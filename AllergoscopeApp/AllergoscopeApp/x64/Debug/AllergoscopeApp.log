@@ -1,0 +1,53 @@
+﻿e:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(499,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  stdafx.cpp
+  AboutBox.cpp
+  AllergoscopeApp.cpp
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(353,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(359,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(367,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(380,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(394,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(398,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(468,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(478,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(484,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(491,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(502,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(506,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(539,99): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(570,120): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(581,105): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(590,97): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(591,65): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(608,87): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(617,86): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(702,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  BuilderVoron2D.cpp
+  LocalSemaphore.cpp
+  lzwcomp.cpp
+K:\AllergoscopeApp\AllergoscopeApp\lzwcomp.cpp(109,18): warning C4244: 'initializing': conversion from 'short' to 'BYTE', possible loss of data
+  lzwdecom.cpp
+K:\AllergoscopeApp\AllergoscopeApp\lzwdecom.cpp(148,32): warning C4244: 'argument': conversion from '__int64' to 'off_t', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\lzwdecom.cpp(153,31): warning C4244: 'argument': conversion from '__int64' to 'off_t', possible loss of data
+K:\AllergoscopeApp\AllergoscopeApp\lzwdecom.cpp(230,27): warning C4244: '+=': conversion from '__int64' to 'LONG', possible loss of data
+  lzwstrmi.cpp
+  lzwstrmo.cpp
+  MakePolyline.cpp
+  MDNS.cpp
+  MDNSReader.cpp
+  MDNSStruct.cpp
+  mfile.cpp
+  MPThread.cpp
+  MultiThread.cpp
+  NetDir.cpp
+  NetServerThread.cpp
+  RuningPolygon.cpp
+  RWThread.cpp
+  ShellZip.cpp
+  Generating Code...
+  Compiling...
+  TimerAndView.cpp
+  variable.cpp
+  _ffile.cpp
+  Generating Code...
+  AllergoscopeApp.vcxproj -> h:\Bin64\AllergoscopeApp.exe
