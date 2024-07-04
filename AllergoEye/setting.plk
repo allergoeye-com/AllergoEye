@@ -105,13 +105,16 @@ new SettingDlg::OnClearDatabase(refer ...) = <|
 	main->CleardDB(self);
 //	self->Show();
 |>;
+//===================================================================
+//
+//===================================================================
 new SettingDlg::OnBackup(refer ...) = <|
 
 	if (.Dir != EMPTY && .Dir != "")
 	{
-new dstDir = instance ShellDir(self);
-	//	dstDir->SetPath(.Dir);
-		dstDir->SetCaption(W6_DATA_DIRECTORY);
+		new dstDir = instance ShellDir(self);
+		//	dstDir->SetPath(.Dir);
+		dstDir->SetCaption(W1_COPY_DB);
 		if (dstDir->Open())
 		{
 			new sh = instance ShellCopy(self);

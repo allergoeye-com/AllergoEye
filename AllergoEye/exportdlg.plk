@@ -316,35 +316,6 @@ new ExportDlg2::OnSelectAll(refer ...) = <|
 	if (.IndexAll != EMPTY && .IndexAll->Find(.CurIndexAll, 0) != -1)
 	{
 		self->_OnSelectAll();
-	/*
-		.AllRecord[.CurIndexAll][SelectDlg::OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.CurIndexAll][SelectDlg::DBOBJ]);
-		.AllRecord[.CurIndexAll][SelectDlg::OBJ]->ClearAllSelection();
-		new b = @.AllRecord[.CurIndexAll][SelectDlg::DBOBJ].Date;
-		new _d = <<>>;
-		.AllRecord[.CurIndexAll][SelectDlg::OBJ]->GetDirList(_d);
-		self->SelectDate(b, _d, .Date);
-	
-		.IndexSubRecords = EMPTY;
-		.IndexDate = EMPTY;
-			.SubRecords = <<>>;
-			.IndexSubRecords = EMPTY;
-
-			for (new di = 0, dl = .Date->Len();.IndexSubRecords == EMPTY &&  di < dl; ++di)
-			{
-				self->PreSelectDate(di);
-				for (new i = 0, l = .SubRecords->Len(); i < l; ++i)
-				{
-					if (.SubRecords[i][SelectDlg::SUB_OBJ]->IsSelected(di))
-					{
-						.IndexDate = di;
-						.IndexSubRecords = i;
-						break;
-					}
-				}
-			}
-			*/
-			
-		
 	}
 	else
 	{
@@ -683,7 +654,7 @@ new com;
 	y = 1;
 	cls->pNumberFormat("@");
 	new rows =  instance Vector(1);
-	rows[0] = <<"First Name", "Last Name", "Date of Birth", "Test Date", "Allergen", "Dilution", "Side", "Exposure Time", "Image Time", "L/R", "SEM">>;
+	rows[0] = <<"First Name", "Last Name", "Date of Birth", "Test Date", "Allergen", "Dilution", "Side", "Exposure Time", "Image Time", "L/R", "SEM", "AE Redness", "Redness Score" >>;
 	trace .IndexAll, CR;
 	for (new n = 0,  N = .IndexAll->Len(); n < N; ++n)
 	{
@@ -712,10 +683,12 @@ new com;
 		new dbdate;
 		for (new i = 0, l = db_date->Len(); i < l; ++i)
 		{
-			dbdate =  = @_date[i][SelectDlg::SUB_DBOBJ];
+			dbdate = @_date[i][SelectDlg::SUB_DBOBJ];
 			date = @_date[i][SelectDlg::SUB_OBJ];
 			if (date->IsSelected(i))
 			{
+				new Score = dbdate->GetAERednessScoreEx();
+				new AERed = dbdate->GetAERednesEx();
 				new _db = << >>;
 				date->GetDirList(_db);
 				new subRecords = <<>>;
@@ -755,15 +728,41 @@ new com;
 							image_time->ReplaceAll("-", ":");
 							rows[y] ,= image_time;
 							new f = instance File(path);
-							if (!f->Open("rb"))
-								continue;
-							new s = f->Gets();
-							new data = s->Tokenize(" = \r\n");
-							data = data->Last();
-							data = data->Tokenize("+-");
-							rows[y] ,= data[0];
-							rows[y] ,= data[data->Len() == 2 ? 1 : 0];
-							f->Close();
+							if (f->Open("rb"))
+							{
+								new s = f->Gets();
+								new data = s->Tokenize(" = \r\n");
+								data = data->Last();
+									data = data->Tokenize("+-");
+								rows[y] ,= data[0];
+								rows[y] ,= data[data->Len() == 2 ? 1 : 0];
+								f->Close();
+							}
+							else
+							{
+								rows[y] ,= "";
+								rows[y] ,= "";
+							}
+							new r = GetTestOrder(GetDilitionEng(vtest[1]));
+							if (r >= 0 && Score != EMPTY && AERed != EMPTY)
+							{
+								new index = Score[0]->Find(r);
+								if (index >= 0)
+								{
+									rows[y] ,= Printf("%d", Score[1][index]);
+									rows[y] ,= Printf("%g", AERed[1][index]);
+								}
+								else
+								{
+									rows[y] ,= "";
+									rows[y] ,= "";
+								}
+							}
+							else
+							{
+								rows[y] ,= "";
+								rows[y] ,= "";
+							}
 							++y;
 						}
 

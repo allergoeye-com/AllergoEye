@@ -313,26 +313,85 @@ new MainMenu::RecalculateAll(void) = <|
 		prg->SetProgress(i * 100 / list->Len());
 		prg->CheckCancel();
 		Pluk->FlushIdle();
-		new  ae = Pluk->GetUUID();
-		new cmt  = JustDirName(ExeName) @ "AEExchange\\" @ Pluk->UUIDToText(ae);
-		new f = instance File(cmt @  ".cmp"); //"ae_exchange.tmp");
+		new f = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
 		f->Open("wb");
-		f->Putv("recalc");
 		for (new j = i; j < Min(i + 30, list->Len()); ++j)
 			f->Putv(dir @ list[j]);
 		f->Close();
-		
-		f->Rename(cmt @ ".tmp");
-	new clock = Clock();
-		while(f->Access(ACCESS_EXIST) == TRUE && Clock() - clock < 5.0)
-			Pluk->FlushIdle();
-		
-//		Pluk->FlushIdle();
-//		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), "ae", f.FileName, JustDirName(ExeName)), TRUE, FALSE);
+		Pluk->FlushIdle();
+		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), "ae", f.FileName, JustDirName(ExeName)), TRUE, FALSE);
 		Pluk->FlushIdle();
 	}
 //	self->RebuildDB();
 |>;
+//=================================================
+//
+//=================================================
+new MainMenu::RecalculateAE2Score(void) = <|
+	new tests = Odml2Exec("select a from DBDate as a", << >>);
+	
+	new Set = instance Vector(4);
+	for (new p = 0; p < tests->Len(); ++p)
+	{
+		tests[p].Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+		new offsetL = 0.0;
+		new offsetR = 0.0;
+		new AEScoreL = instance Vector(tests[p].Tests->Len());
+		new AEScoreR = instance Vector(tests[p].Tests->Len());
+		for (new i = 0; i < tests[p].Tests->Len(); ++i)
+		{
+			AEScoreL[i] = tests[p].Tests[i].AEScoreL;
+			AEScoreR[i] = tests[p].Tests[i].AEScoreR;
+		}
+
+		for (i = 0; i < tests[p].Tests->Len(); ++i)
+		{
+			new r = tests[p].Tests[i]->GetTestOrder();
+			if (r <= 0)
+			{
+				offsetL = AEScoreL[i] - AEScoreR[i];
+				offsetR = AEScoreR[i] - AEScoreL[i];
+			}
+			else
+				break;
+		}
+		for (i = 0; i < tests[p].Tests->Len(); ++i)
+		{
+			new r = tests[p].Tests[i]->GetTestOrder();
+			if (r > 0 && tests[p].Tests[i].OpScoreV != EMPTY)
+			{
+				new k = int(tests[p].Tests[i].OpScoreV[3]);
+				switch (GetSideEng(tests[p].Tests[i].Side))
+				{
+				case "left" :
+					Set[k] ,= (AEScoreL[i] - AEScoreR[i] - offsetL);
+					break;
+				case "right" :
+					Set[k] ,= (AEScoreR[i] - AEScoreL[i] - offsetR);
+					break;
+				}
+			}
+		}
+	}
+	for (new i = 0; i < Set->Len(); ++i)
+		Set[i] = instance Stat(Set[i]);
+	trace "OK", CR;
+	return Set;
+|>;
+/*
+global Score = main->RecalculateAE2Score();
+for (new i = 0; i < Score->Len(); ++i)
+{
+	for (new j = 0; j < Score[i].Data->Len(); ++j)
+		if (Score[i].Data[j] < 0.0)
+			Score[i].Data[j] = 0.0;
+	Score[i] = instance Stat(Score[i].Data);
+	trace Score[i], CR;
+}
+Score[1].Data->Remove(145);
+for (new i = 0; i < Score[1].Data->Len(); ++i)
+	trace i, " ", Score[1].Data[i], CR;
+*/
 //=================================================
 //
 //=================================================

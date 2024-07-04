@@ -103,12 +103,15 @@ param study;
 	while (self->GetNumbGraph() < 1)
 		self->AddGraphic(FALSE);
 	new h = study->GetAERednessGraph();
+	new s = study->GetAERednessScoreGraph();
+//	.Graph[0].NameY = W1_REDNESS;
 	if (h != EMPTY && h->Len() > 1)
 	{
-		self->AddCurve(h, CLR_LIGHTRED, 0);
+		self->AddCurve(s, CLR_LIGHTRED, 0);
+		self->AddCurve(h, CLR_LIGHTBLUE, 0);
 		self->FindScale();
-		if (.Graph[0].Ymax < 0.9)
-			.Graph[0].Ymax = 1.0;
+		if (.Graph[0].Ymax < 3.5)
+			.Graph[0].Ymax = 3.5;
 		else
 			.Graph[0].Ymax += 0.05;
 

@@ -1153,7 +1153,7 @@ File "MAIN_MENU"
 
 Window "DLG_CARD_TOOLS"
 {
-	left = 0; top = 0; right = 1268; bottom = 694; IsVisible = true;
+	left = 0; top = 0; right = 1256; bottom = 816; IsVisible = true;
 	IsDisabled = false; IsWString = true; Type = "popup"; Caption = W1_PATIENTS;
 	HasBorder = true; IsResizable = true; HasSysMenu = true;
 	HasMinButton = true; HasMaxButton = true; HasVScroll = false;
@@ -1193,8 +1193,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		GluePair
 		{
-			ThisID = "ID_GRAPH"; ThatID = -1;
-			Relation = "GLUE_UPTOVCENTER | GLUE_DOWNTODOWN";
+			ThisID = "ID_GRAPH"; ThatID = -1; Relation = "GLUE_WHOLETOVCENTER";
 			IsProportional = false;
 		},
 		GluePair
@@ -1331,7 +1330,7 @@ Window "DLG_CARD_TOOLS"
 	<<
 		Table
 		{
-			left = 527; top = 612; right = 916; bottom = 690; IsVisible = true;
+			left = 543; top = 720; right = 932; bottom = 799; IsVisible = true;
 			IsDisabled = false; ID = "ID_THERAPY"; IsTabStop = true;
 			IsGroupStart = false; LineCount = 0; ColumnCount = 3;
 			HasBorder = false; HasHeader = true; IsColumnTrack = false;
@@ -1413,7 +1412,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Frame
 		{
-			left = 509; top = 128; right = 923; bottom = 584; IsVisible = true;
+			left = 532; top = 128; right = 923; bottom = 683; IsVisible = true;
 			IsDisabled = false; ID = "ID_VIEW"; IsTabStop = false;
 			IsGroupStart = false; Type = "dip"; IsRim = true; IsDrag = false;
 		},
@@ -1440,7 +1439,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Table
 		{
-			left = 4; top = 127; right = 272; bottom = 651; IsVisible = true;
+			left = 4; top = 127; right = 272; bottom = 772; IsVisible = true;
 			IsDisabled = false; ID = "ID_LIST_ALL"; IsTabStop = true;
 			IsGroupStart = false; LineCount = 0; ColumnCount = 4;
 			HasBorder = true; HasHeader = true; IsColumnTrack = true;
@@ -1499,14 +1498,14 @@ Window "DLG_CARD_TOOLS"
 		},
 		Button
 		{
-			left = 1176; top = 612; right = 1247; bottom = 678;
+			left = 1174; top = 735; right = 1243; bottom = 800;
 			IsVisible = true; IsDisabled = false; ID = "ID_EXIT";
 			IsTabStop = true; IsGroupStart = false; Bmp = "BMP_EXIT";
 			IsDefault = false; IsExNotify = false; ToStretch = false;
 		},
 		Table
 		{
-			left = 1008; top = 116; right = 1247; bottom = 607;
+			left = 1008; top = 116; right = 1247; bottom = 728;
 			IsVisible = true; IsDisabled = false; ID = "ID_LIST_SELECT";
 			IsWString = true; IsTabStop = true; IsGroupStart = false;
 			LineCount = 0; ColumnCount = 2; HasBorder = true; HasHeader = true;
@@ -1531,7 +1530,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Table
 		{
-			left = 274; top = 281; right = 502; bottom = 418; IsVisible = true;
+			left = 276; top = 281; right = 528; bottom = 418; IsVisible = true;
 			IsDisabled = false; ID = "ID_TREE"; IsTabStop = true;
 			IsGroupStart = false; LineCount = 0; ColumnCount = 5;
 			HasBorder = true; HasHeader = true; IsColumnTrack = true;
@@ -1630,7 +1629,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Table
 		{
-			left = 275; top = 172; right = 501; bottom = 277; IsVisible = true;
+			left = 276; top = 173; right = 528; bottom = 278; IsVisible = true;
 			IsDisabled = false; ID = "ID_DATE"; IsTabStop = true;
 			IsGroupStart = false; LineCount = 0; ColumnCount = 3;
 			HasBorder = true; HasHeader = true; IsColumnTrack = true;
@@ -1662,7 +1661,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Button
 		{
-			left = 351; top = 656; right = 446; bottom = 680; IsVisible = true;
+			left = 351; top = 779; right = 445; bottom = 802; IsVisible = true;
 			IsDisabled = false; ID = "ID_NEW_TEST"; IsTabStop = true;
 			IsGroupStart = false; Text = W1_NEWTEST; IsDefault = false;
 			IsExNotify = false; ToStretch = false;
@@ -1845,7 +1844,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Edit
 		{
-			left = 781; top = 100; right = 920; bottom = 123; IsVisible = true;
+			left = 808; top = 100; right = 946; bottom = 123; IsVisible = true;
 			IsDisabled = false; FgColor = color(255, 0, 0);
 			ID = "ID_MEAN_SCORE"; IsTabStop = true; IsGroupStart = false;
 			HasBorder = false; Text = ""; TextAlign = "left"; IsReadOnly = true;
@@ -1858,7 +1857,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Button
 		{
-			left = 56; top = 656; right = 146; bottom = 681; IsVisible = true;
+			left = 57; top = 779; right = 146; bottom = 804; IsVisible = true;
 			IsDisabled = false; ID = "ID_NEWPATIENT"; IsTabStop = true;
 			IsGroupStart = false; Text = W9_NEW_PATIENT; IsDefault = false;
 			IsExNotify = false; ToStretch = false;
@@ -1869,13 +1868,13 @@ Window "DLG_CARD_TOOLS"
 		},
 		Frame
 		{
-			left = 274; top = 441; right = 505; bottom = 653; IsVisible = false;
+			left = 276; top = 441; right = 528; bottom = 758; IsVisible = false;
 			IsDisabled = false; ID = "ID_GRAPH"; IsTabStop = false;
 			IsGroupStart = false; Type = "dip"; IsRim = true; IsDrag = false;
 		},
 		Edit
 		{
-			left = 274; top = 422; right = 504; bottom = 440; IsVisible = true;
+			left = 276; top = 422; right = 528; bottom = 440; IsVisible = true;
 			IsDisabled = false; FgColor = color(255, 0, 0);
 			ID = "ID_TOTAL_SCORE"; IsTabStop = true; IsGroupStart = false;
 			HasBorder = true; Text = ""; TextAlign = "left"; IsReadOnly = false;
@@ -1888,14 +1887,14 @@ Window "DLG_CARD_TOOLS"
 		},
 		Button
 		{
-			left = 507; top = 102; right = 592; bottom = 125; IsVisible = true;
+			left = 534; top = 102; right = 619; bottom = 125; IsVisible = true;
 			IsDisabled = false; ID = "ID_EDIT_OPSCORE"; IsTabStop = true;
 			IsGroupStart = false; Text = W1_ADD_SCORE; IsDefault = false;
 			IsExNotify = false; ToStretch = false;
 		},
 		Table
 		{
-			left = 596; top = 89; right = 777; bottom = 127; IsVisible = true;
+			left = 623; top = 89; right = 804; bottom = 127; IsVisible = true;
 			IsDisabled = false; ID = "ID_HEADERS_TXT"; IsTabStop = true;
 			IsGroupStart = false; LineCount = 2; ColumnCount = 4;
 			HasBorder = false; HasHeader = false; IsColumnTrack = false;
@@ -1933,7 +1932,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Frame
 		{
-			left = 973; top = 390; right = 976; bottom = 608; IsVisible = true;
+			left = 973; top = 390; right = 976; bottom = 804; IsVisible = true;
 			IsDisabled = false; ID = "ID_SEPARATOR"; IsTabStop = false;
 			IsGroupStart = false; Type = "bump"; IsRim = false; IsDrag = false;
 		},
@@ -1995,7 +1994,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Table
 		{
-			left = 274; top = 130; right = 500; bottom = 171; IsVisible = true;
+			left = 276; top = 130; right = 528; bottom = 171; IsVisible = true;
 			IsDisabled = false; ID = "ID_CAP_TXT"; IsTabStop = true;
 			IsGroupStart = false; LineCount = 0; ColumnCount = 2;
 			HasBorder = true; HasHeader = false; IsColumnTrack = false;
@@ -2016,7 +2015,7 @@ Window "DLG_CARD_TOOLS"
 		},
 		Text
 		{
-			left = 550; top = 591; right = 875; bottom = 608; IsVisible = true;
+			left = 566; top = 699; right = 891; bottom = 717; IsVisible = true;
 			IsDisabled = false; ID = "ID_THERAPY_TXT"; IsTabStop = false;
 			IsGroupStart = false; HasBorder = false; Text = W1_TREATED;
 			TextAlign = "center";

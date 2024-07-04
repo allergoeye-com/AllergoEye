@@ -478,6 +478,191 @@ new DBDate::GetAERednessGraph(void) = <|
 //=================================================
 //
 //=================================================
+new DBDate::GetAERednessScoreGraph(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new offsetL = 0.0;
+	new offsetR = 0.0;
+	new AEScoreL = instance Vector(.Tests->Len());
+	new AEScoreR = instance Vector(.Tests->Len());
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		AEScoreL[i] = .Tests[i].AEScoreL;
+		AEScoreR[i] = .Tests[i].AEScoreR;
+	}
+
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r <= 0)
+		{
+			offsetL = AEScoreL[i] - AEScoreR[i];
+			offsetR = AEScoreR[i] - AEScoreL[i];
+		}
+		else
+			break;
+	}
+	new X = << >>;
+	new Y = << >>;
+	new score = 0.0;
+	new count = 0;
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		X ,= GetDilutionLocal(.Tests[i].Dil);
+		if (r <= 0)
+			Y ,= 0.0;
+		if (r > 0)
+		{
+			new v = EMPTY;
+			switch (GetSideEng(.Tests[i].Side))
+			{
+			case "left" :
+				v = (AEScoreL[i] - AEScoreR[i] - offsetL);
+				break;
+			case "right" :
+				v = (AEScoreR[i] - AEScoreL[i] - offsetR);
+				break;
+			}
+			if (v < 0.5)
+				Y ,= 0.0;
+			else
+			if (v < 1.66)
+				Y ,= 1.0;
+			else
+			if (v < 3.25)
+				Y ,= 2.0;
+			else
+				Y ,= 3.0;
+		}
+	}
+	return instance BarHistogram(X, Y);
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetAERednessScoreEx(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new offsetL = 0.0;
+	new offsetR = 0.0;
+	new AEScoreL = instance Vector(.Tests->Len());
+	new AEScoreR = instance Vector(.Tests->Len());
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		AEScoreL[i] = .Tests[i].AEScoreL;
+		AEScoreR[i] = .Tests[i].AEScoreR;
+	}
+
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r <= 0)
+		{
+			offsetL = AEScoreL[i] - AEScoreR[i];
+			offsetR = AEScoreR[i] - AEScoreL[i];
+		}
+		else
+			break;
+	}
+	new X = << >>;
+	new Y = << >>;
+	new score = 0.0;
+	new count = 0;
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r > 0)
+		{
+			X ,= r;
+			new v = EMPTY;
+			switch (GetSideEng(.Tests[i].Side))
+			{
+			case "left" :
+				v = (AEScoreL[i] - AEScoreR[i] - offsetL);
+				break;
+			case "right" :
+				v = (AEScoreR[i] - AEScoreL[i] - offsetR);
+				break;
+			}
+			if (v < 0.5)
+				Y ,= 0.0;
+			else
+			if (v < 1.66)
+				Y ,= 1.0;
+			else
+			if (v < 3.25)
+				Y ,= 2.0;
+			else
+				Y ,= 3.0;
+		}
+	}
+	return << X, Y >>;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetAERednesEx(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new offsetL = 0.0;
+	new offsetR = 0.0;
+	new AEScoreL = instance Vector(.Tests->Len());
+	new AEScoreR = instance Vector(.Tests->Len());
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		AEScoreL[i] = .Tests[i].AEScoreL;
+		AEScoreR[i] = .Tests[i].AEScoreR;
+	}
+
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r <= 0)
+		{
+			offsetL = AEScoreL[i] - AEScoreR[i];
+			offsetR = AEScoreR[i] - AEScoreL[i];
+		}
+		else
+			break;
+	}
+	new X = << >>;
+	new Y = << >>;
+	new score = 0.0;
+	new count = 0;
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r > 0)
+		{
+			X ,= r;
+			new v = EMPTY;
+			switch (GetSideEng(.Tests[i].Side))
+			{
+			case "left" :
+				v = (AEScoreL[i] - AEScoreR[i] - offsetL);
+				break;
+			case "right" :
+				v = (AEScoreR[i] - AEScoreL[i] - offsetR);
+				break;
+			}
+			Y ,= Max(0.0, v);
+		}
+	}
+	return << X, Y >>;
+|>;
+//=================================================
+//
+//=================================================
 new DBDate::PrintScore(void) = <|
 	new score = self->GetOpScore();
 	new ae_score = self->GetAEScore();

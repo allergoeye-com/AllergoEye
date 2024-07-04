@@ -25,9 +25,10 @@ RunAllergoscopeApp();
 global GlobalProgramName = "AllergoEye";
 global ProgramVersion = Printf("2.28 (%s)", Pluk->GetVersion()[3]);
 global main = instance MainMenu();
+
+/*
 if (CmdLine->Find("rebuild") != -1)
 	main->RebuildDB();
-/*
 main->RecalculateAll();
 main.SelectDlg->RecalculateSelected();
 main.netDir.dbdir->ImportTherapy();

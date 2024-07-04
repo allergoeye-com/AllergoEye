@@ -160,7 +160,7 @@ BEGIN
 			ScoreL           ScoreL            SQL_FLOAT NULL
 			ScoreR           ScoreR            SQL_FLOAT NULL
 			Side             Side              SQL_VARCHAR (DBEYE_ENUM)
-			Time             Time              SQL_TIME
+			Time             dbTime            SQL_TIME
 		END
 	TRIGGERS BEGIN
 		SYSSAVETRIGGER BEGIN

@@ -591,32 +591,18 @@ param file;
 //	new str = dir->MakeXmlFromPoints(ptr);
 //!!!!!!!!!!!!!!!!!!!!! 2021-12-18 !!!!!!!!!!!!!!!!!!!!
 	new Name = dir->GetImageList(ptr);
-	new  ae = Pluk->GetUUID();
-		new cmt  = JustDirName(ExeName) @ "AEExchange\\" @ Pluk->UUIDToText(ae);
-	new f = instance File(cmt @  ".cmp"); //"ae_exchange.tmp");
-
-///	new FileName = JustDirName(ExeName) @  "AEExchange" @ SFD @ "ae_exchange.tmp";
-//	new f = instance File(FileName);
+	new FileName = JustDirName(ExeName) @ "AEExchange" @ SFD @ "ae_exchange.tmp";
+	new f = instance File(FileName);
 	f->Open("wb");
-	if (file.roi->Len() > 0)
-		f->Putv("recalc");
-	else
-		f->Putv("");
 	for (new k = 0; k < Name->Len(); ++k)
 		f->Putv(Name[k]);
 	f->Close();
-	f->Rename(cmt @ ".tmp");
-	new clock = Clock();
-		while(f->Access(ACCESS_EXIST) == TRUE && Clock() - clock < 5.0)
-			Pluk->FlushIdle();
-	
-/*
-new ae_nn = AllergoEyeIni->ReadStr("NAME", "NN");
+	new ae_nn = AllergoEyeIni->ReadStr("NAME", "NN");
 	if (file.roi->Len() > 0)
 		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
 	else
 		Pluk->Exec(Printf("%snn-test.exe %s %s /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
-*/
+
 	Pluk->FlushIdle();
 //	self->onResponce(1, TRUE);
 //!!!!!!!!!!!!!!!!!!!!! 2021-12-18 !!!!!!!!!!!!!!!!!!!!
@@ -1135,7 +1121,8 @@ parest bb;
 		for (new i = 0; i < l; ++i)
 		{
 			new index = _d->Find(b[i].Path, 0, <|param key, elem; return key == elem->GetPath();|>);
-			d ,= _d[index];
+			if (index >= 0)
+				d ,= _d[index];
 		}
 		for (i = 0, l = b->Len(); i < l; ++i)
 		{
@@ -3014,23 +3001,13 @@ new SelectDlg::RecalculateSelected(void) = <|
 		prg->SetProgress(i * 100 / list->Len());
 		prg->CheckCancel();
 		Pluk->FlushIdle();
-		new  ae = Pluk->GetUUID();
-		new cmt  = JustDirName(ExeName) @ "AEExchange\\" @ Pluk->UUIDToText(ae);
-		new f = instance File(cmt @  ".cmp"); //"ae_exchange.tmp");
-
-//		new f = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
+		new f = instance File(JustDirName(ExeName) @ "AEExchange" @ SFD @ "ae_exchange.tmp");
 		f->Open("wb");
-		f->Putv("");
 		for (new j = i; j < Min(i + 30, list->Len()); ++j)
 			f->Putv(dir @ list[j]);
 		f->Close();
-		f->Rename(cmt @ ".tmp");
-	new clock = Clock();
-		while(f->Access(ACCESS_EXIST) == TRUE && Clock() - clock < 5.0)
-			Pluk->FlushIdle();
-
 		Pluk->FlushIdle();
-	//	Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), "ae", f.FileName, JustDirName(ExeName)), TRUE, FALSE);
+		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), "ae", f.FileName, JustDirName(ExeName)), TRUE, FALSE);
 		Pluk->FlushIdle();
 	}
 |>;
@@ -3104,31 +3081,34 @@ param path;
 		}
 	}
 |>;
+//==========================================
+//
+//==========================================
 new TextGraphic::DrawLine(refer object MDC, refer object TFunc, refer object FGColor, refer object Vector, refer object Vector, boolean, boolean, int, int) = <|
 param Mdc, Curve, CurveColor, Arr, Marker, DrawErrorBar, LogErrorBar, CurveIndex, Size;
 
 	new res = self->Graphic::DrawLine(Mdc, Curve, CurveColor, Arr, Marker, DrawErrorBar, LogErrorBar, CurveIndex, Size);
-	if (res != EMPTY && res->Len() > 0)
+	if (res != EMPTY && res->Len() > 0 && CurveColor->GetColor() == CLR_LIGHTRED)
 	{
-	new crc  = Mdc->GetClipRect();
-	Mdc->UnClip();
-	Mdc->SetMFont(Mdc->GetFontName(), 8, 1);
-	Mdc->SetTextColor(255, 0, 0);
-	Mdc->SetBkMode(BK_TRANSPARENT);
+		new crc  = Mdc->GetClipRect();
+		Mdc->UnClip();
+		Mdc->SetMFont(Mdc->GetFontName(), 12, 1);
+		Mdc->SetTextColor(255, 0, 0);
+		Mdc->SetBkMode(BK_OPAQUE);
 		for (new k = 0, i = 0; i < Curve.Y->Len(); ++i)
 		{
 			new n = 0;
 			new str = "0";
 			if (Curve.Y[i] > 0)
 			{
-				str = Printf("%.2f", Curve.Y[i]);
+				str = Printf("%d", int(Curve.Y[i]));
 				n = 4;
 				if (i > 0 && Curve.Y[i - 1] > 0)
 						--k;
 			}
 			else
 			{
-				str = Printf("%.1f", Curve.Y[i]);
+				str = Printf("%d", int(Curve.Y[i]));
 				if (i > 0 && Curve.Y[i - 1] > 0)
 					--k;	
 				n = 3;
@@ -3143,9 +3123,8 @@ param Mdc, Curve, CurveColor, Arr, Marker, DrawErrorBar, LogErrorBar, CurveIndex
 			
 		}
 		trace Curve.X, CR;
-	Mdc->ResetMFont();
-	Mdc->SetTextColor(0, 0, 0);
-	Mdc->ClipRect(crc);
+		Mdc->ResetMFont();
+		Mdc->SetTextColor(0, 0, 0);
+		Mdc->ClipRect(crc);
 	}
-			
 |>;

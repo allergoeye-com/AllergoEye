@@ -413,7 +413,20 @@ new MainWnd::OnBuild(refer ...) = <|
 	new l = .RoiBar.file.roi->Len();
 	.RoiBar.file->ClearModefied();
 
-
+//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
+	{
+		new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (dir->GetLastByte() != FD)
+			dir @= SFD;
+		dir @= .List[.iSel]->GetWinPath();
+		
+		new Name = JustDirName(dir) @ JustName(dir) @ ".jpg";
+		new f = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
+		f->Open("wb");
+		f->Putv(Name);
+		f->Close();
+	}
+//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
 	new Recalc = TRUE;
 _new_f:
 	if (l > 0)
@@ -507,41 +520,13 @@ _new_f:
 
 */
 	Pluk->FlushIdle();
-	//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
-	{
-		new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
-		if (dir->GetLastByte() != FD)
-			dir @= SFD;
-		dir @= .List[.iSel]->GetWinPath();
-		
-		new Name = JustDirName(dir) @ JustName(dir) @ ".jpg";
-		new  ae = Pluk->GetUUID();
-		new cmt  = JustDirName(ExeName) @ "AEExchange\\" @ Pluk->UUIDToText(ae);
-		new f = instance File(cmt @  ".cmp"); //"ae_exchange.tmp");
-
-//		new f = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
-		f->Open("wb");
-		if (Recalc)
-			f->Putv("recalc");
-		else
-			f->Putv("");
-		f->Putv(Name);
-		f->Close();
-		f->Rename(cmt @ ".tmp");
-		new clock = Clock();
-		while(f->Access(ACCESS_EXIST) == TRUE && Clock() - clock < 5.0)
-			Pluk->FlushIdle();
-
-	}
-//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
-/*
-	new FileName = JustDirName(ExeName) @ "AEExchange" @ SFD @ "ae_exchange.tmp";
+	new FileName = JustDirName(ExeName) @ SFD @ "AEExchange" @ SFD @ "ae_exchange.tmp";
 	new ae_nn = AllergoEyeIni->ReadStr("NAME", "NN");
 	if (Recalc)
 		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
 	else
 		Pluk->Exec(Printf("%snn-test.exe %s %s /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
-*/	Pluk->FlushIdle();
+	Pluk->FlushIdle();
 	self->onResponce(1, TRUE);
 //!!!!!!!!!!!!!!!!!!!!! 2021-12-11 !!!!!!!!!!!!!!!!!!!!
 	return TRUE;

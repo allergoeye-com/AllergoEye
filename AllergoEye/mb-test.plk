@@ -1,3 +1,0 @@
-global dir = instance DirW("f:/AllergoEyeData/Birnbaum_Matthias_10123/2021-12-20/");
-dir->ReadSubDirs();
-
