@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@android:color/background_dark"
+    android:visibility="visible"
+    tools:ignore="MissingDefaultResource">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/AppBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            app:expanded="true"
+            app:theme="@style/ThemeOverlay.AppCompat.ActionBar">
+
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:minHeight="?attr/actionBarSize"
+                android:background="@color/colorMainIcons"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorMainIcons"
+                    android:foregroundGravity="center_vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                <lib.common.button.CMenuButton
+                            android:id="@+id/idExit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="64dp"
+                            android:layout_gravity="start"
+                            android:adjustViewBounds="true"
+                            android:background="@android:color/transparent"
+                            android:scaleType="fitCenter"
+                            app:color_up="@color/white"
+                            app:srcCompat="@drawable/returntohome"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                    />
+
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/searchFieldSearchButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="64dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toRightOf="@+id/idExit"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_gravity="center_vertical|center_horizontal"
+                        android:adjustViewBounds="true"
+                        android:background="@android:color/transparent"
+                        app:color_up="@color/white"
+                        android:scaleType="fitCenter"
+                        app:srcCompat="@drawable/search"
+                        android:layout_marginStart="16dp"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+                    <lib.common.CEdit
+                        android:id="@+id/searchFieldEdit"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toRightOf="@+id/searchFieldSearchButton"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_marginStart="10dp"
+
+                        android:layout_gravity="center_vertical|center_horizontal"
+                        android:ems="10"
+                        android:hint="@string/search"
+                        android:inputType="text"
+                        android:padding="4dp"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="@android:color/white"
+                        android:textColorHint="@color/btn_color_up"
+
+                        android:textStyle="italic" />
+                    <com.allergoscope.app.timer.TimerButton
+
+                        android:id="@+id/idTimer"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_marginEnd="16dp"
+                        android:background="#00FFFFFF"
+
+                        android:scaleType="fitCenter"
+                        app:color_up="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/timer"
+                        />
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/idRename"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/dummy_button"
+                        android:scaleType="fitCenter"
+                        app:color_up="@color/white"
+                        android:layout_marginRight="80dp"
+
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toRightOf="@+id/idTimer"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/rename"
+                        tools:ignore="SpeakableTextPresentCheck" />
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/idSync"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/dummy_button"
+                        android:scaleType="fitCenter"
+                        app:color_up="@color/white"
+                        android:layout_marginRight="80dp"
+
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toRightOf="@+id/idRename"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/synchronizec"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/idDelete"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="#00FFFFFF"
+                        android:layout_marginRight="80dp"
+                        android:scaleType="fitCenter"
+                        app:color_up="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toRightOf="@+id/idSync"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/delete_onscreen"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.appcompat.widget.Toolbar>
+
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_height="5dp"
+            android:layout_width="match_parent"
+            android:indeterminate="false"
+            style="@android:style/Widget.ProgressBar.Horizontal" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <com.allergoscope.app.card.CTreeDir
+                android:background="@color/theme_dlg_background"
+                android:id="@+id/idDirList"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+               android:layout_weight="0.4" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewImageFiles"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.6"
+                android:backgroundTint="@color/bottom_buttons_light_color"
+                tools:listitem="@layout/grid_view_items_1" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/actionProperty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="10dp"
+        android:clickable="true"
+        android:fitsSystemWindows="true"
+        android:focusable="true"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:tint="@android:color/darker_gray"
+        android:visibility="visible"
+        app:backgroundTint="@color/colorMainIcons"
+        app:backgroundTintMode="add"
+        app:elevation="@android:dimen/app_icon_size"
+        app:fabSize="normal"
+        app:layout_anchorGravity="right|bottom"
+        app:maxImageSize="48dp"
+        app:pressedTranslationZ="12dp"
+        app:rippleColor="@color/colorPrimary"
+        app:srcCompat="@drawable/add"
+        app:useCompatPadding="true"
+        tools:ignore="SpeakableTextPresentCheck" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF000000"
+    android:orientation="vertical"
+    android:visibility="visible">
+
+
+    <lib.common.CEdit
+        android:id="@+id/inputText"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:ellipsize="middle"
+        android:fadeScrollbars="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:gravity="start"
+        android:imeOptions="actionNone"
+        android:keepScreenOn="true"
+        android:scrollbars="vertical|horizontal"
+        android:textColor="@android:color/white"
+        android:textIsSelectable="true" />
+
+</LinearLayout>

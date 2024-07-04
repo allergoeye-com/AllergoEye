@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/grid_view_items"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/singer_grid_selector">
+
+    <lib.common.CheckRecycleImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:layout_centerHorizontal="true"
+        android:adjustViewBounds="false"
+        android:contentDescription="@string/default_image"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp"
+
+        android:scaleType="center" />
+
+
+    <CheckBox
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="1dp"
+        android:theme="@style/AppThemeSeek"
+        android:clickable="false"
+        android:ellipsize="end"
+        android:padding="4dp"
+        android:text="fgfdgfdgdfgf"
+        android:textAlignment="center"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/theme_dlg_text_color" />
+
+    <lib.common.button.CMenuButton
+        android:layout_below="@+id/textView"
+        android:padding="10dp"
+        android:id="@+id/textColor"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_centerHorizontal="true"
+
+        app:color_up="@color/theme_bar_btn_color"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/colors" />
+
+</RelativeLayout>
+

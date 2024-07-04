@@ -1,0 +1,5 @@
+data/app/proba.jks.i
+data/app/lint-baseline.xml.i
+data/app/.gitignore.i
+data/app/build.gradle.i
+data/app/proguard-rules.pro.i

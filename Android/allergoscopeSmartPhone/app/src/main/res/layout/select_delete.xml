@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:id="@+id/frameLayout"
+    android:padding="20dp"
+    android:background="@android:color/background_dark"
+
+    >
+
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RadioButton
+            android:id="@+id/ID_MERGE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Merge ?"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/theme_dlg_text_color"
+            android:theme="@style/AppThemeSeek" />
+
+        <TextView
+            android:id="@+id/ID_OR"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:text="or"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@color/theme_dlg_text_color" />
+
+        <RadioButton
+            android:id="@+id/ID_DELETE"
+            android:theme="@style/AppThemeSeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/theme_dlg_text_color"
+
+            android:text="Delete ?" />
+    </RadioGroup>
+</LinearLayout>

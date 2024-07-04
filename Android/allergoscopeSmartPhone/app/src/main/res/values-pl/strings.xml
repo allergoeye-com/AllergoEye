@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AllergoEye</string>
+    <string name="card_last_name">Nazwisko</string>
+    <string name="card_cync">Synchronizować</string>
+    <string name="roi">ROI</string>
+    <string name="exit">Wyjście</string>
+    <string name="card_first_name">Imię</string>
+    <string name="card_birthdate">Data urodzenia</string>
+    <string name="hostname">Nazwa telefonu</string>
+    <string name="select_lang">Wybierz język</string>
+    <string name="str_de">Deutsch</string>
+    <string name="str_en">English</string>
+    <string name="set_timer">Ustaw minutnik</string>
+    <string name="minute">minuty</string>
+    <string name="stop_timer">Zatrzymać minutnik?</string>
+    <string name="ok">OK</string>
+    <string name="cancel">ANULOWAĆ</string>
+    <string name="yes">TAK</string>
+    <string name="no">NIE</string>
+    <string name="set_date">Ustaw datę urodzin</string>
+    <string name="new_test">Utwórz test</string>
+    <string name="card_info">Informacje o pacjencie</string>
+    <string name="test_choise">roztocze farinae;roztocz pteronyssinus;brzozowy;olcha;leszczyna;jesion;trawa;bylica;ambrozja;alternaria alternata;penicillium notatum;kot/rozpocznij test;rozwiązanie kontrolne;1:1000;1:100;1:10;roztwór podstawowy/obie strony;prawo;lewo/ 0 min;5 min;10 min;15 min</string>
+    <string name="photo_over">Inne zdjęcie</string>
+    <string name="view_done">Zrobione</string>
+    <string name="ids_delete_image">Usunąć bieżący obraz?</string>
+    <string name="del_sel">Usunąć bieżący wybór?</string>
+    <string name="rename_test">Zmień nazwę testu</string>
+    <string name="choise_photo">Wybierz zdjęcie:</string>
+    <string name="select_date">Wybierz datę</string>
+    <string name="today">DZISIAJ</string>
+    <string name="select_test">Wybierz test</string>
+    <string name="select_new_test">NOWY TEST</string>
+    <string name="new_card">Nowy pacjent</string>
+    <string name="card_list">Lista pacjentów</string>
+    <string name="host_comment"> Zostanie to pokazane w przeglądzie urządzenia na komputerze.</string>
+    <string name="sync_poc">obrazy przetworzone</string>
+    <string name="str_es">Spanish</string>
+    <string name="str_fr">French</string>
+    <string name="prick">Prick</string>
+</resources>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/transparent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textPlease"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please input a name for your test"
+            android:layout_weight="1"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textAlignment="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/theme_dlg_text_color" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+
+            <lib.common.CComboBox
+                android:id="@+id/test1"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.35"
+                android:gravity="left"
+                android:spinnerMode="dropdown"
+                app:idLayout="@layout/editspiner_cell1" />
+
+            <lib.common.CComboBox
+                android:id="@+id/test2"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.35"
+                android:gravity="left"
+
+                />
+
+            <lib.common.CComboBox
+                android:id="@+id/test3"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.2"
+                android:gravity="left"
+
+                />
+
+            <lib.common.CComboBox
+                android:id="@+id/test4"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="91dp"
+                android:layout_height="match_parent"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.1"
+                android:gravity="left"
+
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/background_dark"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/AppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+        app:expanded="true"
+        app:theme="@style/ThemeOverlay.AppCompat.ActionBar">
+
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            android:minHeight="?attr/actionBarSize">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <lib.common.button.CMenuButton
+                    android:layout_centerVertical="true"
+
+                    android:id="@+id/idHome"
+                    style="@style/Widget.AppCompat.ImageButton"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.05"
+                    android:layout_height="40dp"
+                    android:adjustViewBounds="true"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/returntohome" />
+
+                <lib.common.button.CMenuButton
+                    android:layout_centerVertical="true"
+                    android:id="@+id/idBack"
+                    style="@style/Widget.AppCompat.ImageButton"
+                    android:layout_width="0dp"
+
+                    android:layout_height="40dp"
+                    android:layout_weight="0.1"
+                    android:adjustViewBounds="true"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitEnd"
+                    app:srcCompat="@drawable/previous" />
+
+                <TextView
+                    android:layout_centerVertical="true"
+                    android:layout_weight="0.2"
+                    android:id="@+id/textSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:text="@string/search_in"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@android:color/white" />
+
+                <lib.common.CComboBox
+                    android:layout_centerVertical="true"
+                    android:id="@+id/menuDir"
+                    style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.35"
+                    android:gravity="left"
+                    android:singleLine="false"
+                    android:spinnerMode="dropdown"
+
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@android:color/white" />
+
+                <lib.common.CEdit
+                    android:layout_centerVertical="true"
+                    android:id="@+id/searchFieldEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.25"
+                    android:ems="6"
+                    android:hint="@string/search"
+                    android:inputType="text"
+                    android:padding="4dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColorHint="@color/btn_color_up"
+                    android:textStyle="italic" />
+
+                <lib.common.button.CMenuButton
+                    android:layout_centerVertical="true"
+                    android:id="@+id/searchFieldSearchButton"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="0.05"
+                    android:adjustViewBounds="true"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/search" />
+
+
+                <Space
+                    android:id="@+id/imageView12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <include
+        android:id="@+id/idExploreAP"
+        layout="@layout/content_image_explorer" />
+
+
+    <ProgressBar
+        android:id="@+id/waitCursor"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.595" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/actionProperty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="10dp"
+        android:background="@drawable/grid_selector"
+        android:clickable="true"
+        android:fitsSystemWindows="true"
+        android:focusable="true"
+        android:visibility="visible"
+        app:backgroundTint="@color/colorAccent"
+        app:elevation="@android:dimen/app_icon_size"
+        app:fabSize="normal"
+        app:layout_anchorGravity="right|bottom"
+        app:pressedTranslationZ="12dp"
+        app:rippleColor="@color/colorPrimary"
+        app:srcCompat="@drawable/next"
+        app:useCompatPadding="true" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

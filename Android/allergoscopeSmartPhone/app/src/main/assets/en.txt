@@ -1,0 +1,2 @@
+
+mite farinae;mite pteronyssinus;birch;alder;hazel;ash tree;grass;mugwort;ragweed;alternaria alternata;penicillum notatum;cat/start test;control test;stock solution;1:10;1:100;1:1000;1:10000;1:100000/both sides;right;left/0 min;1 min;5 min;10 min;15 min

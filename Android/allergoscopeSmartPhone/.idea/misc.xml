@@ -1,0 +1,30 @@
+<project version="4">
+  <component name="AndroidDexCompilerConfiguration">
+    <option name="MAX_HEAP_SIZE" value="7000" />
+  </component>
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="../../../../layout/custom_preview.xml" value="0.29739583333333336" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/activity_camera.xml" value="0.19270833333333334" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/activity_view.xml" value="0.17395833333333333" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/card_fragment1.xml" value="0.2046875" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/dlg_grid.xml" value="0.18125" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/dlg_samochustvie.xml" value="0.22" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/grid_cell_slider.xml" value="0.19270833333333334" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/grid_view_items.xml" value="0.19270833333333334" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/list_photo.xml" value="0.19270833333333334" />
+        <entry key="..\:/alergoscope/allergoscopeSmartPhone/app/src/main/res/layout/wrem.xml" value="0.19270833333333334" />
+        <entry key="app/src/main/res/layout/activity_camera.xml" value="0.5364583333333334" />
+        <entry key="app/src/main/res/layout/dlg_list_roi.xml" value="0.37604166666666666" />
+        <entry key="app/src/main/res/layout/selected_view_item.xml" value="0.37604166666666666" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="jbr-17" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

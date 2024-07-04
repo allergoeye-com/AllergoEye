@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/idHeader"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/theme_dlg_background"
+    android:orientation="vertical">
+
+
+    <lib.common.grid.Grid
+        android:id="@+id/idGridCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="4dp">
+
+    </lib.common.grid.Grid>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:visibility="visible">
+
+
+
+        <lib.common.button.CTextButton
+            android:id="@+id/idCancel"
+            android:background="@drawable/buttn_selector"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/cancel" />
+
+        <lib.common.button.CTextButton
+            android:id="@+id/idOk"
+            android:background="@drawable/buttn_selector"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/ok" />
+
+    </LinearLayout>
+</LinearLayout>

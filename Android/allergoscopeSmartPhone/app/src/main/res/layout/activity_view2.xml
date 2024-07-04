@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/theme_dlg_background"
+
+    android:contentDescription="@string/dummy_button"
+    tools:context=".ViewActivity">
+
+
+        <com.allergoscope.app.CViewLayout
+            android:id="@+id/viewContaner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+        </com.allergoscope.app.CViewLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:orientation="vertical">
+
+
+    <LinearLayout
+        android:background="@color/colorMainIcons"
+        android:id="@+id/viewMenuButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <lib.common.layout.LayoutButton
+            android:background="@drawable/menu_buttn_selector"
+            android:id="@+id/idInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:layout_marginTop="2dp"
+            android:paddingEnd="6dp">
+
+            <lib.common.button.CMenuButton
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/dummy_button"
+                android:scaleType="fitCenter"
+                app:color_up="@color/white"
+                android:layout_marginTop="2dp"
+
+                android:clickable="false"
+                app:srcCompat="@drawable/card"
+                tools:ignore="SpeakableTextPresentCheck" />
+
+            <TextView
+                android:visibility="gone"
+                android:clickable="false"
+                android:id="@+id/idInfoText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/view_card"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/white" />
+
+        </lib.common.layout.LayoutButton>
+
+
+
+
+
+        <lib.common.layout.LayoutButton
+            android:id="@+id/idListPhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:background="@drawable/menu_buttn_selector"
+
+            android:paddingEnd="6dp">
+
+            <lib.common.button.CMenuButton
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/dummy_button"
+                android:scaleType="fitCenter"
+                app:color_up="@color/white"
+                android:clickable="false"
+                android:layout_marginTop="2dp"
+
+                app:srcCompat="@drawable/picture"
+                tools:ignore="SpeakableTextPresentCheck" />
+
+            <TextView
+                android:visibility="gone"
+                android:id="@+id/idListPhotoText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/view_photo"
+                android:clickable="false"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/white" />
+
+        </lib.common.layout.LayoutButton>
+        <lib.common.layout.LayoutButton
+            android:id="@+id/idDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:background="@drawable/menu_buttn_selector"
+
+            android:paddingEnd="6dp">
+
+            <lib.common.button.CMenuButton
+                android:layout_marginTop="2dp"
+
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:adjustViewBounds="true"
+
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/dummy_button"
+                android:scaleType="fitCenter"
+                app:color_up="@color/white"
+                android:clickable="false"
+                app:srcCompat="@drawable/delete_onscreen"
+                tools:ignore="SpeakableTextPresentCheck" />
+
+            <TextView
+                android:visibility="gone"
+                android:clickable="false"
+                android:id="@+id/idDeleteText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/delete"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/white" />
+        </lib.common.layout.LayoutButton>
+
+        <lib.common.layout.LayoutButton
+            android:clickable="true"
+            android:background="@drawable/menu_buttn_selector"
+            android:id="@+id/idRoi"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingEnd="6dp"
+            app:disable_change_color="true">
+
+            <lib.common.button.CMenuButton
+                android:layout_marginTop="2dp"
+
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:adjustViewBounds="true"
+
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:color_up="@color/white"
+                android:clickable="false"
+
+                app:srcCompat="@drawable/synchronizec"
+                tools:ignore="SpeakableTextPresentCheck" />
+
+            <TextView
+                android:visibility="gone"
+                android:clickable="false"
+                android:id="@+id/idRoiText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/roi"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/white" />
+
+        </lib.common.layout.LayoutButton>
+
+        <lib.common.layout.LayoutButton
+            android:id="@+id/idTimerBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:background="@drawable/menu_buttn_selector"
+
+            android:padding="6dp">
+
+            <com.allergoscope.app.timer.TimerButton
+                android:id="@+id/idTimer"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:color_up="@color/white"
+                android:clickable="false"
+                app:srcCompat="@drawable/timer"
+
+                tools:ignore="SpeakableTextPresentCheck" />
+
+            <TextView
+                android:visibility="gone"
+                android:clickable="false"
+                android:id="@+id/idTimerText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/timer"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/white" />
+        </lib.common.layout.LayoutButton>
+
+    </LinearLayout>
+        <TextView
+            android:id="@+id/idResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="123"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:background="#00000000"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+
+            <lib.common.layout.LayoutButton
+                android:id="@+id/idCamera"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/buttn_selector"
+                android:clickable="true"
+                android:orientation="horizontal"
+                android:paddingStart="6dp">
+                <TextView
+                    android:layout_weight="0.6"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:clickable="false"
+                    android:gravity="center_vertical|right"
+                    android:id="@+id/idCameraText"
+                    android:text="Camera"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/white" />
+
+                <lib.common.button.CMenuButton
+                    android:layout_weight="0.4"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center_vertical|center_horizontal"
+                    android:layout_marginTop="2dp"
+                    android:adjustViewBounds="true"
+                    android:background="@android:color/transparent"
+                    android:clickable="false"
+                    android:scaleType="fitCenter"
+                    app:color_up="@color/white"
+                    app:srcCompat="@drawable/camera_go_to"
+                    tools:ignore="SpeakableTextPresentCheck" />
+
+
+            </lib.common.layout.LayoutButton>
+
+            <lib.common.layout.LayoutButton
+                android:id="@+id/idExit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/buttn_selector"
+                android:clickable="true"
+                android:orientation="horizontal"
+
+                android:paddingEnd="6dp">
+                <TextView
+                    android:layout_weight="0.6"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:clickable="false"
+                    android:gravity="center_vertical|right"
+                    android:id="@+id/idExitText"
+                    android:text="@string/exit"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/white" />
+                <lib.common.button.CMenuButton
+                    android:layout_weight="0.4"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center_vertical|center_horizontal"
+                    android:layout_marginTop="2dp"
+                    android:adjustViewBounds="true"
+                    android:background="@android:color/transparent"
+                    android:clickable="false"
+                    android:scaleType="fitCenter"
+                    app:color_up="@color/white"
+                    app:srcCompat="@drawable/returntohome"
+                    tools:ignore="SpeakableTextPresentCheck" />
+
+
+
+            </lib.common.layout.LayoutButton>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/idNameCard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:text="123"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@color/white" />
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+    <lib.common.layout.CPanelDialog
+        android:id="@+id/dialogContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:visibility="gone"
+        app:drag_orient="Top"
+        app:size_hand="0dp">
+
+    </lib.common.layout.CPanelDialog>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

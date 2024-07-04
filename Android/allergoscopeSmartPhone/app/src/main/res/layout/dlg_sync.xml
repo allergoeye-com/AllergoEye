@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativeLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#40000000"
+    android:orientation="vertical"
+    android:visibility="visible">
+
+
+    <TextView
+        android:id="@+id/idWaitText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:layout_centerHorizontal="true"
+
+        android:layout_centerVertical="true"
+        android:background="@android:color/transparent"
+        android:gravity="center"
+        android:text="Synchronisation..."
+        android:textAlignment="center"
+        android:textColor="@color/theme_spot_color"
+        android:textSize="36sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.404" />
+
+    <TextView
+        android:id="@+id/idNameText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/idWaitText"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        android:gravity="center"
+
+        android:textAlignment="center"
+        android:textColor="@color/theme_spot_color"
+        app:layout_constraintStart_toStartOf="parent"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        app:layout_constraintTop_toBottomOf="@+id/idWaitText" />
+
+    <lib.common.layout.ProgressLayout
+        android:id="@+id/waitBar"
+        style="@android:style/Widget.Holo.ProgressBar.Large"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/idNameText"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/idNameText"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <LinearLayout
+        android:id="@+id/waitProcessing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@+id/waitBar"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/waitBar"
+        app:layout_constraintVertical_bias="0.0" >
+
+        <TextView
+            android:id="@+id/textWaitCalc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textAlignment="center"
+            android:textColor="@color/theme_spot_color"
+            android:text="Photo processing. Please wait or press cancel" />
+
+        <lib.common.button.CTextButton
+            android:id="@+id/idCancelWait"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@android:string/cancel"
+        />
+
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

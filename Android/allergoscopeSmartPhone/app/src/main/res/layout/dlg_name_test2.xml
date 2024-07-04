@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please input a name for your test"
+            android:layout_weight="1"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textAlignment="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/theme_dlg_text_color" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <lib.common.EditableSpinner
+                android:id="@+id/stest1"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:layout_weight="0.33"
+                android:gravity="left"
+                android:layout_gravity="center_vertical"
+                android:spinnerMode="dropdown"
+                app:idEdit="@+id/textView1"
+                app:idLayout="@layout/editspiner_cell1" />
+
+            <lib.common.EditableSpinner
+                android:id="@+id/stest2"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:layout_weight="0.33"
+                android:gravity="left"
+                android:layout_gravity="center_vertical"
+                android:spinnerMode="dropdown"
+                app:idEdit="@+id/textView2"
+                app:idLayout="@layout/editspiner_cell2" />
+
+            <lib.common.EditableSpinner
+                android:id="@+id/stest3"
+                style="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_centerVertical="true"
+                android:layout_weight="0.33"
+                android:gravity="left"
+                android:layout_gravity="center_vertical"
+                android:spinnerMode="dropdown"
+                app:idEdit="@+id/textView3"
+                app:idLayout="@layout/editspiner_cell3" />
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+</LinearLayout>

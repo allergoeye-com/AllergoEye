@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:cnms="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dialogs_transparent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_centerHorizontal="true"
+        android:layout_width="500dp"
+        android:layout_height="match_parent"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="10dp" />
+
+        <TextView
+            android:id="@+id/currentColor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+
+            android:singleLine="true"
+            android:text="@string/select_color"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@android:color/white" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="10dp" />
+
+        <TextView
+            android:id="@+id/colorPickerCaptionLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left|center"
+
+            android:singleLine="true"
+            android:text="@string/select_color"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@android:color/white" />
+
+
+        <lib.colorpicker.ColorPicker
+            android:id="@+id/selectColorPicker"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#00000000"
+            android:orientation="horizontal">
+
+            <lib.colorpicker.ColorPlane
+                android:id="@+id/colorPlane"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.9"
+                android:background="#00000000" />
+
+            <lib.colorpicker.CSliderLum
+                android:id="@+id/sliderLum"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.1"
+                android:background="#00000000" />
+        </lib.colorpicker.ColorPicker>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

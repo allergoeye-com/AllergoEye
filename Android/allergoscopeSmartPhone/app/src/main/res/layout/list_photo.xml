@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:background="@color/theme_dlg_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorMainIcons"
+        android:orientation="vertical">
+
+
+            <lib.common.button.CMenuButton
+                android:id="@+id/idCancel"
+
+                style="@style/Widget.AppCompat.ImageButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_centerVertical="true"
+                android:layout_weight="0.1"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/returntohome"
+                tools:ignore="SpeakableTextPresentCheck" />
+
+
+        <lib.common.ImageSlider
+            android:id="@+id/idSlider"
+            android:background="@color/theme_dlg_background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="@color/theme_dlg_background"
+                android:layout_weight="0.3"
+                android:orientation="vertical">
+
+
+                <TextView
+                    android:id="@+id/textView8"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="middle"
+                    android:singleLine="true"
+                    android:text="@string/choise_photo"
+                    android:textAlignment="center"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@color/theme_dlg_text_color" />
+
+                <lib.common.CListBox
+                android:id="@+id/idListView"
+                    android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:tabTextColor="@color/theme_dlg_text_color"
+                 />
+            </LinearLayout>
+
+            <lib.common.layout.LinearLayoutBorder
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="@android:color/background_dark"
+
+                android:layout_weight="0.7"
+                android:orientation="vertical">
+
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <LinearLayout
+
+                        android:id="@+id/viewBmp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_centerHorizontal="true"
+                        android:orientation="vertical">
+
+                        <androidx.viewpager.widget.ViewPager
+                            android:id="@+id/idViewPager"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                    </LinearLayout>
+
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/idPrev"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:adjustViewBounds="true"
+                        android:background="@android:color/transparent"
+                        android:scaleType="fitCenter"
+                        android:visibility="visible"
+                        app:color_up="#FFE0E0E0"
+                        app:srcCompat="@drawable/previous" />
+
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/idNext"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="12dp"
+                        android:adjustViewBounds="true"
+                        android:background="@android:color/transparent"
+                        android:scaleType="fitCenter"
+                        android:visibility="visible"
+                        app:color_up="#A0E0E0E0"
+                        app:srcCompat="@drawable/next" />
+
+                </RelativeLayout>
+            </lib.common.layout.LinearLayoutBorder>
+        </lib.common.ImageSlider>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/idOk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="10dp"
+        android:clickable="true"
+        android:fitsSystemWindows="true"
+        android:focusable="true"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:tint="@android:color/darker_gray"
+        android:visibility="visible"
+        app:backgroundTint="@color/colorMainIcons"
+        app:backgroundTintMode="add"
+        app:elevation="@android:dimen/app_icon_size"
+        app:fabSize="normal"
+        app:layout_anchorGravity="right|bottom"
+        app:maxImageSize="48dp"
+        app:pressedTranslationZ="12dp"
+        app:rippleColor="@color/colorPrimary"
+        app:srcCompat="@drawable/accept"
+        app:useCompatPadding="true"
+        tools:ignore="SpeakableTextPresentCheck" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
