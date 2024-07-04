@@ -1,0 +1,75 @@
+new res = Pluk->CreateJob("653D92FE-6C3E-4C8A-BB12-9783DDC0A603");
+if (res == 0)
+{
+	Pluk->ShowJob("653D92FE-6C3E-4C8A-BB12-9783DDC0A603");
+	end;
+
+	
+}
+
+global PlukIni = instance IniFile(JustDirName(ExeName) @ "Pluk.ini");
+PlukIni->ReadStr("PlukInterp", "PlukError", JustDirName(ExeName) @ "error.dat");
+PlukIni->ReadStr("PlukInterp", "PlukBin", JustDirName(ExeName));
+PlukIni->ReadStr("PlukInterp", "PlukBin64", JustDirName(ExeName));
+
+PlukIni->ReadStr("Locale", "Code", "eng");
+PlukIni->ReadStr("Locale", "DateFormat", "dmy");
+PlukIni->ReadStr("Locale", "MoneyFormat", "eur");
+
+PlukIni->WriteInt("DefaultFont", "Size", 9);
+PlukIni->WriteStr("DefaultFont", "Name", "Times New Roman");
+
+global AllergoEyeIni = instance IniFile(JustDirName(ExeName) @ "allergoscopeeditor.ini");
+
+AllergoEyeIni->ReadStr("DIR", "DATA", JustDirName(ExeName) @ "\\Data\\");
+AllergoEyeIni->ReadStr("DIR", "GDT", "");
+AllergoEyeIni->ReadStr("PATH", "PLUK", JustDirName(ExeName));
+
+AllergoEyeIni->ReadStr("NAME", "NN", "NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn");
+
+global MDNSAddress = AllergoEyeIni->ReadStr("MUTICAST", "ADDRESS", "224.0.0.251");
+global MDNSPort = AllergoEyeIni->ReadInt("MUTICAST", "PORT", 5353);
+global ServerPort = AllergoEyeIni->ReadInt("MUTICAST", "SERVERPORT", 8182);
+global mdnsServer = AllergoEyeIni->ReadStr("MUTICAST", "Server", "com.allergoscope.app");
+global mdnsClient = AllergoEyeIni->ReadStr("MUTICAST", "Client", "com.allergoscope.client");
+
+AllergoEyeIni->ReadStr("Locale", "Lang", "English");
+StoreWndPlacement(SWP_POS | SWP_SIZE, "REPORT_WND");
+Pluk->SetThreadLocale(LANG_GERMAN, SUBLANG_GERMAN);
+global renameDir = <|
+	new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	
+	new dirNode = instance TreeDir(Dir, <<>>);
+	new ListCard = dirNode->Root()->GetFileList(<<".ini">>, TRUE);
+	new id, info;
+	for (new i = 0, l = ListCard->Len(); i < l; ++i)
+	{
+	
+		if (ListCard[i].name == "info.ini" && ListCard[i]->Level() == 1)
+		{
+	
+			info = instance IniFile(Dir @ ListCard[i]->GetWinPath());
+			if ((id = info->ReadStr("CARD", "ID", "")) == "")
+			{
+				info->WriteStr("CARD", "ID", Print(int(Rand(Clock()) * 100)));
+				id = info->ReadStr("CARD", "ID", "");
+			}
+			new nam, fam;
+			fam =  info->ReadStr("CARD", "FAMILY", "");
+			nam = info->ReadStr("CARD", "NAME", "");
+			info = EMPTY;
+			new kk = Dir @ "\\" @ nam @ " " @ fam;
+	
+			new dstDir = instance Dir(kk);
+			if (dstDir->GetAttributes()  != -1)
+			{
+				kk = Dir @ "\\" @ nam @ "_" @ fam  @ "_" @ id;
+				dstDir->Rename(kk);
+			}
+		}
+	        
+	}
+	
+|>;
+new netDir = instance NetDir(1);
+end;

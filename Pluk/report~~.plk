@@ -1,0 +1,479 @@
+class AllergoReport : EditReportWnd {
+	data;
+	header;
+	dir;
+	Dir;
+	fImegesView;
+	Parent;
+	Levels; 
+};
+
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::AllergoReport(refer object BaseString, refer object GWnd) = <|
+	param n, w;
+	new file = instance File(JustDirName(ExeName) @ "levels.txt");
+	.Levels = <<>>;
+	onerror {
+	.Levels = EMPTY;
+	}
+	if (.Levels != EMPTY)
+	{
+		file->Open("rt");
+		new index = file->Gets();
+		new bd = index->Tokenize(";");
+		.Levels = <<>>;
+		new s;
+		while ((s =file->Gets()) != EMPTY)
+		{
+			new sd = s->Tokenize(";");
+			for (new i = 0; i < bd->Len(); ++i)
+				.Levels @= << <<sd[i], bd[i]>> >>;
+		}
+
+	}	
+	.fImegesView = TRUE;
+	.Parent = &w;
+	self->EditReportWnd(n, w);
+	
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Callback (refer any) = <|
+param str;
+
+	return instance Vector(2);
+
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Notify(refer any, int) = <|
+param name_report, page_print;
+	new rep = self->GetTable(0, "ID_NUM_PAGE");
+	if (rep != EMPTY)
+		 .vRep[0]->FillCell(&rep.vectCell[0][0], Print(page_print + 1));
+		
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::LoadDATA(int, pointer object SHTable, refer object Vector, refer int) = <|
+param i, table, _data, top;
+	new wrem = instance RECT(0, 0, 0, 0);
+	new data = self->GetTable(i, "IMG_DATA");
+	new header = self->GetTable(i, "EXAM_DATA");
+	.data = *data;
+	.header = *header;
+	self->RemoveTable(i, "IMG_DATA");
+	self->RemoveTable(i, "EXAM_DATA");
+	if (.dir.root.childs->Len() == 0)
+		return;
+	new dir = @.dir.root.childs[0];
+
+	if (dir.childs == EMPTY || dir.childs->Len() == 0)
+		return;
+
+	new index = 0;
+
+	self->_LoadData(i, _data,  &.data, index, top);
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::GetTable(int, refer object BaseString) = <|
+param I, name;
+new rep;
+	for (new i = 0; i < .vRep[I].vRep->Len(); ++i)
+		if (name == .vRep[I].vRep[i].ReportName)
+		{
+			rep = &.vRep[I].vRep[i];
+			break;
+		}
+	return rep;
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::RemoveTable(int, refer object BaseString) = <|
+param I, name;
+new rep;
+	for (new i = 0; i < .vRep[I].vRep->Len(); ++i)
+		if (name == .vRep[I].vRep[i].ReportName)
+		{
+			rep = &.vRep[I].vRep[i];
+			.vRep[I].vRep->Remove(i);
+			break;
+		}
+	return rep;
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::AddTable(pointer object SHTable, pointer object DrawRecord, int) = <|
+param tab, rec, x;
+new y = tab.vectCell->Len();
+	new i, j;
+	rec.record = *tab;
+	 rec.record.vectCell = instance Vector(y);
+     for (i = 0; i < y; ++i)
+    	rec.record.vectCell[i] = instance Vector(x);
+	
+	new width = rec.x_size/x;
+	 for (i = 0; i < y; ++i)
+    	for (j = 0; j < x; ++j)
+		{
+    		rec.record.vectCell[i][j] = tab.vectCell[i][0];
+			rec.record.vectCell[i][j].parent = &rec.record;
+			rec.record.vectCell[i][j].x_size = width;
+			rec.record.vectCell[i][j].x = i * width;
+			rec.record.vectCell[i][j].name @= Print(j);
+		}
+	
+	rec.record->MoveTo(rec.parent->X() + rec.x, rec.parent->Y() + rec.y);
+	rec.record.parent = rec.parent;
+	rec.record->SetFont(*tab);
+	rec.record->SetPos();
+	rec.record.ReportName = "noname";
+ 	rec.record.vid_table = H_NONE;
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::AddDir(refer object DirNode, int, refer int, refer int) = <|
+param dir, i, index, h1;
+	new X, Y;
+	for (new J = 0; J < dir.childs->Len(); ++J)
+	{
+		X = 0; Y = 0;
+		new tlen = .vRep[i].vRep->Len();
+		.vRep[i].vRep->SetLen(tlen + 1);
+		.vRep[i].vRep[tlen] = .header;
+		new rep = &.vRep[i].vRep[tlen];
+		rep.ReportName = "_DATA_" @ Print(index);
+		rep.vid_table = H_DATA;
+		if (!rep->SetIndexCell("TEST_DATE", Y, X))
+			Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		new test_date = dir.name;
+		test_date = test_date->Tokenize("-");
+		if (test_date->Len() >= 3)
+		{
+			new delim = instance Locale().DateDelimiter;
+			new str = Printf("%s%s%s%s%s", test_date[2], delim, test_date[1], delim, test_date[0]);
+			.vRep[i]->FillCell(&rep.vectCell[Y][X], str);
+		}
+		if (!rep->SetIndexCell("ALLERGEN", Y, X))
+			Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		.vRep[i]->FillCell(&rep.vectCell[Y][X], GetAllergenLocal(dir.childs[J].name));
+		new allergen = GetAllergenEng(dir.childs[J].name);
+		new DBPatient = &.Parent.Parent.AllRecord[.Parent.Parent.IndexAll][0];
+		new jj = DBPatient.CAP->Find(allergen, 0, <|param key, elem; return key == elem.Allergen; |>);
+		if (jj >= 0)
+		{
+			if (!rep->SetIndexCell("CAP", Y, X))
+				Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&rep.vectCell[Y][X], Print(DBPatient.CAP[jj].CAP));
+		}
+
+		jj = DBPatient.Therapy->Find(allergen, 0, <|param key, elem; return key == elem.Allergen; |>);
+		if (jj >= 0)
+		{
+			if (!rep->SetIndexCell("START_THERAPY", Y, X))
+				Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&rep.vectCell[Y][X], DBPatient.Therapy[jj].StartDate->Date::Print() @ "     " @ instance String(DBPatient.Therapy[jj].Medication));
+		}
+		new Score = &.Parent.Parent.AllRecord[.Parent.Parent.IndexAll][0].Date[.Parent.Parent.IndexDate]->GetAllScore();
+		if (Score != EMPTY)
+		{
+			.vRep[i]->FillCell("SSS", 1, 0, Printf("%5.2f", Score[0]));
+			.vRep[i]->FillCell("SSS", 1, 1, Printf("%5.2f", Score[1]));
+			.vRep[i]->FillCell("SSS", 1, 2, Printf("%5.2f", Score[2]));
+		}
+		
+		++index;
+		++tlen;
+		rep->Y(rep->Y() + h1);
+		h1 += rep->GetRect()->Height();
+		new k = tlen;
+		new chD = @dir.childs[J];
+		tlen += chD.childs->Len();
+		.vRep[i].vRep->SetLen(tlen);
+		new JJ = <<>>;
+		new j;
+		if (.Levels != EMPTY)
+		{
+			for (j = k; j < tlen; ++j, ++index)
+			{
+				new test_name = chD.childs[j - k].name->Tokenize("_");
+				new n = .Levels->Find(GetDilitionEng(test_name[0]), 0, <| param key, elem; return  key == GetDilitionEng(elem[0]); |>);
+				if (n == -1)
+					JJ @= << << j - k, .Levels[0][1] >> >>;
+				else
+					JJ @= << << j - k, .Levels[n][1] >> >>;
+			}
+			JJ->QSort(<|param key, elem; return  elem[1]  <> key[1]; |>);
+			
+		}
+		for (j = k; j < tlen; ++j, ++index)
+		{
+			new JK = .Levels != EMPTY ? JJ[j - k][0] : j - k;
+			new test_name = chD.childs[JK].name->Tokenize("_");
+			.vRep[i].vRep[j] = .data;
+			rep = &.vRep[i].vRep[j];
+			rep.vid_table = H_DATA;
+			X = 0; Y = 0;
+			rep.ReportName = "_DATA_" @ Print(index);
+			if (!rep->SetIndexCell("HAEDER_IMAGE", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			new sub = @rep.vectCell[Y][X].record;
+			if (!sub->SetIndexCell("EXAM_TYPE", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], W10_TEST);
+			if (!sub->SetIndexCell("SOLUTION", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], GetDilutionLocal(test_name[0]));
+			if (!sub->SetIndexCell("POSITION", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], GetSideLocal(test_name[1]));
+			if (!sub->SetIndexCell("TIME", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], test_name->Len() == 3 ? GetIncubationEng(test_name[2]) : "00min");
+			new chC = @chD.childs[JK];
+			new N = chC.childs->Len();
+
+			if (!rep->SetIndexCell("image_tab", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			new tab, cell;
+			cell = &rep.vectCell[Y][X];
+			tab <- cell.record; 
+			self->AddTable(&tab, cell, N);
+			new sub2 = @cell.record;
+			new MeanResult = 0;
+
+			for (new n = 0; n < N; ++n)
+			{
+				new file = @chC.childs[n].result;
+				new path = .Dir @ file->GetWinPath();
+				new ImageFileName = JustDirName(path) @ file.name;
+				new bmp = instance MBmp();
+				bmp->LoadImage(ImageFileName);
+				
+				
+				if (!sub2->SetIndexCell("IMAGE" @ Print(n), Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+				//ALEX------------------------------------------------------
+				.vRep[i]->FillCell(&sub2.vectCell[Y][X], bmp);
+				sub2.vectCell[Y][X].record.pic = bmp;
+				//---------------------------------------------
+				new cur_res = file.parent->GetFile(JustName(file.name) @ ".res");
+				if (cur_res == EMPTY)
+					continue;
+				onerror {
+					continue;
+				}
+				new ResFileName = JustDirName(path) @ cur_res.name;
+				new res = instance File(ResFileName);
+				res->Open("rb");
+				res = res->Read(-1);
+				res = res->Tokenize(CR);
+				res = res[0]->Tokenize("+");
+				res = res[0];
+				res = res->Tokenize("=");
+				res = double(res[1]);
+		
+				if (!sub2->SetIndexCell("RESULT" @ Print(n), Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+				.vRep[i]->FillCell(&sub2.vectCell[Y][X], Printf("%5.2f", res));
+				MeanResult += res;
+			}
+			new path = .Dir @ chC.childs[0].result->GetWinPath();
+			new SSSFileName = JustDirName(path) @ "opscore.txt";
+			new csv = instance File(SSSFileName);
+			csv->Open("rb");
+			csv = csv->ReadCSV();
+			if (csv->Len() == 2)
+			{
+				rep.ReportName = "_DATA_" @ Print(index);
+				if (!rep->SetIndexCell("SYMPT_SCORE", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+				new sub0 = @rep.vectCell[Y][X].record;
+				for (new k = 0; k < csv[1]->Len(); ++k)
+				{
+					if (!sub0->SetIndexCell(Printf("SSS_%d", k), Y, X))
+						Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+					.vRep[i]->FillCell(&sub0.vectCell[Y][X], csv[1][k]);
+				}
+			}
+			if (!sub->SetIndexCell("RESULT", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], Printf("%5.2f", MeanResult/N));
+			if (!.fImegesView)
+			{
+				.vRep[i].vRep[j] = sub;
+				.vRep[i].vRep[j].parent = EMPTY;
+				rep = &.vRep[i].vRep[j];
+				rep.vid_table = H_DATA;
+				rep.ReportName = "_DATA_" @ Print(index);
+	
+			}
+			rep->Y(rep->Y() + h1);
+			h1 += rep->GetRect()->Height();
+		
+		}
+	}
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::_LoadData(int, refer object Vector, pointer object SHTable, refer int, refer int) = <|
+param i, data, tbl, index, top;
+	new h1 = 0;
+	new dir = @.dir.root.childs[0];
+	for (new j = 0; j < dir.childs->Len(); ++j)
+		self->AddDir(dir.childs[j], i, index, h1);
+
+	top += h1;
+	onerror {
+		return;
+	}
+	new rect = .vRep[i]->GetRectTable("GRAPHIC");
+	
+	.vRep[i]->FillCell("GRAPHIC", 0, 0, .Parent.Parent->GetGraphicImage(rect));
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+MRControl::MoveTo(int, int) = <|
+param shiftx, shifty;
+	new r = .wnd->GetItemRect(.ID);
+	.rect.left = shiftx + .cell.x + 1;
+	.rect.top = shifty + .cell.y + 1;
+	.rect.right = .rect.left + .cell.x_size;
+	.rect.bottom = .rect.top + .cell.y_size;
+
+	if (.valid && .ID != EMPTY)
+		.wnd->SetItemRect(.ID, .rect);
+	new sz = .wnd->GetClientSize();
+	new rect = instance RECT(0, 0, sz[0], sz[1]);
+	if (rect & .rect != EMPTY)
+	{
+		if (!.wnd->IsItemVisible(.ID))
+		{
+			.wnd->ShowItem(.ID);
+			.wnd->SetFocus();
+		}
+
+	}
+	else
+	{
+		if (.wnd->IsItemVisible(.ID))
+			.wnd->HideItem(.ID);
+	}
+
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Reload(void) = <|
+	if (.control != EMPTY && self->IsOpen())
+	{
+		new cell = .control.cell;
+		self->UpdateCell();
+		.control = EMPTY;
+
+	}
+	for (new i = 0; i < .vRep[0].vRep->Len(); ++i)
+		if (.vRep[0].vRep[i].vid_table == H_DATA)
+		{
+			.vRep[0].vRep->Remove(i);
+			--i;
+		}
+		.vRep[0].vRep @=.data;
+		.vRep[0].vRep @=.header;
+		self->InitReport(0, TRUE);
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Load(refer object BaseString) = <|
+param Name;
+	new v = instance SerializeReport();
+	.control = EMPTY;
+	v->Load(Name);
+	.vRep = << instance Report() >>;
+	.vRep[0]->Load(v);
+	new sz = self->GetClientSize();
+	self->SetSize(sz[0], sz[1]);
+	self->Invalidate(TRUE);
+|>;                               
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Save(any) = <|
+param Name;
+	if (.control != EMPTY && self->IsOpen())
+	{
+		new cell = .control.cell;
+		self->UpdateCell();
+		.control = EMPTY;
+		self->SetControl(cell);
+	}
+	new data = .vRep[0]->CreateObjectSerializeReport();
+
+	if (Name == EMPTY)
+		Name =  .Dir @ .dir.root.childs[0]->GetWinPath();
+	else
+	{
+		new old_rep = instance SerializeReport();
+		onerror {
+			goto cont;
+		}
+		old_rep->Load(Name);
+		old_rep.orient = data.orient;
+		if (old_rep == data)
+			return;
+cont :
+		onerror {
+			rollback;
+		}
+		Name = JustDirName(Name);
+	}
+	Name @= "\\";
+	new info = instance IniFile(Name @ "info.ini");
+	new id = info->ReadStrW("CARD", "ID", "0");
+			
+	Name @= id;
+	Name @= "_";
+		
+	new date = instance Date();
+	new v =  date->GetDateAsVector();
+	new str = Print(v[2]);
+	str @= "-";
+	date = Print(v[1]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= date;
+	str @= "-";
+	date = Print(v[0]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= date;
+		
+	str @= "_";
+
+	new tm = instance Time();
+	v = tm->GetTimeAsVector();
+	
+	date = Print(v[0]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= date;
+	str @= "-";
+	date = Print(v[1]);
+	if (date->Len() == 1)
+		str @= "0";
+	
+	str @= date;
+	date = Print(v[2]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= "-";
+	str @= date;
+	Name @= str;
+	Name @= ".srpj";
+
+	data->Save( Name );
+	.Parent.Parent->UpdateForm();
+|>;

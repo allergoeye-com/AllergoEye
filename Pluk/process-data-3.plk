@@ -1,0 +1,238 @@
+global CAP = <<
+<< 669, 3 >>,
+<< 825, 2 >>,
+<< 1039, 2 >>,
+<< 3496, 4 >>,
+<< 3707, 3 >>,
+<< 3826, 3 >>,
+<< 3826, 3 >>,
+<< 3910, 5 >>,
+<< 4045, 3 >>,
+<< 4171, 2 >>,
+<< 4440, 3 >>,
+<< 5883, 2 >>,
+<< 5883, 3 >>,
+<< 6459, 2 >>,
+<< 6459, 3 >>,
+<< 6688, 5 >>,
+<< 7774, 4 >>,
+<< 7913, 3 >>,
+<< 7922, 2 >>,
+<< 8340, 4 >>,
+<< 8340, 5 >>,
+<< 8975, 5 >>,
+<< 9489, 5 >>,
+<< 9754, 3 >>,
+<< 9892, 4 >>,
+<< 10043, 3 >>,
+<< 10078, 4 >>,
+<< 10081, 3 >>,
+<< 10115, 3 >>,
+<< 10123, 4 >>,
+<< 10123, 4 >>,
+<< 10181, 4 >>,
+<< 10237, 4 >>,
+<< 10264, 2 >>,
+<< 10339, 5 >>,
+<< 10375, 6 >>,
+<< 10410, 3 >>,
+<< 10439, 4 >>,
+<< 10459, 4 >>,
+<< 10478, 0 >>,
+<< 10512, 3 >>,
+<< 10644, 4 >>,
+<< 10649, 4 >>,
+<< 10661, 1 >>,
+<< 10663, 3 >>,
+<< 10686, 4 >>,
+<< 10701, 3 >>,
+<< 10708, 6 >>,
+<< 10712, 4 >>,
+<< 10801, 2 >>,
+<< 10802, 2 >>,
+<< 10829, 3 >>,
+<< 10844, 4 >>,
+<< 10859, 5 >>,
+<< 10868, 0 >>,
+<< 7434, 3 >>,
+<< 10995, 3 >>,
+<< 6125, 4 >>
+>>;
+CAP->QSort();
+/*	
+new X = instance Vector(7);
+for (new i = 0; i < 7; ++i)
+	X[i] = Print(i);
+new Y = instance Vector(7);
+Y->Set(0.0);
+for (i = 0; i < CAP->Len(); ++i)
+	Y[CAP[i][1]] += 1.0;
+
+global hgraph = instance TextGraphWnd();
+hgraph->AddCurve(instance BarHistogram(X, Y, "CAP-Classes"));
+*/
+
+//=================================================
+//
+//=================================================
+new MainMenu::CalculateGraph1(number) = <|
+param t;
+	new X = << "1-1000",  "1-100", "1-10", "Stock", "No Reaction">>;
+	new Y = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YR = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YSR = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YAE = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+
+	new YSR_CAP = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YAE_CAP = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YSR_CAP2 = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YAE_CAP2 = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YSR_CAP_Count = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+	new YAE_CAP_Count = << 0.0, 0.0, 0.0, 0.0, 0.0 >>;
+
+	new f = instance File(instance GOpenDialog("csv", "", "*.csv|*.csv", self)->Open());
+	f->Open("rb");
+	new op = f->ReadCSV();
+	f->Close();
+	for (new i = 0; i < op->Len(); ++i)
+	{
+		new rec = op[i];
+		if (rec->Len() < 4 || rec[3]->IsNumber() == FALSE)
+			continue;
+		new id = int(rec[3]);
+		new s_index = int(rec[2]) - 1;
+		new study = Odml2Exec("select p.Date[index] from DBPatient as p where p.PatientID = ? order by p.Date[index].Date", << id >>);
+		if (study->Len() <= s_index)
+			continue;
+		new tests = study[s_index]->GetTestList("Gras");
+		tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+		new flgS = FALSE;
+		new flgR = FALSE;
+		new flgAE = FALSE;
+		new offsetAEL;
+		new offsetAER;
+		new oy = EMPTY;
+		new or = EMPTY;
+		new oae = EMPTY;
+		if (tests[1]->GetTestOrder() == 0 && tests[1].OpScoreV != EMPTY)
+		{
+			offsetAEL = tests[1].AEScoreL - tests[1].AEScoreR;
+			offsetAER = tests[1].AEScoreR - tests[1].AEScoreL;
+		}
+		else
+		if (tests[0]->GetTestOrder() < 0 && tests[0].OpScoreV != EMPTY)
+		{
+			offsetAEL = tests[0].AEScoreL - tests[0].AEScoreR;
+			offsetAER = tests[0].AEScoreR - tests[0].AEScoreL;
+		}
+
+		for (new j = 0; j < tests->Len(); ++j)
+		{
+			if (tests[j]->GetTestOrder() > 0 && tests[j].OpScoreV != EMPTY)
+			{
+				new ae = tests[j].AEScoreL - tests[j].AEScoreR - offsetAEL;
+				new r = tests[j]->GetTestOrder() - 3;
+				if (!flgS && tests[j].OpScore >= 3)
+				{
+					oy = r;
+					flgS = TRUE;
+				}
+				if (tests[j].OpScoreV[3] > 0 && !flgR)
+				{
+					or = r;
+					flgR = TRUE;
+				}
+				if (ae >= t && !flgAE)
+				{
+					oae = r;
+					flgAE = TRUE;
+				}
+			}
+		}
+		
+		if (oy != EMPTY)
+			Y[oy] += 1.0;
+		else
+			Y[4] += 1.0;
+		if (oae != EMPTY)
+			YAE[oae] += 1.0;
+		else
+			YAE[4] += 1.0;
+		if (or != EMPTY)
+			YR[or] += 1.0;
+		else
+			YR[4] += 1.0;
+		if (or == EMPTY && oy == EMPTY)
+			YSR[4] += 1.0;
+		else
+		if (or != EMPTY && oy != EMPTY)
+			YSR[Min(or, oy)] += 1.0;
+		else
+			YSR[Max(or, oy)] += 1.0;
+		new c_index = CAP->BFind(id, {|param key, elem; return key <> elem[0]; |});
+		if (c_index >= 0)
+		{
+			if (or == EMPTY && oy == EMPTY)
+			{
+				YSR_CAP_Count[4] += 1.0;
+				YSR_CAP[4] += CAP[c_index][1];
+				YSR_CAP2[4] += CAP[c_index][1] ** 2.0;
+			}
+			else
+			if (or != EMPTY && oy != EMPTY)
+			{
+				YSR_CAP_Count[Min(or, oy)] += 1.0;
+				YSR_CAP[Min(or, oy)] += CAP[c_index][1];
+				YSR_CAP2[Min(or, oy)] += CAP[c_index][1] ** 2.0;
+			}
+			else
+			{
+				YSR_CAP_Count[Max(or, oy)] += 1.0;
+				YSR_CAP[Max(or, oy)] += CAP[c_index][1];
+				YSR_CAP2[Max(or, oy)] += CAP[c_index][1] ** 2.0;
+			}
+			if (oae != EMPTY)
+			{
+				YAE_CAP_Count[oae] += 1.0;
+				YAE_CAP[oae] += CAP[c_index][1];
+				YAE_CAP2[oae] += CAP[c_index][1] ** 2.0;
+			}
+			else
+			{
+				YAE_CAP_Count[4] += 1.0;
+				YAE_CAP[4] += CAP[c_index][1];
+				YAE_CAP2[4] += CAP[c_index][1] ** 2.0;
+			}
+		}
+
+	}
+	for (i = 0; i < 5; ++i)
+	{
+		if (YAE_CAP_Count[i] > 0)
+		{
+			YAE_CAP[i] /= YAE_CAP_Count[i];
+			YAE_CAP2[i] /= YAE_CAP_Count[i];
+			YAE_CAP2[i] = (YAE_CAP2[i] - YAE_CAP[i] ** 2.0) / YAE_CAP_Count[i];
+		}
+		if (YSR_CAP_Count[i] > 0)
+		{
+			YSR_CAP[i] /= YSR_CAP_Count[i];
+			YSR_CAP2[i] /= YSR_CAP_Count[i];
+			YSR_CAP2[i] = (YSR_CAP2[i] - YSR_CAP[i] ** 2.0) / YSR_CAP_Count[i];
+		}
+	}
+	global hgraph;
+	if (hgraph == EMPTY || !hgraph->IsOpen())
+		hgraph = instance TextGraphWnd();
+//	hgraph->AddCurve(instance BarHistogram(X, Y, "Total Score >= 3"));
+//	hgraph->AddCurve(instance BarHistogram(X, YR, "Op. Red >= 1"));
+//	hgraph->AddCurve(instance BarHistogram(X, YAE, Printf("AE. Red >= %g", t)));
+//	hgraph->AddCurve(instance BarHistogram(X, YSR, "Total Score >= 3 or Op.Red >= 1"));
+	new h = instance BarHistogram(X, YAE_CAP, Printf("Mean CAP at AE. Red >= %g", t));
+	h.Disp = YAE_CAP2;
+	hgraph->AddCurve(h);
+//	h = instance BarHistogram(X, YSR_CAP, "Mean CAP at Total Score >= 3 or Op.Red >= 1");
+//	h.Disp = YSR_CAP2;
+//	hgraph->AddCurve(h);
+|>;
+main->CalculateGraph1(0.5);

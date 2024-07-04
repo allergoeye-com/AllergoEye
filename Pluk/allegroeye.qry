@@ -1,0 +1,159 @@
+
+CREATE TABLE "DBCAP" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"Allergen"                     VARCHAR(20)  NOT NULL CHECK ("Allergen" IN ('mite farinae', 'mite pteronyssinus', 'birch', 'alder', 'hazel', 'ash tree', 'grass', 'mugwort', 'ambrosia', 'altenaria altenata', 'penicillium notatum', 'cat')),
+	"CAP"                          INTEGER      NOT NULL 
+)
+
+CREATE TABLE "DBTherapy" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"Allergen"                     VARCHAR(20)  NOT NULL CHECK ("Allergen" IN ('mite farinae', 'mite pteronyssinus', 'birch', 'alder', 'hazel', 'ash tree', 'grass', 'mugwort', 'ambrosia', 'altenaria altenata', 'penicillium notatum', 'cat')),
+	"Medication"                   NVARCHAR(80) ,
+	"StartDate"                    DATE         NOT NULL 
+)
+
+CREATE TABLE "DBReport" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"Path"                         NVARCHAR(255)  NOT NULL 
+)
+
+CREATE TABLE "DBPicture" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"AreaL"                        FLOAT        DEFAULT -1e37,
+	"AreaR"                        FLOAT        DEFAULT -1e37,
+	"Contur"                       BIT          NOT NULL ,
+	"Date"                         DATE         NOT NULL ,
+	"DistrL"                       LONGVARBINARY ,
+	"DistrR"                       LONGVARBINARY ,
+	"DistrTotal"                   LONGVARBINARY ,
+	"Names"                        BIT          NOT NULL ,
+	"Path"                         NVARCHAR(255)  NOT NULL ,
+	"Result"                       BIT          NOT NULL ,
+	"ScoreL"                       FLOAT        DEFAULT -1e37,
+	"ScoreR"                       FLOAT        DEFAULT -1e37,
+	"Side"                         VARCHAR(11)  NOT NULL CHECK ("Side" IN ('left', 'right', 'both sides')),
+	"Time"                         TIME         NOT NULL 
+)
+
+CREATE TABLE "DBTest" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"AEScoreL"                     FLOAT        DEFAULT -1e37,
+	"AEScoreR"                     FLOAT        DEFAULT -1e37,
+	"Allergen"                     VARCHAR(20)  NOT NULL CHECK ("Allergen" IN ('mite farinae', 'mite pteronyssinus', 'birch', 'alder', 'hazel', 'ash tree', 'grass', 'mugwort', 'ambrosia', 'altenaria altenata', 'penicillium notatum', 'cat')),
+	"Dil"                          VARCHAR(17)  NOT NULL CHECK ("Dil" IN ('start test', 'control solution', '1-1000', '1-100', '1-10', 'stock solution')),
+	"DistrL"                       LONGVARBINARY ,
+	"DistrR"                       LONGVARBINARY ,
+	"DistrTotal"                   LONGVARBINARY ,
+	"Incubation"                   NVARCHAR(10) ,
+	"OpScore"                      FLOAT        DEFAULT -1e37,
+	"OpScoreV"                     VARBINARY(254) ,
+	"Path"                         NVARCHAR(255)  NOT NULL ,
+	"Side"                         VARCHAR(11)  NOT NULL CHECK ("Side" IN ('left', 'right', 'both sides'))
+)
+
+CREATE TABLE "DBDate" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"Allergen"                     VARCHAR(20)  NOT NULL CHECK ("Allergen" IN ('mite farinae', 'mite pteronyssinus', 'birch', 'alder', 'hazel', 'ash tree', 'grass', 'mugwort', 'ambrosia', 'altenaria altenata', 'penicillium notatum', 'cat')),
+	"Date"                         DATE         NOT NULL ,
+	"Path"                         NVARCHAR(255)  NOT NULL 
+)
+
+CREATE TABLE "DBPatient" (
+	"oID"                          BINARY(16)  PRIMARY KEY,
+	"ClassID"                      INTEGER     ,
+	"DateOfBirth"                  DATE         NOT NULL ,
+	"FirstName"                    NVARCHAR(80)  NOT NULL ,
+	"LastName"                     NVARCHAR(80)  NOT NULL ,
+	"Path"                         NVARCHAR(255)  NOT NULL  UNIQUE ,
+	"PatientIDStr"                 VARCHAR(16)  NOT NULL  UNIQUE 
+)
+
+CREATE TABLE "_PBRd0a_est_Pictures_DBPicture" (
+	"HOLDERID"                     BINARY(16)   NOT NULL ,
+	"HANDLERID"                    BINARY(16)   NOT NULL ,
+
+	FOREIGN KEY ("HOLDERID") REFERENCES "DBTest" ("oID"),
+	FOREIGN KEY ("HANDLERID") REFERENCES "DBPicture" ("oID"),
+	PRIMARY KEY ("HOLDERID", "HANDLERID")
+)
+
+CREATE TABLE "_PBRcd1_DBDate_Tests_DBTest" (
+	"HOLDERID"                     BINARY(16)   NOT NULL ,
+	"HANDLERID"                    BINARY(16)   NOT NULL ,
+
+	FOREIGN KEY ("HOLDERID") REFERENCES "DBDate" ("oID"),
+	FOREIGN KEY ("HANDLERID") REFERENCES "DBTest" ("oID"),
+	PRIMARY KEY ("HOLDERID", "HANDLERID")
+)
+
+CREATE TABLE "_PBR75d_DBPatient_CAP_DBCAP" (
+	"HOLDERID"                     BINARY(16)   NOT NULL ,
+	"HANDLERID"                    BINARY(16)   NOT NULL ,
+
+	FOREIGN KEY ("HOLDERID") REFERENCES "DBPatient" ("oID"),
+	FOREIGN KEY ("HANDLERID") REFERENCES "DBCAP" ("oID"),
+	PRIMARY KEY ("HOLDERID", "HANDLERID")
+)
+
+CREATE TABLE "_PBR001_DBPatient_Date_DBDate" (
+	"HOLDERID"                     BINARY(16)   NOT NULL ,
+	"HANDLERID"                    BINARY(16)   NOT NULL ,
+
+	FOREIGN KEY ("HOLDERID") REFERENCES "DBPatient" ("oID"),
+	FOREIGN KEY ("HANDLERID") REFERENCES "DBDate" ("oID"),
+	PRIMARY KEY ("HOLDERID", "HANDLERID")
+)
+
+CREATE TABLE "_PBR44c_tient_Reports_DBReport" (
+	"HOLDERID"                     BINARY(16)   NOT NULL ,
+	"HANDLERID"                    BINARY(16)   NOT NULL ,
+
+	FOREIGN KEY ("HOLDERID") REFERENCES "DBPatient" ("oID"),
+	FOREIGN KEY ("HANDLERID") REFERENCES "DBReport" ("oID"),
+	PRIMARY KEY ("HOLDERID", "HANDLERID")
+)
+
+CREATE TABLE "_PBRc55_ient_Therapy_DBTherapy" (
+	"HOLDERID"                     BINARY(16)   NOT NULL ,
+	"HANDLERID"                    BINARY(16)   NOT NULL ,
+
+	FOREIGN KEY ("HOLDERID") REFERENCES "DBPatient" ("oID"),
+	FOREIGN KEY ("HANDLERID") REFERENCES "DBTherapy" ("oID"),
+	PRIMARY KEY ("HOLDERID", "HANDLERID")
+)
+
+CREATE INDEX "LastName1" ON "DBPatient" ("LastName")
+
+CREATE INDEX "Path2" ON "DBPatient" ("Path")
+
+CREATE INDEX "PatientIDStr3" ON "DBPatient" ("PatientIDStr")
+
+CREATE INDEX "HOLDERID4" ON "_PBRd0a_est_Pictures_DBPicture" ("HOLDERID")
+
+CREATE INDEX "HANDLERID5" ON "_PBRd0a_est_Pictures_DBPicture" ("HANDLERID")
+
+CREATE INDEX "HOLDERID6" ON "_PBRcd1_DBDate_Tests_DBTest" ("HOLDERID")
+
+CREATE INDEX "HANDLERID7" ON "_PBRcd1_DBDate_Tests_DBTest" ("HANDLERID")
+
+CREATE INDEX "HOLDERID8" ON "_PBR75d_DBPatient_CAP_DBCAP" ("HOLDERID")
+
+CREATE INDEX "HANDLERID9" ON "_PBR75d_DBPatient_CAP_DBCAP" ("HANDLERID")
+
+CREATE INDEX "HOLDERID10" ON "_PBR001_DBPatient_Date_DBDate" ("HOLDERID")
+
+CREATE INDEX "HANDLERID11" ON "_PBR001_DBPatient_Date_DBDate" ("HANDLERID")
+
+CREATE INDEX "HOLDERID12" ON "_PBR44c_tient_Reports_DBReport" ("HOLDERID")
+
+CREATE INDEX "HANDLERID13" ON "_PBR44c_tient_Reports_DBReport" ("HANDLERID")
+
+CREATE INDEX "HOLDERID14" ON "_PBRc55_ient_Therapy_DBTherapy" ("HOLDERID")
+
+CREATE INDEX "HANDLERID15" ON "_PBRc55_ient_Therapy_DBTherapy" ("HANDLERID")

@@ -1,0 +1,7 @@
+global RepDlg = instance ReportWnd("REPORT_WND", main, "p:/Yura/AllergoEye/report_eng.rpj", 1);
+RepDlg->Open();
+RepDlg->FillCellAndShow("PATIENT", "ID", "1234");
+RepDlg->FillCellAndShow("PATIENT", "NAME", "Vasia");
+
+global RepDlg = instance AE_ReportWnd(main);
+RepDlg->Open();

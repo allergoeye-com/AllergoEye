@@ -1,0 +1,438 @@
+//=========================================================
+//
+//=========================================================
+class BmpHolder {
+	Bmp;
+	rc;
+	parent;
+	scale;
+	size;
+	file;
+	
+};
+//=========================================================
+//
+//=========================================================
+new BmpHolder::BmpHolder(refer object MBmp, pointer object FileNode, pointer object GWnd) = <|
+param bmp, file, parentWnd;
+	.file = file;
+	.parent = parentWnd;
+	.Bmp <- bmp;
+	self->RecalcLayout();
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpHolder::RecalcLayout(void) = <|
+	.size = .parent->GetSize();
+	.size = .parent->GetItemSize(ID_FRAME);
+	.size[0] -= 10;
+	.size[1] -= 30;	
+	if (.size[0] < .Bmp->GetWidth())
+	{
+		.scale = double(.size[0] - 2.0)/double(.Bmp->GetWidth());
+		.rc = instance Rect(2, 0, .size[0], int(.Bmp->GetHeight() * .scale));
+	}
+	else
+	{
+		.scale = 1.0;
+		new left = (.size[0] - .Bmp->GetWidth())/2;
+		.rc = instance Rect(left, 0, left + .Bmp->GetWidth(), .Bmp->GetHeight());
+	}
+
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpHolder::Height(void) = <|
+	return .parent.TextSize + .rc->Height(); 
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpHolder::Show(refer object MDC, int, boolean) = <|
+param mdc, top, fSelect;
+	onerror {
+		return FALSE;
+	}
+	if (top > .size[1] || (top +  .rc.bottom <= 0 ))
+		return TRUE; 
+	new rcDes = .rc;
+	rcDes.top += top;
+	rcDes.bottom += top;
+	new rect;
+	new rc1 = instance Rect(0, 0, .size[0], .size[1]);
+
+	rect = rcDes & rc1;
+	new fText = rcDes.bottom == rect.bottom;
+	
+	rcDes = rect;
+	rc1 = instance RECT(rcDes.left, rcDes.bottom, rcDes.right, rcDes.bottom + .parent.TextSize);
+	if (fSelect)
+	{
+		mdc->SetBgColor(instance ColorRef(0x10, 0xA0, 0xFF));
+		new r = rc1 | rcDes;
+		r.left -= 2;
+		r.top -= 2;
+		r.right += 2;
+		mdc->Bar(r);
+
+	}
+	rect.top -= top;
+	rect.bottom -= top;
+	rect *= 1.0/.scale;
+	rect->MoveTo(0, rect.top);
+
+	mdc->Stretch(.Bmp, rcDes, TRUE, rect);
+	new Font = instance MFont("Arial", 7, FT_NORMAL);
+	mdc->SelectObject(Font);
+	mdc->SetBkMode(BK_OPAQUE);
+	if (.file.result != "")
+		mdc->OutText(rcDes, .file.result, MAT_CENTER | MAT_BOTTOM);
+
+	if (fText)
+		mdc->OutText(rc1, PrinfDateFromImageName(JustName(.file.name)) @ Printf(" %dx%d", .Bmp->GetWidth(), .Bmp->GetHeight()), MAT_CENTER);
+	mdc->UnSelectObject(Font);
+	mdc->SetBkMode(BK_TRANSPARENT);
+	
+	
+	new trans = instance Transform2D();	
+	trans->Init(rcDes, rect);
+
+	if (.file.roi->Len() != 0)
+	{
+		for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+			if (.file.names[i] == EMPTY || .file.names[i] == "" || .file.names[i] == "sclera")
+				.file.roi[i]->OnDraw(mdc, trans, self);
+			
+	}
+	return TRUE;
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpHolder::GetBox(int) = <|
+param top;
+	if (top > .size[1] || (top +  .rc.bottom <= 0 )) return EMPTY; 
+	new rcDes = .rc;
+	rcDes.top += top;
+	rcDes.bottom += top;
+	new rect;
+	new rc1 = instance Rect(0, 0, .size[0], .size[1]);
+
+	rect = rcDes & rc1;
+	rcDes = rect;
+	rc1 = instance RECT(rcDes.left, rcDes.bottom, rcDes.right, rcDes.bottom + .parent.TextSize);
+	return rc1 | rcDes;
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+class BmpListView : GWnd
+{
+	List;
+	Pos;
+	screen;
+	mdc;
+	TextSize;
+	iSel;
+	fPan;
+	fReadOnly;
+	Range;
+
+};
+
+event WND_UPDATE, 			BmpListView::OnUpdate;
+event WND_SIZE, 			BmpListView::OnSize;
+event WND_VSCROLL, 			BmpListView::OnVScroll;
+event WND_LBUTTONDOWN, 		BmpListView::OnLButtonDown;
+event WND_MOUSEWHEEL, 		BmpListView::OnMouseWheel;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::BmpListView(boolean, refer object GWnd) = <|
+param fReadOnly, parentWnd;
+	.fReadOnly = fReadOnly;
+	.Range = 0;
+	.List = << >>;
+	.iSel = -1;
+	.Pos = 0;
+	self->GWnd("LIST_CARD_VIEW", parentWnd);
+	self->Open();
+	self->Show();
+	
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::Setup(void) =
+<|
+	self->GWnd::Setup();
+	self->AllowEvent( WND_VSCROLL );
+	self->AllowEvent( WND_UPDATE );
+	self->AllowEvent( WND_SIZE );
+	self->AllowEvent(WND_LBUTTONDOWN);
+
+	
+	.mdc = instance MDC( self );
+	.mdc->OpenDC();
+	.TextSize = .mdc->GetStringRect("Ty")->Height();
+	.mdc->CloseDC();
+	
+	self->EnableItem( IDVSCROLL, FALSE);
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::Clear(void) =
+<|
+	.iSel = -1;
+	.List = << >>;
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::AddBmp( object MBmp, pointer object FileNode ) =
+<|
+param bmp, file;
+
+	.List @= instance BmpHolder(bmp, file,  &self);
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpListView::Remove(pointer object FileNode ) =<|
+param file;
+	new i = .List->Find(file, 0, <| param key, elem; return key == elem.file; |> );
+	if (i != -1)
+		.List->Remove(i);
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpListView::IsSelect(pointer object FileNode ) =<|
+param file;
+	new i = .List->Find(file, 0, <| param key, elem; return key == elem.file; |> );
+	return i != -1;
+|>;
+new BmpListView::Len(void) =<|
+return .List != EMPTY ? .List->Len() : 0;
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpListView::GetListRecords(void) =<|
+	new list = instance Vector(.List->Len());
+	for (new i = 0, l = .List->Len(); i < l; ++i)
+	{
+		list[i] = .List[i].file;
+	}
+	return list;
+	
+|>;
+new BmpListView::IsNumRecords(void) =<|
+	return .List != EMPTY && .List->Len() > 0;
+	
+|>;
+
+
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::RecalcLayout(void) =
+<|
+onerror {
+	self->CheckDump();
+
+};
+	if
+	(.List->Len() == 0) return;
+	new vy = 40;
+	.Range = 0;
+	new off = 0;
+	.List->QSort({|param key, elem; return key.file.name  <> elem.file.name;|});
+
+	for (new i = 0, l = .List->Len(); i < l; ++i)
+	{
+		.List[i]->RecalcLayout();
+		if (i == .iSel)
+			if (.List[i]->GetBox(vy) == EMPTY)
+				off = vy;		
+		vy += .List[i]->Height();
+	}
+	.Pos = -off;
+	new size = self->GetItemSize(ID_FRAME);
+	if (size[1] < vy)
+	{
+		self->EnableItem( IDVSCROLL, TRUE);
+		.Range = vy - size[1];
+		self->SetItem(<<IDVSCROLL, 0, vy - size[1], off >>);
+	}
+	else
+		self->EnableItem( IDVSCROLL, FALSE);
+	
+	
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::Invalidate(boolean) = <|
+	self->OnUpdate();
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::OnUpdate(void) =
+<|
+onerror {
+	self->CheckDump();
+	return;
+
+};
+	if (.screen == EMPTY) return; 
+	.mdc->OpenMBmp(.screen);
+	.mdc->SetBgColor(self->GWnd::GetBgColor());
+	.mdc->SetBkMode(BK_TRANSPARENT);
+
+	new size = self->GetItemSize(ID_FRAME);
+	new rect = instance RECT(0, 0, size[0], size[1]);
+
+	.mdc->Bar(rect);
+	new pos = .Pos; 
+	for (new i = 0, l = .List->Len(); i < l; ++i)
+	{
+		if (!.List[i]->Show(.mdc, pos, i == .iSel))
+		{
+			self->CheckDump();
+			self->OnUpdate();
+			return;
+
+		}
+		pos += .List[i]->Height();
+	}
+	.mdc->CloseMBmp();
+	.mdc->OpenDC();
+	.mdc->Show(.screen, 4, 4);
+	.mdc->CloseDC();
+|>;
+//=========================================================
+//
+//=========================================================
+new BmpListView::CheckDump(void) =
+<|
+	if (.screen == EMPTY) return; 
+	for (new i = 0; i < .List->Len(); ++i)
+	{
+		new k =.List[i].file;
+		if (typeof(*k) == "Dump")
+		{
+			.List->Remove(i);
+			--i;
+		}
+	}
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::OnVScroll(...) =
+<|
+	.Pos = -self->GetItem( IDVSCROLL );
+
+	self->Invalidate(TRUE);
+|>;
+//=============================================
+//
+//=============================================
+new BmpListView::OnMouseWheel(int) = <|
+param zDelta;
+
+	if (.List->Len() > 0)
+	{
+		new pt = self->GetCursorPos();
+		new size = self->GetItemSize(ID_FRAME);
+		if (pt[0] < 0 || pt[1] < 0 || pt[0] > size[0] || pt[1] > size[1])
+			return FALSE;
+		new vy = .List[0]->Height();
+		new Pos = -.Pos; 
+		if (zDelta > 0)
+			Pos -= vy;
+		else
+			Pos += vy;
+		if (Pos < 0)
+			Pos = 0;
+		if (Pos > .Range)
+		Pos = .Range + vy;
+			self->SetItem(<<IDVSCROLL, 0, .Range, Pos >>);
+		.Pos = -self->GetItem( IDVSCROLL );
+
+	
+	self->OnUpdate();
+	return TRUE;
+	
+	}
+	return FALSE;
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new BmpListView::OnSize(...) =
+<|
+param code, width, height;
+
+	if (code != SIZE_MINIMIZED)
+	{
+		new size = self->GetItemSize(ID_FRAME);
+		.screen = instance MBmp(size[0], size[1]);
+		self->RecalcLayout();
+		
+	}
+|>;
+
+//=============================================
+//
+//=============================================
+new BmpListView::OnLButtonDown(int, int) = <|
+param x, y;
+	if (!.fReadOnly)
+	{
+		new box, pos = .Pos;
+		new sel = .iSel;
+		for (new i = 0, l = .List->Len(); i < l; ++i)
+		{
+			box = .List[i]->GetBox(pos);
+			pos += .List[i]->Height();
+			if (box != EMPTY)
+			{
+				if (box->IsInRect(x, y))
+				{
+					.iSel = i;
+					break;
+				}
+			}
+		}
+		if (sel != .iSel)
+			self->Invalidate(TRUE);
+		if (.iSel != -1 && .iSel == sel)
+		{
+			.iSel = -1;
+			self->Invalidate(TRUE);
+		}
+	}	
+
+|>;

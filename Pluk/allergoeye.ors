@@ -1,0 +1,198 @@
+schema "Окно базы данных"
+{
+	param CurPat, CurExam, SelWnds
+
+	node root "Текущий пациент"
+	{
+		item		"Фамилия":
+			CurPat.LastName
+		item		"Имя":
+			CurPat.FirstName
+		item		"Отчество":
+			CurPat.MiddleName
+		item		"ФИО":
+			CurPat->Print()
+		item		"ФИО (инициалы)":
+			CurPat->Print2()
+		item		"Номер карты":
+			CurPat.Cards[0].Code
+		item		"Дата рождения":
+			CurPat.BirthDate
+		item		"Год рождения":
+			Print(CurPat.BirthDate->Year())
+		item		"Возраст":
+			CurPat->GetAge()
+		item		"Пол":
+			CurPat.Sex == 0 ? "мужской" : "женский"
+		item		"Адрес":
+			CurPat.Address->MakeString()
+		item		"Комментарий":
+			CurPat.Comment
+	}
+
+	node root "Текущее обследование"
+	{
+		item			"Номер обследования":
+			CurExam.ID
+		item			"Пользовательский номер обследования":
+			CurExam.UserID
+		item			"Дата и время":
+			CurExam.TimeDate
+		item			"Дата":
+			instance Date(CurExam.TimeDate)
+		item			"Время":
+			instance Time(CurExam.TimeDate)
+		item			"Комментарий":
+			CurExam.Comment
+		item list		"Изображения"		"Изображение":
+			CurExam.Images
+		item      "Направившее учреждение"   "ЛПУ":
+			CurExam.ReqInstitution
+		item      "Направившее подразделение":
+			CurExam.ReqDepartment
+		item	"Направивший врач":
+			CurExam->PrintReqPhysician()
+		item	"Врач, проводивший обследование"	"Сотрудник":
+			CurExam.Physician
+		item	"Направительный диагноз"			"Диагноз":
+			CurExam.Diagnosis
+		item	"Эффективная доза":
+			CurExam.Dose
+		item      "Контраст":
+			CurExam.ContrastName
+		item      "Количество Контраста":
+			CurExam.ContrastQuantity
+		item      "Способ введения контраста":
+			CurExam.ContrastIntro
+	}
+
+	node "ЛПУ"
+	{
+		item			"Код":
+			.Code
+		item			"Название":
+			.Name
+		item			"Район":
+			.District
+	}
+
+	node "Сотрудник"
+	{
+		item			"Код":
+			.Code
+		item			"ФИО":
+			self->Print()
+	}
+
+	node "Диагноз"
+	{
+		item			"Код":
+			.Code
+		item			"Название":
+			.Name
+	}
+
+	node "Изображение"
+	{
+		item		"Время":
+			.Incubation
+		item		"Картинка":
+			self->GetImgBmp()
+	}
+
+	node root "Выбранные изображения"
+	{
+		item		"Первое":
+			SelWnds[0]->GetPrintReportFunc()
+		item		"Первое (картинка)":
+			SelWnds[0]->ExportBmp()
+		item		"Второе":
+			SelWnds[1]->GetPrintReportFunc()
+		item		"Второе (картинка)":
+			SelWnds[1]->ExportBmp()
+		item		"Третье":
+			SelWnds[2]->GetPrintReportFunc()
+		item		"Третье (картинка)":
+			SelWnds[2]->ExportBmp()
+		item		"Четвертое":
+			SelWnds[3]->GetPrintReportFunc()
+		item		"Четвертое (картинка)":
+			SelWnds[3]->ExportBmp()
+		item		"Пятое":
+			SelWnds[4]->GetPrintReportFunc()
+		item		"Пятое (картинка)":
+			SelWnds[4]->ExportBmp()
+		item		"Шестое":
+			SelWnds[5]->GetPrintReportFunc()
+		item		"Шестое (картинка)":
+			SelWnds[5]->ExportBmp()
+		item		"Седьмое":
+			SelWnds[6]->GetPrintReportFunc()
+		item		"Седьмое (картинка)":
+			SelWnds[6]->ExportBmp()
+		item		"Восьмое":
+			SelWnds[7]->GetPrintReportFunc()
+		item		"Восьмое (картинка)":
+			SelWnds[7]->ExportBmp()
+		item		"Девятое":
+			SelWnds[8]->GetPrintReportFunc()
+		item		"Девятое (картинка)":
+			SelWnds[8]->ExportBmp()
+		item		"Десятое":
+			SelWnds[9]->GetPrintReportFunc()
+		item		"Десятое (картинка)":
+			SelWnds[9]->ExportBmp()
+		item		"Одинадцатое":
+			SelWnds[10]->GetPrintReportFunc()
+		item		"Одинадцатое (картинка)":
+			SelWnds[10]->ExportBmp()
+		item		"Двенадцатое":
+			SelWnds[11]->GetPrintReportFunc()
+		item		"Двенадцатое (картинка)":
+			SelWnds[11]->ExportBmp()
+		item		"Тринадцатое":
+			SelWnds[12]->GetPrintReportFunc()
+		item		"Тринадцатое (картинка)":
+			SelWnds[12]->ExportBmp()
+		item		"Четырнадцатое":
+			SelWnds[13]->GetPrintReportFunc()
+		item		"Четырнадцатое (картинка)":
+			SelWnds[13]->ExportBmp()
+		item		"Пятнадцатое":
+			SelWnds[14]->GetPrintReportFunc()
+		item		"Пятнадцатое (картинка)":
+			SelWnds[14]->ExportBmp()
+		item		"Шестнадцатое":
+			SelWnds[15]->GetPrintReportFunc()
+		item		"Шестнадцатое (картинка)":
+			SelWnds[15]->ExportBmp()
+	}
+
+	node root "Измерения"
+	{
+		item		"Измерение расстояния":
+			<|return GetMeasuredValue("Расстояние", "0", &ImageWnd::Control, "Line");|>
+		item		"Измерение площади":
+			<|return GetMeasuredValue("Площадь", "0", &ImageWnd::Control, "PolyLine");|>
+	}
+
+}
+
+schema "Стресс Эхо"
+{
+	param Result
+
+	item list		"Результаты"		"Результат":
+		Result->GetResults()
+
+	node "Результат"
+	{
+		item		"Контуры":
+			self[0]
+		item		"График":
+			self[1]
+		item		"Заголовок":
+			self[2]
+	}
+
+}

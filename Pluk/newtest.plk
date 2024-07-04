@@ -1,0 +1,105 @@
+class DlgNewTest : ModalForm , FormTriggers {
+	newtest;
+	alerg;
+	side;
+	dil;
+global:	
+	IndexDil;
+	IndexSide;
+	IndexAlerg;
+	IndexTime;
+};
+DlgNewTest::IndexAlerg = 0;
+DlgNewTest::IndexSide=0;
+DlgNewTest::IndexDil=0;
+DlgNewTest::IndexTime = 0;
+
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::DlgNewTest(refer object GWnd ) = <|
+param parent;
+	DlgNewTest::IndexAlerg = AllergoEyeIni->ReadInt("TEST", "1", 0);
+	DlgNewTest::IndexSide = AllergoEyeIni->ReadInt("TEST", "2", 0);
+	DlgNewTest::IndexDil = AllergoEyeIni->ReadInt("TEST", "3", 0);
+	DlgNewTest::IndexTime = AllergoEyeIni->ReadInt("TEST", "4", 0);
+
+	self->ModalForm( "DLG_NEW_TEST", parent );
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::DlgNewTest(object BaseString, refer object GWnd ) = <|
+param name, parent;
+	
+	name = name->Tokenize("_");
+	DlgNewTest::IndexAlerg = self->GetAllergenIndex(name[0]);
+	if (name->Len() > 2)
+	{
+		name[1]->ReplaceAll("-", ":");
+		name[1]->ReplaceAll(" ", "");
+		DlgNewTest::IndexDil = self->GetDilitionIndex(name[1]);
+	}
+	else
+		DlgNewTest::IndexDil = 0;
+	if (name->Len() > 2)
+		DlgNewTest::IndexSide = self->GetSideIndex(name[2]);
+	else
+		DlgNewTest::IndexSide = 0;
+
+	if (name->Len() > 3)
+		DlgNewTest::IndexTime = self->GetTimeIndex(name[3]);
+	else
+		DlgNewTest::IndexTime = 0;
+
+	self->ModalForm( "DLG_NEW_TEST", parent );
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::GetAllergenIndex(object BaseString) = GetAllergenIndex;
+
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::GetDilitionIndex(object BaseString) = GetDilitionIndex;
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::GetSideIndex(object BaseString) = GetSideIndex;
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::GetTimeIndex(object BaseString) = GetTimeIndex;
+
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	self->UpdateForm();
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgNewTest::OnOk(refer ...) = <|
+//	self->UpdateForm();
+	new combo = instance GComboBox(ID_TEST_ALERGEN, self);
+	.newtest = GetAllergenEng(combo->GetText());
+	combo = instance GComboBox(ID_DIL, self);
+	new b = GetDilitionEng(combo->GetText());;
+	b->ReplaceAll(":", "-");
+	.newtest @= "_" @ b;
+	combo = instance GComboBox(ID_SIDE, self);
+	.newtest @= "_" @ GetSideEng(combo->GetText());
+	combo = instance GComboBox(ID_TIME, self);
+	.newtest @= "_" @ GetIncubationEng(combo->GetText());
+	AllergoEyeIni->WriteInt("TEST", "1", DlgNewTest::IndexAlerg);
+	AllergoEyeIni->WriteInt("TEST", "2", DlgNewTest::IndexSide);
+	AllergoEyeIni->WriteInt("TEST", "3", DlgNewTest::IndexDil);
+	AllergoEyeIni->WriteInt("TEST", "4", DlgNewTest::IndexTime);
+
+	self->ModalForm::Close(IDOK);
+|>;

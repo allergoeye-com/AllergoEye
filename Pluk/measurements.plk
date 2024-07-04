@@ -1,0 +1,604 @@
+//=================================================
+//
+//=================================================
+global DoBalanceWB = {|
+param Image;
+	
+	new sc = << 1.0, 0.62, 0.52 >>;
+	new med = instance Vector(3);
+/*	for (new m = 0; m < 3; ++m)
+	{
+		new hist_l = Image[m]->GetHistogram(40, 0, 50, Image[m]->Height());
+		new hist_r = Image[m]->GetHistogram(Image[m]->Width() - 50, 0, Image[m]->Width() - 40, Image[m]->Height());
+		new s_l = instance Stat_Weighted(hist_l.X, hist_l.Y);
+		new s_r = instance Stat_Weighted(hist_r.X, hist_r.Y);
+		med[m] = Max(s_l->GetMean(), s_r->GetMean());
+	}
+*/
+	for (new m = 0; m < 3; ++m)
+	{
+		new hist = Image[m]->GetHistogram(Image[m]->Width() * 0.45, Image[m]->Height() * 0.3, Image[m]->Width() * 0.1, Image[m]->Height() * 0.3);
+		new Data = instance Vector(hist->Len());
+		new Weight = instance Vector(hist->Len());
+		new count  = 0;
+		for (new j = hist->Len() - 1; j >= 0; --j)
+		{
+			if (hist.Y[j] > 0.0)
+			{
+				Data[count] = hist.X[j];
+				Weight[count] = hist.Y[j];
+				++count;
+			}
+		}
+		Data->SetLen(count);
+		Weight->SetLen(count);
+		hist = instance Stat_Weighted(Data, Weight)->GetCumulativeDistr();
+		hist -= 0.5;
+		med[m] = hist->Zero()[0];
+	}
+	for (m = 1; m < 3; ++m)
+		med[m] /= med[0];
+	new sc0 = 150.0 / med[0];
+	med[0] = 1.0;
+	for (m = 0; m < 3; ++m)
+		Image[m] *= sc0 * sc[m] / med[m];
+
+/*
+	if (med[0] < 190 && (med[1] > 200 || med[2] > 200))
+	{
+		new sc = float(med[0] + med[1] + med[2]) / 3.0;
+		for (m = 0; m < 3; ++m)
+			Image[m] *= sc / med[m];
+	}*/
+|};
+//=================================================
+//
+//=================================================
+new DBTest::GetTestOrder(void) = <|
+	new p = GetDilitionEng(.Dil)->ToLower();
+	return GetTestOrder(p);
+|>;
+
+global GetTestOrder = <|
+param p;
+	switch (p)
+	{
+	case "start test" :
+		return -1;
+	case "control solution" : 
+		return 0;
+	case "1-100000" :
+		return 1;
+	case "1-10000" :
+		return 2;
+	case "1-1000" :
+		return 3;
+	case "1-100" :
+		return 4;
+	case "1-10" :
+		return 5;
+	case "stock solution" :
+		return 6;
+	default :
+		return 0;
+	}
+|>;
+//=================================================
+//
+//=================================================
+new DBTest::CalculateScore(void) = <|
+	onerror {
+		return;
+	};
+	if (.Pictures->Len() == 0)
+		return;
+	new scoreL = 0.0;
+	new scoreR = 0.0;
+	new areaL = 0.0;
+	new areaR = 0.0;
+
+	for (new i = 0; i < .Pictures->Len(); ++i)
+	{
+		scoreL += .Pictures[i].ScoreL * .Pictures[i].AreaL;
+		areaL += .Pictures[i].AreaL;
+		scoreR += .Pictures[i].ScoreR * .Pictures[i].AreaR;
+		areaR += .Pictures[i].AreaR;
+	}
+	if (areaL > 0.0)
+		scoreL /= areaL;
+	if (areaR > 0.0)
+		scoreR /= areaR;
+		
+	.AEScoreL = scoreL;
+	.AEScoreR = scoreR;
+|>;
+//=================================================
+//
+//=================================================
+new DBTest::PrintMeanScore(void) = <|
+	onerror {
+		return "";
+	};
+	if (.AEScoreR == EMPTY)
+	{
+		self->CalculateScore();
+		if (.AEScoreR == EMPTY)
+			return "";
+	}
+	if (.AEScoreR > -100.0 && .AEScoreR < 100.0 && .AEScoreL > - 100.0 && .AEScoreL < 100.0)
+	{
+		new study = Odml2Exec("select p from DBDate as p where p.Tests[index].oID = ?", << .oID >>)[0];
+		study.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+		new my_index = study.Tests->Find(.oID, 0, {|param key, elem; return key == elem.oID;|});
+
+		new offsetL = EMPTY;
+		new offsetR = EMPTY;
+		for (new i = 0; i < study.Tests->Len(); ++i)
+		{
+			if (study.Tests[i].Allergen != .Allergen)
+				continue;
+			if (study.Tests[1]->GetTestOrder() == 0)
+			{
+				offsetL = study.Tests[1].AEScoreL - study.Tests[1].AEScoreR;
+				offsetR = study.Tests[1].AEScoreR - study.Tests[1].AEScoreL;
+				break;
+			}
+			else
+			if (study.Tests[0]->GetTestOrder() <= 0)
+			{
+				offsetL = study.Tests[0].AEScoreL - study.Tests[0].AEScoreR;
+				offsetR = study.Tests[0].AEScoreR - study.Tests[0].AEScoreL;
+			}
+		}
+		new v;
+		switch (GetSideEng(.Side))
+		{
+		case "left" :
+			v = Max(0, .AEScoreL - .AEScoreR - offsetL);
+			break;
+		case "right" :
+			v = Max(0, .AEScoreR - .AEScoreL - offsetR);
+			break;
+		}
+		if (v == EMPTY)
+			return Printf("%s: R=%4.2f L= %4.2f", W1_REDNESS, .AEScoreR, .AEScoreL);
+		else
+			return Printf("%s: R=%4.2f L= %4.2f => Red_AE= %5.3f", W1_REDNESS, .AEScoreR, .AEScoreL, v);
+	}
+	else
+		return "";
+|>;
+//=================================================
+//
+//=================================================
+new DBTest::PrintOpScore(void) = <|
+	onerror {
+		return "";
+	};
+	if (.OpScoreV == EMPTY)
+		return << "", "", "", "" >>;
+	else
+		return << Print(.OpScoreV[0]), Print(.OpScoreV[1]), Print(.OpScoreV[2]), Print(.OpScoreV[3]) >>;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetAEScore(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new offsetL = 0.0;
+	new offsetR = 0.0;
+	new AEScoreL = instance Vector(.Tests->Len());
+	new AEScoreR = instance Vector(.Tests->Len());
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		AEScoreL[i] = .Tests[i].AEScoreL;
+		AEScoreR[i] = .Tests[i].AEScoreR;
+	}
+
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r <= 0)
+		{
+			offsetL = AEScoreL[i] - AEScoreR[i];
+			offsetR = AEScoreR[i] - AEScoreL[i];
+		}
+		else
+			break;
+	}
+	
+	new score = 0.0;
+	new count = 0;
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r > 0 && .Tests[i].AEScoreL > -100.0)
+		{
+			new v = EMPTY;
+			switch (GetSideEng(.Tests[i].Side))
+			{
+			case "left" :
+				v = (AEScoreL[i] - AEScoreR[i] - offsetL);
+				break;
+			case "right" :
+				v = (AEScoreR[i] - AEScoreL[i] - offsetR);
+				break;
+			}
+			new Th = 0.3; 
+			if (v >= Th)
+			{
+				score += 3.0 * (6 - r) + (v / Th) ** 0.25;
+				++count;
+			}
+			else
+			if (score > 0.0)
+				++count;
+		}
+	}
+	if (count > 0)
+		score = score /  count;
+	return score;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetOpScore(void) = <|
+	onerror {
+		return 0.0;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new score = 0.0;
+	new offset = 0.0;
+	new r = .Tests[1]->GetTestOrder();
+	if (r == 0)
+		offset = .Tests[1].OpScore;
+	else
+	{
+		r = .Tests[0]->GetTestOrder();
+		if (r <= 0)
+			offset = .Tests[0].OpScore;
+	}		
+	new count = 0;
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		r = .Tests[i]->GetTestOrder();
+		if (r > 0)
+		{
+			new v = Max(0.0, .Tests[i].OpScore - offset);
+			if (v > 2)
+			{
+				score += 3.0 * (6.0 - r) + v;
+				++count;
+			}
+			else
+			if (score > 0.0)
+				++count;
+		}
+	}
+	if (count > 0)
+		score /= count;
+	return score;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetOpRScore(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new score = 0.0;
+	new offset = 0.0;
+	new r = .Tests[0]->GetTestOrder();
+	if (r == 0 || r == -1)
+		offset += .Tests[0].OpScoreV[3];
+
+	new count = 0;
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r > 0)
+		{
+			new v = Max(0.0, .Tests[i].OpScoreV[3] - offset);
+			if (v > 0)
+			{
+				score = Max(score, 3.0 * (6 - r) + v);
+				++count;
+			}
+		}
+	}
+	if (count > 0)
+		score /= count;
+	return score;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetOpSynScore(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	new offsetL = 0.0;
+	new offsetR = 0.0;
+	new AEScoreL = instance Vector(.Tests->Len());
+	new AEScoreR = instance Vector(.Tests->Len());
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		AEScoreL[i] = .Tests[i].AEScoreL;;
+		AEScoreR[i] = .Tests[i].AEScoreR;;
+	}
+
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r <= 0)
+		{
+			offsetL = AEScoreL[i] - AEScoreR[i];
+			offsetR = AEScoreR[i] - AEScoreL[i];
+		}
+		else
+			break;
+	}
+	new score = 0.0;
+	new count = 0;
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		
+		if (r > 0 && .Tests[i].AEScoreL > -100.0 && .Tests[i].OpScoreV != EMPTY)
+		{
+			new v = EMPTY;
+			switch (GetSideEng(.Tests[i].Side))
+			{
+			case "left" :
+				v = (AEScoreL[i] - AEScoreR[i] - offsetL);
+				break;
+			case "right" :
+				v = (AEScoreR[i] - AEScoreL[i] - offsetR);
+				break;
+			}
+			v = Max(v, 0.0);
+			new op = .Tests[i].OpScoreV[0] + .Tests[i].OpScoreV[1] + .Tests[i].OpScoreV[2];
+			new Th = 0.3;
+			if (v > Th || op + (v / Th) ** 0.25 >= 3.0)
+			{
+				score += 3.0 * (6 - r) + op + (v / Th) ** 0.25;
+				++count;
+			}
+			else
+			if (score > 0.0)
+				++count;
+		}
+	}
+	if (count > 0)
+		return score / count;
+	else
+		return 0.0;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetSSScore(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new score = 0.0;
+	new offset = 0.0;
+	new r = .Tests[1]->GetTestOrder();
+	if (r == 0)
+		offset = .Tests[1].OpScore;
+	else
+	{
+		r = .Tests[0]->GetTestOrder();
+		if (r <= 0)
+			offset = .Tests[0].OpScore;
+	}		
+	new count = 0;
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		r = .Tests[i]->GetTestOrder();
+		if (r > 0)
+		{
+			new v = Max(0.0, .Tests[i].OpScore - offset);
+			if (v > 2)
+			{
+				score += 3.0 * (6.0 - r) + 1.0;
+				break;
+			}
+		}
+	}
+	return score;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetAERednessGraph(void) = <|
+	onerror {
+		return;
+	};
+	.Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	
+	new offsetL = 0.0;
+	new offsetR = 0.0;
+	new AEScoreL = instance Vector(.Tests->Len());
+	new AEScoreR = instance Vector(.Tests->Len());
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		AEScoreL[i] = .Tests[i].AEScoreL;
+		AEScoreR[i] = .Tests[i].AEScoreR;
+	}
+
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		if (r <= 0)
+		{
+			offsetL = AEScoreL[i] - AEScoreR[i];
+			offsetR = AEScoreR[i] - AEScoreL[i];
+		}
+		else
+			break;
+	}
+	new X = << >>;
+	new Y = << >>;
+	new score = 0.0;
+	new count = 0;
+	for (i = 0; i < .Tests->Len(); ++i)
+	{
+		new r = .Tests[i]->GetTestOrder();
+		X ,= GetDilutionLocal(.Tests[i].Dil);
+		if (r <= 0)
+			Y ,= 0.0;
+		if (r > 0)
+		{
+			new v = EMPTY;
+			switch (GetSideEng(.Tests[i].Side))
+			{
+			case "left" :
+				v = (AEScoreL[i] - AEScoreR[i] - offsetL);
+				break;
+			case "right" :
+				v = (AEScoreR[i] - AEScoreL[i] - offsetR);
+				break;
+			}
+			Y ,= Max(0.0, v);
+		}
+	}
+	return instance BarHistogram(X, Y);
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::PrintScore(void) = <|
+	new score = self->GetOpScore();
+	new ae_score = self->GetAEScore();
+	new syn_score = self->GetOpSynScore();
+	new txt = "Score: ";
+	if (score != EMPTY)
+		txt @= Printf("SSS = %5.2f;  ", score);
+		
+	if (ae_score != EMPTY)
+		txt @= Printf("AE = %5.2f;  ", ae_score);
+	if (syn_score != EMPTY)
+		txt @= Printf("AE-SSS = %5.2f  ", syn_score);
+	return txt;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetAllScore(void) = <|
+	new score = self->GetOpScore();
+	new ae_score = self->GetAEScore();
+	new syn_score = self->GetOpSynScore();
+	return << score, ae_score, syn_score >>;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetAllergenList(void) = <|
+	new List = << >>;
+	for (new k = 0; k < .Tests->Len(); ++k)
+	{
+		new x = GetAllergenIndex(.Tests[k].Allergen);
+		if (x >= 0)
+		{
+			if (List->BFind(x) == -1)
+				List->BInsert(x);
+		}
+	}
+	new aList = GetAllergenList();
+	for (k = 0; k < List->Len(); ++k)
+		List[k] = aList[List[k]];
+	return List;
+|>;
+//=================================================
+//
+//=================================================
+new DBDate::GetTestList(refer object BaseString) = <|
+param Allergen;
+	new a_index = GetAllergenIndex(Allergen);
+	if (a_index < 0)
+		return;
+	onerror {
+		return;
+	};
+	new Tests = << >>;
+	for (new i = 0; i < .Tests->Len(); ++i)
+	{
+		if (.Tests[i]->GetTestOrder() <= 0 || GetAllergenIndex(.Tests[i].Allergen) == a_index)
+			Tests ,= &.Tests[i];
+	}
+	Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+	return Tests;
+|>;
+//=================================================
+//
+//=================================================
+new DBTest::GetDistrMeasurements(void) = <|
+
+	return << .DistrL, .DistrR, .DistrTotal >>;
+|>;
+//=================================================
+//
+//=================================================
+new DBTest::UpdateDistributions(void) = {|
+	onerror {
+		return;
+	}
+	for (new i = 0; i < .Pictures->Len(); ++i)
+	{
+		if (.Pictures[i].DistrTotal != EMPTY)
+		{
+			if (.DistrTotal == EMPTY)
+				.DistrTotal = .Pictures[i].DistrTotal[0];
+			else
+				.DistrTotal += .Pictures[i].DistrTotal[0];
+		}
+		if (.Pictures[i].DistrL != EMPTY)
+		{
+
+			if (.DistrL == EMPTY)
+			{
+				.DistrL = .Pictures[i].DistrL;
+				.DistrR = .Pictures[i].DistrR;
+			}
+			else
+			{
+				.DistrL[0] += .Pictures[i].DistrL[0];
+				.DistrL[1] += .Pictures[i].DistrL[1];
+				.DistrR[0] += .Pictures[i].DistrR[0];
+				.DistrR[1] += .Pictures[i].DistrR[1];
+			}
+		}
+	}
+	if (.DistrL != EMPTY)
+	{
+		new p = .DistrL[0]->Integral(.DistrL[0].X[0], .DistrL[0].X->Last());
+		.DistrL[0] *= 1.0 /(p != 0 ? p : 1);
+		p = .DistrL[1]->Integral(.DistrL[1].X[0], .DistrL[1].X->Last());
+		.DistrL[1] *= 1.0 /(p != 0 ? p : 1);
+		.DistrL[1].Comment = .DistrL[0].Comment = "Left";
+	}
+	if (.DistrR != EMPTY)
+	{
+		new p = .DistrR[0]->Integral(.DistrR[0].X[0], .DistrR[0].X->Last());
+		.DistrR[0]  *= 1.0 /(p != 0 ? p : 1);;
+		p = .DistrR[1]->Integral(.DistrR[1].X[0], .DistrR[1].X->Last());
+		.DistrR[1] *= 1.0 /(p != 0 ? p : 1);
+		.DistrR[1].Comment = .DistrR[0].Comment = "Right";
+	}
+	if (.DistrTotal != EMPTY)
+	{
+		.DistrTotal *= 1.0 / .DistrTotal->Integral(.DistrTotal.X[0], .DistrTotal.X->Last());
+		.DistrTotal.Comment = "Total Image";
+	}
+|};

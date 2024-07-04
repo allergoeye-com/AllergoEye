@@ -1,0 +1,245 @@
+
+
+
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+class DateEdit : GEdit {
+	parent;
+	id;
+	old_txt;
+};
+//========================================================
+//========================================================
+new DateEdit::DateEdit(int, refer object GWnd) = <|
+param id, wnd;
+	.parent = &wnd;
+	.id = id;
+	.old_txt = "";
+	self->GEdit (id, wnd);
+|>;
+//========================================================
+//========================================================
+new DateEdit::OnKeyUp(int) = <|
+param a;
+	self->GEdit::OnKeyUp(a);
+	new txt = self->GetText();
+
+	if (txt->Len() < .old_txt->Len())
+	{
+		.old_txt = txt;
+		return;
+	}
+	.old_txt = txt;
+	
+	new delim = instance Locale().DateDelimiter;
+	new lastdelim = txt->GetLastByte() == '/' || txt->GetLastByte() == '.';
+
+	new d = txt->Tokenize("/.");
+	new day, mon, year;
+	switch (d->Len())
+	{
+	case 0:
+		return;
+	case 1:
+		day = int(d[0]);
+		if (lastdelim || day > 3)
+			txt = Printf("%02d%s", day, delim);
+		else
+		{
+			if (d[0]->Len() > 2)
+				txt = txt->Left(2) @ delim @ txt->Tail(2);
+			else
+			if (d[0]->Len() == 2)
+				txt = txt @ delim;
+		}
+		break;
+	case 2:
+		day = int(d[0]);
+		mon = int(d[1]);
+		if (lastdelim || (mon > 1 || d[1]->Len() == 2))
+			txt = Printf("%02d%s%02d%s", day, delim, mon, delim);
+		else
+		{
+			if (d[1]->Len() > 2)
+			{
+				d[1] = d[1]->Left(2) @ delim @ d[1]->Tail(2);
+				txt = Printf("%02d%s%s", day, delim, d[1]);
+			}
+		}
+		break;
+	case 3:
+		day = int(d[0]);
+		mon = int(d[1]);
+		year = int(d[2]);
+		if (d[2]->Len() == 2 && year != 19 && year != 20)
+		{
+			if (year > instance Date()->Year() - 2000)
+				year += 1900;
+			else
+				year += 2000;
+		}
+		txt = Printf("%02d%s%02d%s%d", day, delim, mon, delim, year);
+		break;
+	}
+	.old_txt = txt;
+	self->SetText(txt);
+	self->SetCaretPos(txt->Len());
+|>;
+
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+class NewCardDlg : ModalForm , FormTriggers {
+	Date;
+	Name;
+	Familie;
+	ID;
+	info;
+	DateEdit;
+	eBoxDate;
+};
+
+
+//=========================================================
+//
+//=========================================================
+new NewCardDlg::NewCardDlg(refer object GWnd ) = <|
+param parent;
+	.Date = instance Date()->PrintDMY();
+	self->ModalForm( "DLG_NEW_CARD", parent );
+|>;
+//=========================================================
+//
+//=========================================================
+new NewCardDlg::NewCardDlg(pointer object DirNode, refer object GWnd ) = <|
+param dir, parent;
+	.Date = instance Date()->PrintDMY();
+	new i = dir.childs->Find("info.ini", 0, <| param key, elem; return key == elem.name; |> );
+	new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (Dir->GetLastByte() != FD)
+		Dir @= SFD;
+	.info = instance IniFile(Dir @ dir.childs[i]->GetWinPath());
+	.Name = .info->ReadStrW("CARD", "NAME", "");
+	.Familie = .info->ReadStrW("CARD", "FAMILY", "");
+	.ID  = .info->ReadStrW("CARD", "ID", "");
+	 new str = .info->ReadStrW("CARD", "DATE", "");
+	 new v = str->Tokenize("/.");
+	 if (v->Len() < 2)
+	 	v = instance Date()->PrintDMY()->Tokenize("/.");
+	 new y = int(v[2]);
+	if (y < 1000)
+		y = y % 100;
+	if (y < 100)
+	{
+		if (y > 25)
+			y += 1900;
+		else
+			y += 2000;
+	}
+	else
+	{
+		if (y > 20000)
+			y = 2000 + y % 1000;
+		else
+		if (y > 19000)
+			y = 1900 + y % 1000;
+	}
+	.Date = instance Date(int(v[0]), int(v[1]), y);
+
+	self->ModalForm( "DLG_NEW_CARD", parent );
+|>;
+//=========================================================
+//
+//=========================================================
+new NewCardDlg::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	.eBoxDate = instance DateEdit(ID_DATE, self);
+	self->UpdateForm();
+|>;
+//===================================================================
+//
+//===================================================================
+new NewCardDlg::CanClose( void ) = <|
+	.Date = instance TimeDate(.Date);
+	return TRUE;
+|>;
+//===================================================================
+//
+//===================================================================
+new NewCardDlg::Cleanup( void ) = <|
+|>;
+//===================================================================
+//
+//===================================================================
+new NewCardDlg::MyValidateRegExpr(refer any, refer any) = <|
+param data, pars;
+	new delim = instance Locale().DateDelimiter;
+//	new expr = Printf("[1-9]|([0-2][0-9]))'%s'(('0'?[1-9])|(1[1-2]))'%s'('19'|'20'[0-9][0-9])", delim, delim);
+	new expr = Printf("[1-9]|(0[1-9])|([1-2][0-9])|(3[0-1])'%s'((0[1-9])|(1[0-2]))'%s'((19)|(20))[0-9][0-9]", delim, delim);
+	data->TrimTrail();
+	data->TrimLead();
+	expr =
+	"
+		%%
+			(" @ expr @ ") {||}
+		%%
+	";
+	if (!instance LexScanner(expr)->Check(data) || instance Date(data) > instance Date())
+	{
+		ErrorBox(W1_WRONG_DATE_FORMAT, *(pars.Form));
+		Pluk->SetError(ERR_FORM_TRIGGER_ERROR);
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+/*new NewCardDlg::OnSetDate(refer ...) = <|
+	new v = .Date->PrintDMY()->Tokenize("/.");
+	new y = int(v[2]);
+	if (y < 1000)
+		y = y % 100;
+	if (y < 100)
+	{
+		if (y > 25)
+			y += 1900;
+		else
+			y += 2000;
+	}
+	else
+	{
+		if (y > 20000)
+			y = 2000 + y % 1000;
+		else
+		if (y > 19000)
+			y = 1900 + y % 1000;
+	}
+	.Date->Date::SetDateDMY(int(v[0]), int(v[1]), y);
+	if (.Date > instance Date())
+		rollback;
+	self->UpdateForm();
+|>;*/
+//===================================================================
+//
+//===================================================================
+new NewCardDlg::OnOk(refer ...) = <|
+	self->UpdateForm();
+
+	if (.Date == EMPTY || .Name== EMPTY || .Familie == EMPTY || .ID == EMPTY) return;
+	if (.info != EMPTY)
+	{
+		.info->WriteStrW("CARD", "ID", .ID);
+		.info->WriteStrW("CARD", "NAME", .Name);
+		.info->WriteStrW("CARD", "FAMILY", .Familie);
+		.info->WriteStrW("CARD", "DATE", instance Date(.Date)->PrintDMY());
+	}
+	self->ModalForm::Close(IDOK);
+|>;

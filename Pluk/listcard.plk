@@ -1,0 +1,222 @@
+
+class DlgListCards : ModalForm , FormTriggers {
+	List;
+	fOnOpen;
+	TreeCtrl;
+	dirNode;
+	dirMap;
+	Dir;
+	currentList;
+	iSel;
+	
+
+};
+
+event WND_SIZE, DlgListCards::OnSize;
+event WND_UPDATE, DlgListCards::OnUpdate;
+event CMD_FIRST + ID_TREE, DlgListCards::OnTreeCommand;
+
+//=========================================================
+//
+//=========================================================
+new DlgListCards::DlgListCards(refer object GWnd ) = <|
+param parent;
+	.fOnOpen = FALSE;
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (.Dir->GetLastByte() != FD)
+		.Dir @= SFD;
+	.dirMap = instance DictionaryInt();
+	.dirNode = instance TreeDir(.Dir, <<>>);
+	self->ModalForm( "DLG_LIST_CARD", parent );
+	self->AllowEvent( WND_SIZE );
+	self->AllowEvent(WND_UPDATE);
+
+|>;
+
+new DlgListCards::~DlgListCards(void) = <|
+	.List->Clear();
+|>;
+
+ 
+//==========================================
+//
+//==========================================
+new DlgListCards::Setup( void ) =
+<|
+	.List = instance BmpListView(FALSE, self);
+	self->ModalForm::Setup();
+	self->Bind(self);
+	.TreeCtrl = instance GTree(ID_TREE, self);
+	
+
+
+|>;
+
+//==========================================
+//
+//==========================================
+new DlgListCards::UpdateSize(void) = <|
+	if (.List != EMPTY)
+	{
+		new pos = self->GetItemPos(ID_TREE);
+		new size = self->GetItemSize(ID_TREE);
+		pos[0] += size[0] + 20; 
+		.List->SetPos(pos[0], pos[1]);
+		
+		new s = self->GetSize();
+		.List->SetSize(s[0] - pos[0] - 20, size[1]);
+		.List->Invalidate(FALSE);
+		.List->SetFocus();
+	}
+
+|>;
+
+//=============================================
+//
+//=============================================
+new DlgListCards::OnUpdate(void) = <|
+	onerror {
+		new mdc = instance MDC(self);
+		mdc->OpenDC();
+		mdc->CloseDC();
+		return;
+	}
+	if (!.fOnOpen)
+		self->OnOpen();
+		
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	mdc->CloseDC();
+	if (.fOnOpen)
+		if (.List != EMPTY)
+			.List->OnUpdate();
+|>;
+
+//=========================================================
+//
+//=========================================================
+new DlgListCards::OnSize(...) =
+<|
+param code, width, height;
+
+	if (code != SIZE_MINIMIZED)
+	{
+		if (!self->OnOpen())
+			self->UpdateSize();		
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgListCards::OnOpen(void) = <|
+
+	if (!.fOnOpen)
+	{
+		
+		if (.TreeCtrl != EMPTY)
+		{
+			new l = .dirNode->NumDir();
+			new sel;
+			for (new i = 0; i < l; ++i)
+			{
+				new node = .dirNode->get(i);
+				new curItem = instance GTreeItem(node.name);
+				curItem.Children = << >>;
+				new jl = node->NumDir();
+				curItem.IsExpanded = TRUE;
+				new index = .TreeCtrl->Insert( curItem, 0, ITEM_LAST);
+				if (sel == EMPTY)
+					sel =  index;
+				.dirMap->Add(index, &node);
+				for (new j = 0; j < jl; ++j)
+				{
+					new sub = node->get(j);
+					new curItem = instance GTreeItem(sub.name);
+					index = .TreeCtrl->Insert( curItem, index, ITEM_LAST);
+					.dirMap->Add(index, &sub);
+				}
+		
+			}
+			self->UpdateSize();
+			.fOnOpen = TRUE;
+			if (sel != EMPTY)
+			{
+				.TreeCtrl->SetSel(sel);
+				self->OnSelTree();
+			}
+		
+		}
+		
+	}
+	return FALSE;
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgListCards::OnOk(refer ...) = <|
+	self->UpdateForm();
+	.iSel = .List.iSel;
+	.List->Clear();
+	self->ModalForm::Close(IDOK);
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgListCards::OnTreeCommand( int, int ) = <|
+param id, code;
+	
+	if ( code == TRN_SELCHANGE )
+		self->OnSelTree();
+|>;	
+//=========================================================
+//
+//=========================================================
+new DlgListCards::OnSelTree(void) = <|
+	
+		new id = .TreeCtrl->GetSel();
+		new m = .dirMap->Find(id);
+		.currentList = m->GetFileList(<<".jpg", ".tif">>);
+		
+		if (.currentList->Len() == 0)
+		{
+		.List->Clear();
+			id = .TreeCtrl->GetFirstChild(id);
+			if (id != 0 && !GetKeyState(VK_UP))
+			{
+				.TreeCtrl->SetSel(id);
+				self->OnSelTree();
+			}
+			else
+			{
+				.List->Invalidate(TRUE);
+			}
+		}
+		else
+		{
+			.List->Clear();
+			for (new i = 0, l = .currentList->Len(); i < l; ++i)
+			{
+				new bmp = instance MBmp();
+				new dir = .Dir @ .currentList[i]->GetWinPath();
+				if (.currentList[i].parent.childs->Find(JustName(dir) @ ".ctr", 0,  <| param key, elem; return key == elem.name; |>) != -1)
+				{
+					new v = <<>>;
+					new names = << >>;
+					new distr = << >>;
+					.currentList[i].result = main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+					.currentList[i].res_distr <- distr;
+					if (v->Len() > 0)
+					{
+						.currentList[i].roi <- v;
+						.currentList[i].names <- names;
+					}
+				}
+				
+				bmp->LoadImage(dir);
+				.List->AddBmp(bmp, .currentList[i]);
+			}
+			.List->RecalcLayout();
+			.List->Invalidate(TRUE);
+		}
+	
+|>;	

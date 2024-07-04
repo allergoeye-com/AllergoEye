@@ -1,0 +1,46 @@
+global PatientList = Odml2Exec("select p from DBPatient as p", <<  >>);
+
+new root = AllergoEyeIni->ReadStrW("DIR", "DATA");
+for (new p = 0; p < PatientList->Len(); ++p)
+{
+	new Patient = &PatientList[p];
+	for (new d = 0; d < Patient.Date->Len(); ++d)
+	{
+		new DBDate = &Patient.Date[d];
+		if (DBDate.Tests->Len() > 0)
+		{
+			new index = DBDate.Tests->Find(0, 0, {|param key, elem; return elem->GetTestOrder() <= key; |});
+			if (index == -1)
+			{
+				new dir = instance Dir(root @ DBDate.Path);
+				dir->ReadSubDirs();
+				new rep_set = << >>;
+				for (new k = 0; k < dir->GetNumbSubDir(); ++k)
+				{
+					new name = dir->SubDirName(k);
+					if (name->GetByte(0) == '.' || name->GetByte(1) == ':')
+						continue;
+					new v = name->Tokenize("_");
+					new order = GetTestOrder(GetDelutionEng(CheckForDepricatedNames(instance String(v[1]))));
+					if (order <= 0 && DBDate.Tests->Find(order, 0, {|param key, elem; return elem->GetTestOrder() == key; |}) == -1)
+					{
+						rep_set ,= v;
+					}
+				}
+				if (rep_set->Len() > 0)
+				{
+					for (k = 0; k < rep_set->Len(); ++k)
+					{
+						new name_src = dir.DirName @ rep_set[k]->SynStr("_");
+						rep_set[k][0] = DBDate.Allergen;
+						new name_dst = dir.DirName @ rep_set[k]->SynStr("_");
+						instance Dir()->Create(name_dst);
+						new src = instance Dir(name_src);
+						src->CopyTo(name_dst);
+						trace name_dst, CR;
+					}
+				}
+			}
+		}
+	}
+}

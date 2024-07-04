@@ -1,0 +1,34 @@
+new res = Pluk->CreateJob("653D92FE-6C3E-4C8A-BB12-9783DDC0A602");
+if (res == 0)
+{
+	Pluk->ShowJob("653D92FE-6C3E-4C8A-BB12-9783DDC0A602");
+	end;
+}
+
+
+Pluk->AddMembers("DBTest", << "Selected" >>);
+
+StoreWndPlacement(SWP_POS | SWP_SIZE, "REPORT_WND");
+global RunAllergoscopeApp = <|
+	onerror {
+		return;
+	}
+	new path = AllergoEyeIni->ReadStr("PATH", "PLUK");
+	if (path->GetLastByte() != FD)
+		path @= SFD;
+	if (path == EMPTY)
+		path = "";
+	Pluk->Exec(Printf("%sAllergoscopeApp.exe", path), FALSE, FALSE);
+|>;
+
+RunAllergoscopeApp();
+global GlobalProgramName = "AllergoEye";
+global ProgramVersion = Printf("2.28 (%s)", Pluk->GetVersion()[3]);
+global main = instance MainMenu();
+if (CmdLine->Find("rebuild") != -1)
+	main->RebuildDB();
+/*
+main->RecalculateAll();
+main.SelectDlg->RecalculateSelected();
+main.netDir.dbdir->ImportTherapy();
+*/

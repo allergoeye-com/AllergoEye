@@ -1,0 +1,484 @@
+class AllergoReport : EditReportWnd {
+	data;
+	header;
+	DBPatient;
+	DBDates;
+	TherapyControl;
+	fImegesView;
+	Parent;
+	Levels; 
+};
+
+//====================================================
+//
+//====================================================
+new EditReportWnd::FillCellAndShow(refer ...) = <|
+parest p;
+	if (self.TherapyControl)
+		self->FillCell("TherapyReport", [p]);
+	else
+		self->FillCell("AReport", [p]);
+|>;
+//====================================================
+//
+//====================================================
+new EditReportWnd::GetRectReport(void) = <|
+	return .vRep[0]->GetRectReport();
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::AllergoReport(refer object DBPatient, refer object Vector, refer object BaseString, refer object GWnd) = <|
+param Patient, DateTest, TamplateName, Parent;
+	.DBPatient = &Patient;
+	.DBDates = &DateTest;
+	.TherapyControl = .DBDates->Len() > 1;
+	.fImegesView = TRUE;
+	.Parent = &Parent;
+	self->EditReportWnd(TamplateName, Parent);
+	
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Callback (refer any) = <|
+param str;
+
+	return instance Vector(2);
+
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Notify(refer any, int) = <|
+param name_report, page_print;
+	new rep = self->GetTable(0, "ID_NUM_PAGE");
+	if (rep != EMPTY)
+		 .vRep[0]->FillCell(&rep.vectCell[0][0], Print(page_print + 1));
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::LoadDATA(int, pointer object SHTable, refer object Vector, refer int) = <|
+param i, table, _data, top;
+	new wrem = instance RECT(0, 0, 0, 0);
+	new header = self->GetTable(i, "EXAM_DATA");
+	new data = self->GetTable(i, "IMG_DATA");
+	.data = *data;
+	.header = *header;
+	self->RemoveTable(i, "IMG_DATA");
+	self->_LoadData(i, _data,  &.data, top);
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::_LoadData(int, refer object Vector, pointer object SHTable, refer int) = <|
+param i, data, tbl, top;
+	if (.TherapyControl != TRUE)
+	{
+		new h1 = 0;
+		new index = 0;
+		for (new j = 0; j < .DBDates[0].Tests->Len(); ++j)
+			self->AddDir(*&(.DBDates[0].Tests[j]), i, index, h1);
+		top += h1;
+	
+		new rect = .vRep[i]->GetRectTable("GRAPHIC");
+		.vRep[i]->FillCell("GRAPHIC", 0, 0, .Parent.Parent->GetGraphicImage(rect));
+	}
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::GetTable(int, refer object BaseString) = <|
+param I, name;
+new rep;
+	for (new i = 0; i < .vRep[I].vRep->Len(); ++i)
+		if (name == .vRep[I].vRep[i].ReportName)
+		{
+			rep = &.vRep[I].vRep[i];
+			break;
+		}
+	return rep;
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::RemoveTable(int, refer object BaseString) = <|
+param I, name;
+new rep;
+	for (new i = 0; i < .vRep[I].vRep->Len(); ++i)
+		if (name == .vRep[I].vRep[i].ReportName)
+		{
+			rep = &.vRep[I].vRep[i];
+			.vRep[I].vRep->Remove(i);
+			break;
+		}
+	return rep;
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::AddTable(pointer object SHTable, pointer object DrawRecord, int) = <|
+param tab, rec, x;
+new y = tab.vectCell->Len();
+	new i, j;
+	rec.record = *tab;
+	rec.record.vectCell = instance Vector(y);
+
+    for (i = 0; i < y; ++i)
+    	rec.record.vectCell[i] = instance Vector(x);
+	
+	new width = rec.x_size/x;
+	for (i = 0; i < y; ++i)
+	{
+    	for (j = 0; j < x; ++j)
+		{
+    		rec.record.vectCell[i][j] = tab.vectCell[i][0];
+			rec.record.vectCell[i][j].parent = &rec.record;
+			rec.record.vectCell[i][j].x_size = width;
+			rec.record.vectCell[i][j].x = i * width;
+			rec.record.vectCell[i][j].name @= Print(j);
+		}
+	}
+	
+	rec.record->MoveTo(rec.parent->X() + rec.x, rec.parent->Y() + rec.y);
+	rec.record.parent = rec.parent;
+	rec.record->SetFont(*tab);
+	rec.record->SetPos();
+	rec.record.ReportName = "noname";
+ 	rec.record.vid_table = H_NONE;
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::AddDir(refer object DBTest, int, refer int, refer int) = <|
+param DBTest, i, index, h1;
+	new X = 0, Y = 0;
+	new tlen = .vRep[i].vRep->Len();
+	.vRep[i].vRep->SetLen(tlen + 1);
+	.vRep[i].vRep[tlen] = .data;
+	new rep = &.vRep[i].vRep[tlen];
+	rep.ReportName = "_DATA_" @ Print(index);
+	++index;
+	rep.vid_table = H_DATA;
+	rep->Y(rep->Y() + h1);
+	new root = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	if (!rep->SetIndexCell("HAEDER_IMAGE", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+	{
+		new sub = @rep.vectCell[Y][X].record;
+
+		if (!sub->SetIndexCell("EXAM_TYPE", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], W10_TEST);
+
+		if (!sub->SetIndexCell("SOLUTION_TXT", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], W1_TEST_SOLUTION);
+		if (!sub->SetIndexCell("SOLUTION", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], GetDilutionLocal(DBTest.Dil));
+
+		if (!sub->SetIndexCell("SIDE_TXT", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], W1_SIDE);
+		if (!sub->SetIndexCell("POSITION", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], GetSideLocal(DBTest.Side));
+
+		if (!sub->SetIndexCell("EXPOSURE_TXT", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], W1_EXPOSURE_TIME);
+		if (DBTest.Incubation != EMPTY)
+		{
+			if (!sub->SetIndexCell("TIME", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+				.vRep[i]->FillCell(&sub.vectCell[Y][X], GetIncubationLocal(DBTest.Incubation));
+		}
+
+		if (!sub->SetIndexCell("RED_DIFF_TXT", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+			.vRep[i]->FillCell(&sub.vectCell[Y][X], W1_REDNESS_DIFF);
+		new reddiff = << >>;
+		new area = << >>;
+		for (new k = 0; k < DBTest.Pictures->Len(); ++k)
+		{
+			onerror {
+				continue;
+			}
+			new ResFileName = JustDirName(root @ DBTest.Pictures[k].Path) @ JustName(DBTest.Pictures[k].Path) @ ".res";
+			new file = instance File(ResFileName);
+			if (file->Access(ACCESS_EXIST))
+			{
+				file->Open("rb");
+				new res = file->Read(-1);
+				res = res->Tokenize(CR);
+				if (res[0]->Find("Right/Left Redness Ratio") != -1)
+				{
+					new diff = res[0]->Tokenize("=+");
+					new v = float(diff[1]);
+					new a_l = res[3]->Tokenize("=+");
+					a_l = float(a_l[1]);
+					new a_r = res[4]->Tokenize("=+");
+					a_r = float(a_r[1]);
+					reddiff ,= v;
+					area ,= a_l + a_r;
+				}
+			}
+		}
+		onerror {
+			rollback;
+		}
+		new res = 0.0;
+		new sum_a = 0.0;
+		for (k = 0; k < reddiff->Len(); ++k)
+		{
+			res += reddiff[k] * area[k];
+			sum_a += area[k];
+		}
+		if (sum_a > 0.0)
+		{
+			res /= sum_a;
+			if (!sub->SetIndexCell("RESULT", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+				.vRep[i]->FillCell(&sub.vectCell[Y][X], Printf("%5.2f", res));
+		}
+		new N = DBTest.Pictures->Len();
+		new tab, cell;
+		if (!rep->SetIndexCell("image_tab", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+
+		cell = &rep.vectCell[Y][X];
+		tab <- cell.record; 
+		self->AddTable(&tab, cell, N);
+		new sub2 = @cell.record;
+		for (new n = 0; n < N; ++n)
+		{
+			new ResFileName = JustDirName(root @ DBTest.Pictures[n].Path) @ JustName(DBTest.Pictures[n].Path) @ ".res";
+			new file = instance File(ResFileName);
+			if (file->Access(ACCESS_EXIST))
+			{
+				file->Open("rb");
+				new res = file->Read(-1);
+				res = res->Tokenize(CR);
+				if (res[0]->Find("Right/Left Redness Ratio") != -1)
+				{
+					new diff = res[0]->Tokenize("=+");
+					new v = float(diff[1]);
+					if (!sub2->SetIndexCell("RESULT" @ Print(n), Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+					.vRep[i]->FillCell(&sub2.vectCell[Y][X], Printf("%5.2f", v));
+				}
+			}
+/*
+			new bmp = instance MBmp();
+			bmp->LoadImage(root @ DBTest.Pictures[n].Path);
+*/
+//			new _Image = MathImage::LoadImageSet(root @ DBTest.Pictures[n].Path);
+			new _Image = LoadImageWithBlur(root @ DBTest.Pictures[n].Path);
+			if (MainMenu::BalanceWB)
+				DoBalanceWB(&_Image);
+			new Params = instance Vector(3);
+			new LUT = instance SimpleLUT();
+			LUT.Automatic = FALSE;
+			LUT.Min = 0;
+			LUT.Max = 255;
+			Params = << << _Image[0], 255, 0, 0, LUT >>, << _Image[1], 0, 255, 0, LUT >>, << _Image[2], 0, 0, 255, LUT >> >>;
+			new bmp =  instance MBmp(Get3BytesBits(Params), _Image[0]->Width(), _Image[0]->Height());
+			if (bmp->GetWidth() != 0)
+			{
+				if (!sub2->SetIndexCell("IMAGE" @ Print(n), Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+				//ALEX------------------------------------------------------
+				.vRep[i]->FillCell(&sub2.vectCell[Y][X], bmp);
+				sub2.vectCell[Y][X].record.pic = bmp;
+				//---------------------------------------------
+			}
+		}
+		new SSSFileName = root @ DBTest.Path @ SFD @ "opscore.txt";
+		new csv = instance File(SSSFileName);
+		rep.ReportName = "_DATA_" @ Print(index);
+		++index;
+		if (!rep->SetIndexCell("SYMPT_SCORE", Y, X)) Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		new sub0 = @rep.vectCell[Y][X].record;
+		
+		if (!sub0->SetIndexCell("ITCHING_TXT", Y, X))	Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		.vRep[i]->FillCell(&sub0.vectCell[Y][X], W1_ITCHING);
+		if (!sub0->SetIndexCell("IRRITATION_TXT", Y, X))	Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		.vRep[i]->FillCell(&sub0.vectCell[Y][X], W1_IRRITATION);
+		if (!sub0->SetIndexCell("TEARS_TXT", Y, X))	Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		.vRep[i]->FillCell(&sub0.vectCell[Y][X], W1_TEARS);
+		if (!sub0->SetIndexCell("REDNESS_TXT", Y, X))	Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+		.vRep[i]->FillCell(&sub0.vectCell[Y][X], W1_REDNESS);
+		if (csv->Access(ACCESS_EXIST))
+		{
+			csv->Open("rb");
+			csv = csv->ReadCSV();
+			if (csv->Len() == 2)
+			{
+				for (new k = 0; k < csv[1]->Len(); ++k)
+				{
+					if (!sub0->SetIndexCell(Printf("SSS_%d", k), Y, X))	Pluk->SetError(ERR_REP_DATA_ERROR, "invalid cell name");
+					.vRep[i]->FillCell(&sub0.vectCell[Y][X], csv[1][k]);
+				}
+			}
+		}
+		if (!.fImegesView)
+		{
+			.vRep[i].vRep->SetLen(tlen + 2);
+			.vRep[i].vRep[tlen + 1] = sub0;
+			.vRep[i].vRep[tlen + 1].parent = EMPTY;
+			.vRep[i].vRep[tlen] = sub;
+			.vRep[i].vRep[tlen].parent = EMPTY;
+			rep = &.vRep[i].vRep[tlen];
+			rep.vid_table = H_DATA;
+			rep.ReportName = "_DATA_" @ Print(index);
+			++index;
+			rep = &.vRep[i].vRep[tlen + 1];
+			rep.vid_table = H_DATA;
+			rep.ReportName = "_DATA_" @ Print(index);
+			++index;
+			rep->Y(.vRep[i].vRep[tlen]->Y() + .vRep[i].vRep[tlen]->GetRect()->Height());
+			h1 += int(.vRep[i].vRep[tlen]->GetRect()->Height() * 1.1) + .vRep[i].vRep[tlen + 1]->GetRect()->Height();
+			tlen += 2;
+		}
+		else
+		{
+			++tlen;
+			h1 += rep->GetRect()->Height();
+		}
+	}
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+MRControl::MoveTo(int, int) = <|
+param shiftx, shifty;
+	new r = .wnd->GetItemRect(.ID);
+	.rect.left = shiftx + .cell.x + 1;
+	.rect.top = shifty + .cell.y + 1;
+	.rect.right = .rect.left + .cell.x_size;
+	.rect.bottom = .rect.top + .cell.y_size;
+
+	if (.valid && .ID != EMPTY)
+		.wnd->SetItemRect(.ID, .rect);
+	new sz = .wnd->GetClientSize();
+	new rect = instance RECT(0, 0, sz[0], sz[1]);
+	if (rect & .rect != EMPTY)
+	{
+		if (!.wnd->IsItemVisible(.ID))
+		{
+			.wnd->ShowItem(.ID);
+			.wnd->SetFocus();
+		}
+
+	}
+	else
+	{
+		if (.wnd->IsItemVisible(.ID))
+			.wnd->HideItem(.ID);
+	}
+
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Reload(void) = <|
+	if (.control != EMPTY && self->IsOpen())
+	{
+		new cell = .control.cell;
+		self->UpdateCell();
+		.control = EMPTY;
+
+	}
+	for (new i = 0; i < .vRep[0].vRep->Len(); ++i)
+		if (.vRep[0].vRep[i].vid_table == H_DATA)
+		{
+			.vRep[0].vRep->Remove(i);
+			--i;
+		}
+	.vRep[0].vRep @=.data;
+	.vRep[0].vRep @=.header;
+	self->InitReport(0, TRUE);
+|>;
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Load(refer object BaseString) = <|
+param Name;
+	new v = instance SerializeReport();
+	.control = EMPTY;
+	v->Load(Name);
+	.vRep = << instance Report() >>;
+	.vRep[0]->Load(v);
+	new sz = self->GetClientSize();
+	self->SetSize(sz[0], sz[1]);
+	self->Invalidate(TRUE);
+|>;                               
+//--------------------------------------------
+//
+//--------------------------------------------
+new AllergoReport::Save(any) = <|
+param Name;
+	if (.control != EMPTY && self->IsOpen())
+	{
+		new cell = .control.cell;
+		self->UpdateCell();
+		.control = EMPTY;
+		self->SetControl(cell);
+	}
+	new data = .vRep[0]->CreateObjectSerializeReport();
+
+	new root = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	if (Name == EMPTY)
+		Name = root @ .DBPatient.Path @ SFD;
+	else
+	{
+		new old_rep = instance SerializeReport();
+		onerror {
+			goto cont;
+		}
+		old_rep->Load(Name);
+		old_rep.orient = data.orient;
+		if (old_rep == data)
+			return;
+cont :
+		onerror {
+			rollback;
+		}
+		Name = JustDirName(Name);
+	}
+	Name @= SFD;
+	new info = instance IniFile(Name @ "info.ini");
+	new id = info->ReadStrW("CARD", "ID", "0");
+			
+	Name @= id;
+	Name @= "_";
+		
+	new date = instance Date();
+	new v =  date->GetDateAsVector();
+	new str = Print(v[2]);
+	str @= "-";
+	date = Print(v[1]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= date;
+	str @= "-";
+	date = Print(v[0]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= date;
+		
+	str @= "_";
+
+	new tm = instance Time();
+	v = tm->GetTimeAsVector();
+	
+	date = Print(v[0]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= date;
+	str @= "-";
+	date = Print(v[1]);
+	if (date->Len() == 1)
+		str @= "0";
+	
+	str @= date;
+	date = Print(v[2]);
+	if (date->Len() == 1)
+		str @= "0";
+	str @= "-";
+	str @= date;
+	Name @= str;
+	Name @= ".srpj";
+
+	data->Save( Name );
+	.Parent.Parent->UpdateForm();
+|>;

@@ -1,0 +1,107 @@
+
+
+//=========================================================
+//
+//=========================================================
+class DlgListSmartphone : ModalForm , FormTriggers {
+	List;
+	Index;
+	Server;
+	Datagram;
+	fFind;
+	
+};
+
+
+//=========================================================
+//
+//=========================================================
+new DlgListSmartphone::DlgListSmartphone(refer object GWnd ) = <|
+param parent;
+.List = <<  >>;
+.fFind = FALSE;	
+	self->ModalForm( "DLG_LIST_SMART", parent );
+
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new DlgListSmartphone::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	self->UpdateForm();
+	.Datagram = instance MDNSClient(self);
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgListSmartphone::~DlgListSmartphone( void ) =
+<|
+.Datagram->LeaveGroup();	
+	
+|>;
+
+
+//===================================================================
+//
+//===================================================================
+new DlgListSmartphone::Cleanup( void ) =
+<|
+|>;
+new DlgListSmartphone::OnOk(refer ...) = <|
+	self->UpdateForm();
+	if (.List->Len() == 0 || .Index == EMPTY) return;
+	
+	self->ModalForm::Close(IDOK);
+|>;
+
+//=========================================================
+//
+//=========================================================
+new DlgListSmartphone::OnFindClient(refer object PacketMDns, refer object String) = <|
+param pack, ip;
+	if (pack.Records->Len() > 0 && pack.Records[0] == mdnsClient  && .List->Find(ip, 0, <| param key, elem; return elem->Len() >= 2 && key == elem[1]; |> ) == -1)
+	{
+		trace pack.Name, " ", ip, CR;
+		.List @= << <<pack.Name, ip >> >>;
+		self->UpdateForm(".List");
+		
+	}
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new DlgListSmartphone::OnFindServer(refer object PacketMDns, refer object SocketAddress) = <|
+param pack, ip;
+	if (pack.Records->Len() > 1 && pack.Records[1] == mdnsServer)
+	{
+		.Server = ip;
+		return TRUE;
+	}
+	return FALSE;
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgListSmartphone::OnReceive(refer object SocketAddress, refer object String ) =
+<|
+	param addr, str;
+	onerror {
+	.fFind = FALSE;
+	return;
+	}
+	if (.fFind) return;
+	.fFind = TRUE;
+	new packetMDns = instance PacketMDns(str, .Datagram->IntAddrToStr(.Datagram->GetPeerName().Address));
+	if (packetMDns.isValid)
+	{
+	if (!self->OnFindServer(packetMDns, addr))
+		self->OnFindClient(packetMDns, .Datagram->IntAddrToStr(addr.Address));
+	}
+	.fFind = FALSE;
+|>;

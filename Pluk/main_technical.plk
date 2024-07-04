@@ -1,0 +1,63 @@
+//================================================
+//================================================
+global ansi2utf16 = <|
+	new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+//	stop;
+	new dirNode = instance TreeDir(Dir, <<>>);
+	new ListCard = dirNode->Root()->GetFileList(<<".ini">>, TRUE);
+	for (new i = 0, l = ListCard->Len(); i < l; ++i)
+	{
+		new f = instance File(Dir @ ListCard[i]->GetWinPath());
+		if (f->Open("rb"))
+		{
+			new s = f->Read(-1); //f->GetLength());
+			f->Close();
+			if (f->Open("wb"))
+			{
+				new s1 = s->ANSIToUTF16();
+				f->Write(s1);
+			}
+		}
+		
+	}
+|>;
+global renameDir = <|
+//	stop;
+	new Dir = instance GDirDialog()->Open().DirName;
+	
+	new dirNode = instance TreeDir(Dir, <<>>);
+	new ListCard = dirNode->Root()->GetFileList(<<".ini">>, TRUE);
+	new id, info;
+	for (new i = 0, l = ListCard->Len(); i < l; ++i)
+	{
+	
+		if (ListCard[i].name == "info.ini" && ListCard[i]->Level() == 1)
+		{
+			new InfoName = Dir @ ListCard[i]->GetWinPath();
+			info = instance IniFile(InfoName);
+			if ((id = info->ReadStrW("CARD", "ID", "")) == "")
+			{
+				info->WriteStrW("CARD", "ID", Print(int(Rand(Clock()) * 100)));
+				id = info->ReadStrW("CARD", "ID", "");
+			}
+			new nam, fam;
+			fam =  info->ReadStrW("CARD", "FAMILY", "");
+			nam = info->ReadStrW("CARD", "NAME", "");
+			info = EMPTY;
+
+			new dstDir = instance DirW(JustDirName(InfoName));
+			new kk = instance String(Dir @ fam  @ "_" @ nam @ "_" @ id @ "\\");
+			if (dstDir.DirName != kk && fam != "" && nam != "")
+			{
+				trace kk, " -> ", dstDir->Rename(dstDir.DirName, kk), CR;
+			}
+		}
+	}
+|>;
+
+renameDir();
+ansi2utf16();
+/*
+main.netDir.mdns = instance MDNSClient(&main.netDir);
+main.netDir.dbdir->InitDB();
+*/

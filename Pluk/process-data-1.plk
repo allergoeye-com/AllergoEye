@@ -1,0 +1,326 @@
+/*
+main->RecalculateAll();
+*/
+//=================================================
+//
+//=================================================
+global ExcludeList = <<
+	 << 10478, 6 >>,
+	 << 10043, -2 >>,
+	 << 9892, -2 >>
+>>;
+
+global ReEvaluateList = <<
+	 << 9489, 4, 1 >>,
+	 << 7434, 3, 1 >>,
+	 << 9489, 3, 1 >>,
+	 << 10459, 4, 0 >>,
+	 << 669, 5, 0 >>,
+	 << 3910, 4, 0 >>,
+	 << 10115, 4, 1 >>,
+	 << 1039, 6, 0 >>,
+	 << 10410, 3, 0 >>
+ >>;
+ReEvaluateList->QSort(); 
+//=================================================
+//
+//=================================================
+new MainMenu::Filter(pointer object DBTest, int) = <|
+param Test, PatientID;
+	new index = ExcludeList->Find(PatientID, 0, {|param key, elem; return key == elem[0]; |});
+	if (index != -1)
+	{
+		if (ExcludeList[index] == -2 || ExcludeList[index][1] == Test->GetTestOrder())
+			return FALSE;
+	}
+	return TRUE;
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::ReEvaluate(pointer object DBTest, int) = <|
+param Test, PatientID;
+	new index = ReEvaluateList->BFind(<< PatientID, Test->GetTestOrder() >>, {|param key, elem; return key[0] == elem[0] ? key[1] <> elem[1] : key[0] <> elem[0]; |});
+	if (index != -1)
+		return ReEvaluateList[index][2];
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::CalculateByNN(boolean) = <|
+param Filter;
+	new X = << >>;
+	new Y = << >>;
+	new AE = << >>;
+	new XR = << >>;
+
+	new f = instance File(instance GOpenDialog("csv", "", "*.csv|*.csv", self)->Open());
+	f->Open("rb");
+	new op = f->ReadCSV();
+	f->Close();
+	new sets = instance Vector(5, 0);
+	new op_sets = instance Vector(5, 0);
+	new ae_sets = instance Vector(5, 0);
+	new opR_sets = instance Vector(5, 0);
+	for (new i = 0; i < op->Len(); ++i)
+	{
+		new rec = op[i];
+		if (rec->Len() < 4 || rec[3]->IsNumber() == FALSE)
+			continue;
+		new id = int(rec[3]);
+		new s_index = int(rec[2]) - 1;
+		new study = Odml2Exec("select p.Date[index] from DBPatient as p where p.PatientID = ? order by p.Date[index].Date", << id >>);
+		if (study->Len() <= s_index)
+			continue;
+
+		trace "------------------------ ", CR, study[s_index].Path, CR, CR;
+		new Allegrens = study[s_index]->GetAllergenList();
+		for (new k = 0; k < Allegrens->Len(); ++k)
+		{
+			new tests = study[s_index]->GetTestList(Allegrens[k]);
+			tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+			new offsetL = EMPTY;
+			new offsetR = EMPTY;
+			new offsetOp = EMPTY;
+			new offsetOpR = EMPTY;
+			new offsetAER = EMPTY;
+			new offsetAEL = EMPTY;
+			if (tests[1]->GetTestOrder() == 0 && tests[1].OpScoreV != EMPTY)
+			{
+				offsetL = tests[1]->GetMeasurements("left");
+				offsetR = tests[1]->GetMeasurements("right");
+				offsetOp = tests[1].OpScore;
+				offsetOpR = tests[1].OpScoreV[3];
+				offsetAEL = tests[1].AEScoreL - tests[1].AEScoreR;
+				offsetAER = tests[1].AEScoreR - tests[1].AEScoreL;
+			}
+			else
+			if (tests[0]->GetTestOrder() < 0 && tests[0].OpScoreV != EMPTY)
+			{
+				offsetL = tests[0]->GetMeasurements("left");
+				offsetR = tests[0]->GetMeasurements("right");
+				offsetOp = tests[0].OpScore;// tests[0].OpScoreV[0] + tests[0].OpScoreV[1] + tests[0].OpScoreV[2];
+				offsetOpR = tests[0].OpScoreV[3];
+				offsetAEL = tests[0].AEScoreL - tests[0].AEScoreR;
+				offsetAER = tests[0].AEScoreR - tests[0].AEScoreL;
+			}
+
+			for (new j = 0; j < tests->Len(); ++j)
+			{
+				if (tests[j]->GetTestOrder() <= 0)
+					continue;
+				if (Filter && !self->Filter(tests[j], id))
+					continue;
+				if (tests[j].OpScoreV != EMPTY)
+				{
+					new res = EMPTY, op, opR, ae;
+					new _in = tests[j]->GetRelativeMeasurements("left", offsetL);
+					if (_in != EMPTY)
+					{
+						NN->Map(_in);
+						res = NN->GetResult()[0][0];
+						opR = tests[j].OpScoreV[3] - offsetOpR;
+						op =  Max(0.0, tests[j].OpScore - offsetOp);
+						ae = tests[j].AEScoreL - tests[j].AEScoreR - offsetAEL;
+					}
+					else
+					{
+						_in = tests[j]->GetRelativeMeasurements("right", offsetR);
+						if (_in != EMPTY)
+						{
+							NN->Map(_in);
+							res = NN->GetResult()[0][0];
+							opR = tests[j].OpScoreV[3] - offsetOpR;
+							op = Max(0.0, tests[j].OpScore - offsetOp);
+							ae = tests[j].AEScoreR - tests[j].AEScoreL - offsetAER;
+						}
+					}
+					if (Filter)
+					{
+						new _opR = self->ReEvaluate(tests[j], id);
+						if (_opR != EMPTY)
+							opR = _opR;
+					}
+					if (res != EMPTY)
+					{
+//						X ,= Max(opR >= 1 ? 3 : 0, op);
+						X ,= opR >= 1 ? 3 : 0;
+						Y ,= res;
+						AE ,= Max(Rand(0.01), ae);
+						XR ,= opR;
+						new d_index = tests[j]->GetTestOrder();
+						if (d_index == -1)
+							continue;
+						if (d_index <= 0)
+							d_index = 0;
+						else
+							d_index -= 2;
+						sets[d_index] ,= res;
+						op_sets[d_index] ,= op;
+						ae_sets[d_index] ,= ae;
+						opR_sets[d_index] ,= opR;
+						if (ae >= 0.3 && X->Last() < 3)
+							trace Printf("FP: %s %s %v op = %g, opR = %g, ae = %g, res = %v\r\n", tests[j].Allergen.Allergen, tests[j].Allergen.Dil, tests[j].OpScoreV, op, opR, ae, res);
+						if (ae < 0.3 && X->Last() >= 3)
+							trace Printf("FN: %s %s %v op = %g, opR = %g, ae = %g, res = %v\r\n", tests[j].Allergen.Allergen, tests[j].Allergen.Dil, tests[j].OpScoreV, op, opR, ae, res);
+					}
+				}
+			}
+		}
+	}
+	global sgraph;
+	if (sgraph == EMPTY || !sgraph->IsOpen())
+		sgraph = instance ScatterPlotGrphWnd();
+	sgraph->AddCurve(instance ScatterPlot(X, AE, "OpScore-X, AE-Red-Y"));
+//	sgraph->AddCurve(instance ScatterPlot(XR, AE, "OpRed-X, AE_Red-Y"));
+
+	global roc_graph;
+	if (roc_graph == EMPTY || !roc_graph->IsOpen())
+		roc_graph = instance GraphicWnd();
+	new nTP = 0.0;
+	new nFP = 0.0;
+	new ROC = instance Vector(X->Len());
+	for (new k = 0; k < X->Len(); ++k)
+	{
+		if (X[k] >= 3)
+			nTP += 1.0;
+		else
+			nFP += 1.0;
+		ROC[k] = << AE[k], X[k] >>;
+	}
+	ROC->QSort({| param key, elem; return key[0] <> elem[0]; |});
+	new _ROC = << << 1.0, 1.0, ROC->Last()[0] ** 2.0 + 0.5 >> >>;
+	new tp = 1.0;
+	new fp = 1.0;
+	for (new t = 0; t < ROC->Len(); ++t)
+	{
+
+		if (ROC[t][1] >= 3)
+			tp -= 1.0 / nTP;
+		else
+			fp -= 1.0 / nFP;
+		_ROC ,= << fp, tp, ROC[t][0] ** 2.0 >>;
+	}
+	_ROC->QSort();
+	new ROC_X = instance Vector(_ROC->Len());
+	new ROC_Y = instance Vector(_ROC->Len());
+	new ROC_D = instance Vector(_ROC->Len());
+	for (k = 0; k < _ROC->Len(); ++k)
+	{
+		ROC_X[k] = _ROC[k][0] * 100.0;
+		ROC_Y[k] = _ROC[k][1] * 100.0;
+		ROC_D[k] = _ROC[k][2];
+	}
+	new rc = instance Curve(ROC_X, ROC_Y, ROC_D);
+	roc_graph->AddCurve(rc);
+//	return self->SaveToCSV(sets, op_sets, ae_sets, opR_sets);
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::SaveToCSV(object Vector, object Vector, object Vector, object Vector) = <|
+param sets, op_sets, ae_sets, opR_sets;
+
+	new fRes = instance File(instance GSaveDialog("csv", "", "*.csv|*.csv", self)->Open());
+	fRes->Open("wb");
+
+	new TestNames = << "Eingangsuntersuchung", "1-1 000", "1-100", "1-10", "Stocklösung" >>;
+	fRes->Write("NN\r\n");
+	fRes->Printf("%s, %s, %s, %s, %s\r\n", [TestNames]);
+	new Rep = TRUE;
+	new off = 0;
+	new i;
+	while (Rep)
+	{
+		Rep = FALSE;
+		for (new k = 0; k < 5; ++k)
+		{
+			if (sets[k]->Len() > off)
+			{
+				fRes->Printf(" %g,", sets[k][off]);
+				Rep = TRUE;
+			}
+			else
+				fRes->Printf(" ,");
+		}
+		fRes->Printf("\r\n");
+		++off;
+	}
+	
+	for (i = 0; i < 5; ++i)
+		fRes->Printf("\"%s\"\r\n%v\r\n", TestNames[i], instance Stat(sets[i]));
+
+	fRes->Write("\r\n\t\nOpScore\r\n");
+	fRes->Printf("%s, %s, %s, s, %s\r\n", [TestNames]);
+	Rep = TRUE;
+	off = 0;
+	while (Rep)
+	{
+		Rep = FALSE;
+		for (new k = 0; k < 5; ++k)
+		{
+			if (op_sets[k]->Len() > off)
+			{
+				fRes->Printf(" %g,", op_sets[k][off]);
+				Rep = TRUE;
+			}
+			else
+				fRes->Printf(" ,");
+		}
+		fRes->Printf("\r\n");
+		++off;
+	}
+
+	for (i = 0; i < 5; ++i)
+		fRes->Printf("\"%s\"\r\n%v\r\n", TestNames[i], instance Stat(op_sets[i]));
+
+	fRes->Write("\r\n\t\nAE_Red\r\n");
+	fRes->Printf("%s, %s, %s, %s, %s\r\n", [TestNames]);
+	Rep = TRUE;
+	off = 0;
+	while (Rep)
+	{
+		Rep = FALSE;
+		for (new k = 0; k < 5; ++k)
+		{
+			if (ae_sets[k]->Len() > off)
+			{
+				fRes->Printf(" %g,", ae_sets[k][off]);
+				Rep = TRUE;
+			}
+			else
+				fRes->Printf(" ,");
+		}
+		fRes->Printf("\r\n");
+		++off;
+	}
+	for (i = 0; i < 5; ++i)
+		fRes->Printf("\"%s\"\r\n%v\r\n", TestNames[i], instance Stat(ae_sets[i]));
+
+
+	fRes->Write("\r\n\t\nOp_Red\r\n");
+	fRes->Printf("%s, %s, %s, %s, %s\r\n", [TestNames]);
+	Rep = TRUE;
+	off = 0;
+	while (Rep)
+	{
+		Rep = FALSE;
+		for (new k = 0; k < 5; ++k)
+		{
+			if (ae_sets[k]->Len() > off)
+			{
+				fRes->Printf(" %g,", opR_sets[k][off]);
+				Rep = TRUE;
+			}
+			else
+				fRes->Printf(" ,");
+		}
+		fRes->Printf("\r\n");
+		++off;
+	}
+	for (i = 0; i < 5; ++i)
+		fRes->Printf("\"%s\"\r\n%v\r\n", TestNames[i], instance Stat(opR_sets[i]));
+
+	fRes->Close();
+	return << sets, op_sets>>;
+|>;

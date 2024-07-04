@@ -1,0 +1,865 @@
+class MainWnd  : ModalForm , FormTriggers {
+		ToolBar;
+		RoiBar;
+		ImageWnd;
+		Height;
+		Width;
+		List;
+		iSel;
+		Parent;
+		prevRoi;
+		boolFOK;
+		waitCursor;
+		undo;
+		GraphWnd;
+		Modefied;
+global:
+		ShowGraph;
+	};
+event WND_SIZE,	MainWnd::OnSize;
+event WND_UPDATE, MainWnd::OnUpdate;
+event WND_USER + ID_RESPONCE, 	MainWnd::onResponce;
+
+MainWnd::ShowGraph = FALSE;
+
+//==========================================
+//
+//==========================================
+new MainWnd::MainWnd(refer object Vector, int, refer object GWnd ) = <|
+param list, iSel, parent;
+	.Modefied = FALSE;
+	.List = list;
+	.Parent = &parent;
+	if (iSel < 0)
+		iSel = 0;
+	.iSel = iSel;
+	.boolFOK = FALSE;
+	.prevRoi = instance Vector(list->Len());
+	.undo = instance Vector(list->Len());
+	for (new i = 0; i < list->Len(); ++i)
+		.prevRoi[i] = list[i].roi;
+	self->ModalForm("DLG_EDIT_CONTOURS_WND", parent);
+	self->AllowEvent(WND_SIZE);
+	self->AllowEvent(WND_UPDATE);
+
+	self->AllowEvent(WND_USER + ID_RESPONCE);
+	self->Bind(self);
+|>;
+
+//==========================================
+//
+//==========================================
+new MainWnd::OnUpdateROI(void) = <|
+	.RoiBar->OnUpdateROI2();
+|>;
+//==========================================
+//
+//==========================================
+new MainWnd::Setup(void) = <|
+	.ToolBar = instance ToolBar(self);
+	.RoiBar = instance RoiWnd(.List, .iSel, self);
+	.ImageWnd = instance ImageWnd(self);
+	self->ModalForm::Setup();
+	self->Maximize();
+	self->UpdateSize();
+|>;
+//==========================================
+//
+//==========================================
+new MainWnd::OnClose(refer ...) = <|
+	onerror {
+	
+		self->ModalForm::Close(IDOK);
+		return;
+	}
+	self->OnEndEdit();
+	if (.List->Len() > 0)
+	{
+		if (.iSel != EMPTY && .iSel  > -1 )
+		for (new i = 0, l = .List[.iSel].roi->Len(); i < l; ++i)
+		{
+			.List[.iSel].roi[i]->Edit(FALSE);
+			.List[.iSel].roi[i].Selected = FALSE;
+		}
+	
+		for (new i = 0; i < .List->Len(); ++i)
+			if (.List[i]->IsModefied() || .prevRoi[i]->Len() != .List[i].roi->Len())
+			{
+				.RoiBar->SelectJPG(i);
+				if (MessageBox(W1_WARNING, W1_ROI_MODEFY_REBUILD, MB_YESNO | MB_ICONSTOP, self) == IDYES)
+				{
+					.boolFOK = TRUE;
+					for (new j = 0; j < .List->Len(); ++j)
+						.List[j]->ClearModefied();
+					self->OnBuild();
+					return;
+				}
+				else
+				{
+					for (new j = 0; j < .List->Len(); ++j)
+						if (.List[j]->IsModefied())
+						{
+							.List[j].roi = .prevRoi[j];
+							.List[j]->ClearModefied();
+						}
+					break;
+				}
+			}
+	}		
+	self->ModalForm::Close(IDOK);
+|>;
+//================================================
+//
+//================================================
+new MainWnd::OnSize(int, int, int) = <|
+param code, width, height;
+	onerror {
+		return 0;
+	}
+	if (code != SIZE_MINIMIZED)
+	{
+		if (.Height == height && .Width == width)
+			return 0;
+		.Height = height;
+		.Width = width;
+		Pluk->FlushIdle();
+		self->UpdateSize();
+	}
+	return 0;
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::OnSelectFile(int) = <|
+param i;
+	if (.Modefied == TRUE)
+	{
+		.Modefied = FALSE;
+		.RoiBar->SelectJPG(.iSel);
+		self->OnBuild();
+	}
+	.ImageWnd->EndEdit();
+	.iSel = i;
+	.ImageWnd->OnLoad(.List[.iSel]);
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/*if (MainWnd::ShowGraph)
+{
+	for (new j = 0; j < .List[.iSel].res_distr->Len(); ++j)
+	{
+		if (.GraphWnd == EMPTY)
+			.GraphWnd = instance GraphicWnd(self);
+		else
+			if (!.GraphWnd->IsOpen())
+				.GraphWnd = instance GraphicWnd(self);
+		if (typeof(.List[.iSel].res_distr[j]) == "Vector")
+		{
+			.GraphWnd->AddCurve(.List[.iSel].res_distr[j][0], j == 0 ? CLR_LIGHTRED : CLR_LIGHTBLUE);
+			.GraphWnd->AddCurve(.List[.iSel].res_distr[j][1], j == 0 ? CLR_RED : CLR_BLUE);
+		}
+		else
+			.GraphWnd->AddCurve(.List[.iSel].res_distr[j], j == 0 ? CLR_LIGHTRED : CLR_LIGHTBLUE);
+	}
+}*/
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	.ToolBar->SetResult(.RoiBar.file.result);
+	self->NotifyUndo();
+	.RoiBar->SelectRoi(0);
+
+
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::EndNewROI(void) = <|
+	self->OnUpdateROI();
+	if (.ToolBar->GetItem(ID_NEW_ROI))
+		.ToolBar->SetItem(<<ID_NEW_ROI, FALSE>>);
+	.ToolBar->EnableItem(ID_EDIT, TRUE);
+	
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::OnNewROI(void) = <|
+	if (.ToolBar->GetItem(ID_NEW_ROI))
+	{
+		.ToolBar->EnableItem(ID_EDIT, FALSE);
+		.ImageWnd->AddNewROI();
+
+	}
+	else
+	{
+		.ImageWnd->EndNewROI();
+		.ToolBar->EnableItem(ID_EDIT, TRUE);
+	}
+	
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::OnUpdate(void) = <|
+	onerror {
+		new mdc = instance MDC(self);
+		mdc->OpenDC();
+		mdc->CloseDC();
+		return;
+	}
+		
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	mdc->CloseDC();
+	if (.ImageWnd != EMPTY)
+		.ImageWnd->OnUpdate();
+	if (.ToolBar != EMPTY)
+		.ToolBar->SetResult(.RoiBar.file.result);
+|>;
+//=============================================
+//
+//=============================================
+
+new MainWnd::OnUpdateViews(void) = <|
+	.ImageWnd->OnUpdate();
+|>;
+//==========================================
+//
+//==========================================
+new MainWnd::UpdateSize(void) = <|
+	new size = self->GetClientSize();
+	.Width = size[0];
+	.Height = size[1];
+	if (.ToolBar != EMPTY)
+		.ToolBar->SetSize(.Width, .ToolBar->GetSize()[1]);
+	if (.RoiBar != EMPTY)
+	{
+		.RoiBar->SetPos(0, .ToolBar->GetSize()[1]);
+	
+		.RoiBar->SetSize(.RoiBar->GetSize()[0], .Height - .ToolBar->GetSize()[1]);
+	}
+
+	if (.ImageWnd != EMPTY)
+	{
+		new top = .ToolBar->GetSize()[1];
+		new left = .RoiBar->GetSize()[0];
+		new Width = (self->GetClientSize()[0] - left - 4);
+		.ImageWnd->SetPos(left, top);
+		.ImageWnd->SetSize(Width, size[1] - top);
+		if (.ImageWnd.Bmp == EMPTY)
+			self->OnSelectFile(.iSel);
+		.ImageWnd->Invalidate(TRUE);
+	}
+	if (.ToolBar != EMPTY)
+	.ToolBar->Invalidate(TRUE);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnEdit(void) = <|
+
+	if (.ToolBar->GetItem(ID_EDIT))
+	{
+		.ToolBar->EnableItem(ID_NEW_ROI, FALSE);
+		.RoiBar->OnEdit();
+	}
+	else
+		.ImageWnd->EndEdit(.RoiBar);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::SetEdit(void) = <|
+
+	.ToolBar->SetItem(<<ID_EDIT, TRUE>>);
+	self->OnEdit();
+
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnEndEdit(void) = <|
+	if (.ToolBar->GetItem(ID_EDIT))
+		.ToolBar->SetItem(<<ID_EDIT, FALSE>>);
+	.ToolBar->EnableItem(ID_NEW_ROI, TRUE);
+
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::EnableEdit(boolean, refer any) = <|
+param flg, ref;
+	.ImageWnd->EnableEdit(flg, ref);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnDelete(void) = <|
+	.ImageWnd->EndNewROI();
+	.ImageWnd->EndEdit();
+	.RoiBar->OnDelete();
+	.Modefied = TRUE;
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::TraceFileName(void) = <|
+	new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	.ImageWnd->EndNewROI();
+	.ImageWnd->EndEdit();
+	new FileName = dir @ .List[.iSel]->GetWinPath() @ CR;
+	
+	dir = AllergoEyeIni->ReadStr("DIR", "DATA_EX");
+	if (dir == EMPTY || dir == "")
+	{
+		dir = instance GDirDialog(self)->Open().DirName;
+		AllergoEyeIni->WriteStr("DIR", "DATA_EX", dir);
+	}
+	new f = instance File(dir @ "trace.txt");
+	f->Open("ab");
+	if (f->Tell() == 0)
+		f->WriteUnicodePrefix();
+	new rw = FileName @ CR;
+	f->Write(rw);
+	f->Close();	
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnDeleteImage(void) = <|
+	if (MessageBox(W12_ATTESTION, W12_IMAGE_CONFIRM, MB_ICONQUESTION | MB_YESNO, self) == IDYES)
+	{
+		new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (dir->GetLastByte() != FD)
+			dir @= SFD;
+		.ImageWnd->EndNewROI();
+		.ImageWnd->EndEdit();
+		new FileName = dir @ .List[.iSel]->GetWinPath();
+		new nm = .List[.iSel].name;
+		new par = .List[.iSel].parent;
+		new selPath = .List[.iSel]->GetPath();
+		new i = .iSel; 
+		if (.iSel > 0)	
+			--.iSel;
+		if (.iSel > .List->Len())
+		{
+			instance File(FileName)->Remove();
+			self->ModalForm::Close(IDOK);
+			return;
+		}
+		.List->Remove(i);
+		
+		.prevRoi->Remove(i);
+		.undo->Remove(i);
+		new f = instance File(FileName);
+		if (f->GetAttribute() != -1)
+			f->Remove();
+		f = instance File(JustDirName(FileName) @ JustName(FileName) @ ".bin");
+		if (f->GetAttribute() != -1)
+			f->Remove();
+		f = instance File(JustDirName(FileName) @ JustName(FileName) @ ".ctr");
+		if (f->GetAttribute() != -1)
+			f->Remove();
+		f = instance File(JustDirName(FileName) @ JustName(FileName) @ ".nam");
+		if (f->GetAttribute() != -1)
+			f->Remove();
+		f = instance File(JustDirName(FileName) @ JustName(FileName) @ ".res");
+		if (f->GetAttribute() != -1)
+			f->Remove();
+		f = instance File(JustDirName(FileName) @ JustName(FileName) @ ".dst");
+		if (f->GetAttribute() != -1)
+			f->Remove();
+		main.netDir.proxy->OnRemovePiture(selPath);
+	
+		*par -= JustName(FileName) @ ".bin";
+		*par -= JustName(FileName) @ ".ctr";
+		*par -= JustName(FileName) @ ".nam";
+		*par -= JustName(FileName) @ ".jpg";
+		.RoiBar->Init(.List, .iSel);
+		.RoiBar->UpdateForm();
+
+		self->OnSelectFile(.iSel);
+		self->UpdateForm();
+	}
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnSelectRoi(any) = <|
+param b;
+	if (b != EMPTY)
+		.ImageWnd->OnSelectRoi(b == EMPTY ? -1 : b);
+	.ToolBar->EnableItem(ID_BUILD, TRUE);
+
+	.ToolBar->EnableDelete(b != EMPTY && b >= 0);
+	.ToolBar->EnableEdit(b != EMPTY && b >= 0);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnBuild(refer ...) = <|
+	onerror {
+		.waitCursor = EMPTY;
+		return;
+	};
+	.Modefied = FALSE;
+	self->OnEndEdit();
+	.waitCursor = instance GWaitCursor();
+	.ToolBar->EnableItem(ID_BUILD, FALSE);
+	.ImageWnd->EndNewROI();
+	.ImageWnd->EndEdit();
+	.undo[.iSel] = EMPTY;
+	
+	self->OnUpdateViews();
+	self->NotifyUndo();
+	new l = .RoiBar.file.roi->Len();
+	.RoiBar.file->ClearModefied();
+
+
+	new Recalc = TRUE;
+_new_f:
+	if (l > 0)
+	{
+		new v = instance Vector(l);
+		new H = .ImageWnd.Bmp->GetHeight(); 	
+		new W = .ImageWnd.Bmp->GetWidth();
+		new res;
+		new mi = instance MathImage(W, H);
+		for (new i = 0;  i < l; ++i)
+		{
+			new v = .RoiBar.file.roi[i].Points;
+			if (v->Len() < 3)
+			{
+				.RoiBar.file.roi->Remove(i);
+				.RoiBar.file.names->Remove(i);
+				.RoiBar.Data->Remove(i);
+				--l;
+				--i;
+				continue;
+			}
+			.RoiBar.file.names[i] = .RoiBar.Data[i][0];
+			for (new j = 0, jl = v->Len(); j <  jl; ++j)
+				v[j].y  = H - v[j].y;
+			new bc = instance BetaContour(v);
+			bc->MakeSplineFromControl(v);
+			new _mask = mi->GetSplineMask(bc, TRUE) * -1;
+			if (.RoiBar.file.names[i]->ToLower()->Find("iris") != -1)
+				_mask *= 2;
+			else
+			if (.RoiBar.file.names[i]->ToLower()->Find("corner") != -1)
+				_mask *= 4;
+
+			if (res == EMPTY)
+			 	res = _mask;
+			else
+				res |= _mask;
+		}
+		if (l <= 0)
+			goto _new_f;
+		res->SetIfEqual(2, 3);
+		res->SetIfEqual(4, 5);
+		res->SetIfEqual(4, 6);
+		
+		new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (dir->GetLastByte() != FD)
+			dir @= SFD;
+		dir @= .List[.iSel]->GetWinPath();
+		
+		new MaskName = JustDirName(dir) @ JustName(dir) @ ".bin";
+		new f = instance File(MaskName);
+		f->Open("wb");
+		f->Write(res->GetBits(1));
+		f->Close();
+	}
+	else
+	{
+		Recalc = FALSE;
+		if (TRUE) //.prevRoi[.RoiBar.IndexJpg]->Len() > 0)
+		{
+			new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+			if (dir->GetLastByte() != FD)
+				dir @= SFD;
+			dir @= .List[.iSel]->GetWinPath();
+			new b = TRUE;
+			onerror {
+				b = FALSE;
+			};
+			if (b)
+			{
+				new MaskName = JustDirName(dir) @ JustName(dir) @ ".bin";
+				new f = instance File(MaskName);
+				f->Remove();
+				MaskName = JustDirName(dir) @ JustName(dir) @ ".ctr";
+				f = instance File(MaskName);
+				f->Remove();
+				MaskName = JustDirName(dir) @ JustName(dir) @ ".nam";
+				f = instance File(MaskName);
+				f->Remove();
+			}
+		}	
+	}
+//!!!!!!!!!!!!!!!!!!!!! 2021-12-11 !!!!!!!!!!!!!!!!!!!!
+/*
+	if (!.Parent->OnBuild(.RoiBar.file))
+	{
+		.waitCursor = EMPTY;
+		MessageBox("Warning !", "connect error", MB_OK | MB_ICONSTOP, self);
+		return FALSE;
+	}
+
+*/
+	Pluk->FlushIdle();
+	//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
+	{
+		new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (dir->GetLastByte() != FD)
+			dir @= SFD;
+		dir @= .List[.iSel]->GetWinPath();
+		
+		new Name = JustDirName(dir) @ JustName(dir) @ ".jpg";
+		new  ae = Pluk->GetUUID();
+		new cmt  = JustDirName(ExeName) @ "AEExchange\\" @ Pluk->UUIDToText(ae);
+		new f = instance File(cmt @  ".cmp"); //"ae_exchange.tmp");
+
+//		new f = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
+		f->Open("wb");
+		if (Recalc)
+			f->Putv("recalc");
+		else
+			f->Putv("");
+		f->Putv(Name);
+		f->Close();
+		f->Rename(cmt @ ".tmp");
+		new clock = Clock();
+		while(f->Access(ACCESS_EXIST) == TRUE && Clock() - clock < 5.0)
+			Pluk->FlushIdle();
+
+	}
+//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
+/*
+	new FileName = JustDirName(ExeName) @ "AEExchange" @ SFD @ "ae_exchange.tmp";
+	new ae_nn = AllergoEyeIni->ReadStr("NAME", "NN");
+	if (Recalc)
+		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
+	else
+		Pluk->Exec(Printf("%snn-test.exe %s %s /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
+*/	Pluk->FlushIdle();
+	self->onResponce(1, TRUE);
+//!!!!!!!!!!!!!!!!!!!!! 2021-12-11 !!!!!!!!!!!!!!!!!!!!
+	return TRUE;
+	
+|>;
+//===================================================
+//
+//===================================================
+/*
+new MainWnd::OnResponce(void) = <|
+	onerror {
+		return FALSE;
+	};
+	self->PostEvent(WND_USER + ID_RESPONCE, 0, 0);
+	return TRUE;
+
+|>;
+*/
+//===================================================
+//
+//===================================================
+new MainWnd::onResponce(refer ...) = <|
+parest res;
+	
+	if (res[1] == FALSE)
+	{
+		.waitCursor = EMPTY;
+	
+		MessageBox("Warning !", "send data error", MB_OK | MB_ICONSTOP, self);
+		.ToolBar->EnableItem(ID_BUILD, TRUE);
+		self->OnUpdateViews();
+		return;
+		
+	
+	}
+	.waitCursor = EMPTY;
+	new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (Dir->GetLastByte() != FD)
+		Dir @= SFD;
+	new dir = Dir @ .RoiBar.file->GetWinPath();
+	.RoiBar.file.parent->ReloadDir(Dir, <<>>, FALSE);
+	if (.RoiBar.file.parent.childs->Find(JustName(dir) @ ".ctr", 0,  <| param key, elem; return key == elem.name; |>) != -1)
+	{
+		new v = <<>>;
+		new names = << >>;
+		new distr = << >>;
+		.RoiBar.file.result = main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+		.RoiBar.file.res_distr <- distr;
+		new Pict = Odml2Exec("select p from DBPicture as p where p.Path like ?", <<"%" @ .RoiBar.file.name>>);
+		if (Pict->Len() > 0)
+		{
+			new root = AllergoEyeIni->ReadStr("DIR", "DATA");
+			new Name = JustName(Pict[0].Path);
+			new dirName = root @ JustDirName(Pict[0].Path);
+			new f1 = instance File(dirName @ Name @ ".res");
+			Pict[0]->ReadScore(f1);
+			f1 = instance File(dirName @ Name @ ".dst");
+			Pict[0]->ReadDistr(f1);
+			Pict[0]->Save();
+			new Test = Odml2Exec("select p from DBTest as p where p.Pictures[i].oID = ?", <<Pict[0].oID>>);
+			Test[0]->CalculateScore();
+			Test[0]->Save();
+		}
+				
+		if (v->Len() > 0)
+		{
+			.RoiBar.file.roi <- v;
+			.RoiBar.file.names <- names;
+		}
+	}
+	.prevRoi[.iSel] = .List[.iSel].roi;
+	.ToolBar->SetResult(.RoiBar.file.result);
+	.RoiBar->OnUpdateROI();
+	.ToolBar->EnableItem(ID_BUILD, TRUE);
+	self->OnUpdateViews();
+	
+	if (.Parent.ListSubRecord != EMPTY)
+		.Parent.ListSubRecord->OnUpdate();
+	for (new i = 0; i < .List->Len(); ++i)
+		if (.List[i]->IsModefied())
+		{
+			.RoiBar->SelectJPG(i);
+			self->OnBuild();
+			return;
+		}
+	if (.boolFOK)
+		self->ModalForm::Close(IDOK);
+	else
+		.RoiBar->SelectRoi(0);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::AddUndo(refer object String, refer object Vector, int) = <|
+param cmd, prm, indexROI;
+	onerror {
+		return;
+	}
+	if (.undo[.iSel] != EMPTY)
+		if (.undo[.iSel].is_run) return;
+
+	new elmUndo = instance ElmUndo();
+	switch(cmd)
+	{
+		case "InsertPOINT":
+			elmUndo.undo = <<"DeletePOINT", indexROI, prm[1] >>;
+			elmUndo.redo = <<"InsertPOINT", indexROI, prm[0], prm[1] >>;
+			break;
+		case "DeletePOINT":
+			elmUndo.redo = <<"DeletePOINT", indexROI, prm[1] >>;
+			elmUndo.undo = <<"InsertPOINT", indexROI, prm[0], prm[1] >>;
+			break;
+		case "MovePOINT":
+			elmUndo.redo = <<"MovePOINT", indexROI, prm[2], prm[1] >>;
+			elmUndo.undo = <<"MovePOINT", indexROI, prm[2], prm[0] >>;
+			break;
+		case "AddROI":
+			elmUndo.redo = <<"AddROI",  indexROI, prm >>;
+			elmUndo.undo = <<"DeleteROI", indexROI >>;
+			break;
+		case "DeleteROI":
+			elmUndo.undo = <<"AddROI",  indexROI, prm >>;
+			elmUndo.redo = <<"DeleteROI", indexROI >>;
+			break;
+		default:
+			elmUndo = EMPTY;
+	}
+	if (elmUndo != EMPTY)
+	{
+		if (.undo[.iSel] == EMPTY)
+			.undo[.iSel] = instance Undo(100);
+		.undo[.iSel]->Add(elmUndo);
+		self->NotifyUndo();
+	}	
+	
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::NotifyUndo(void) = <|
+	if (.undo[.iSel] == EMPTY)
+	{
+		.ToolBar->EnableItem(ID_REDO, FALSE);
+		.ToolBar->EnableItem(ID_UNDO, FALSE);
+		return;
+	
+	}
+	new l = @.undo[.iSel];
+	if (l->Pos() == l->Len())
+		.ToolBar->EnableItem(ID_REDO, FALSE);
+	else
+		.ToolBar->EnableItem(ID_REDO, TRUE);
+	
+	if (l->Pos() == 0)
+		.ToolBar->EnableItem(ID_UNDO, FALSE);
+	else
+		.ToolBar->EnableItem(ID_UNDO, TRUE);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnUndo(void) = <|
+new s = .undo[.iSel] == EMPTY ? EMPTY : .undo[.iSel]->Prev();
+	if (s != EMPTY)
+		self->ExecCmd(s.undo);
+	self->NotifyUndo();	
+	
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnRedo(void) = <|
+new s = .undo[.iSel] == EMPTY ? EMPTY : .undo[.iSel]->Next();
+	if (s != EMPTY)
+		self->ExecCmd(s.redo);
+	self->NotifyUndo();
+
+|>;
+new MainWnd::IsEditJPG(int) = <|
+param i;
+	return .undo[i] == EMPTY || .undo[i]->Len() == 0 ? FALSE : TRUE;  
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::ExecCmd(refer object Vector) = <|
+param cmd;
+	onerror {
+	.undo[.iSel].is_run = FALSE;
+	return;
+	}
+	new flg = FALSE;
+	if (.undo[.iSel] != EMPTY)
+		if (.undo[.iSel].is_run) return;
+	.undo[.iSel].is_run = TRUE;
+	switch(cmd[0])
+	{
+		case "InsertPOINT":
+			.RoiBar->SelectRoi(cmd[1]);
+			if (!.List[.iSel].roi[cmd[1]]->IsEdit())
+				self->SetEdit();
+			.List[.iSel].roi[cmd[1]]->Insert(cmd[2], cmd[3]);
+//			self->EnableEdit(FALSE, EMPTY);
+			break;
+		case "DeletePOINT":
+			.RoiBar->SelectRoi(cmd[1]);
+			if (!.List[.iSel].roi[cmd[1]]->IsEdit())
+				self->SetEdit();
+			.List[.iSel].roi[cmd[1]]->Delete(cmd[2]);
+
+			//self->EnableEdit(FALSE, EMPTY);
+			break;
+		case "MovePOINT":
+			.RoiBar->SelectRoi(cmd[1]);
+			if (!.List[.iSel].roi[cmd[1]]->IsEdit())
+				self->SetEdit();
+			.List[.iSel].roi[cmd[1]]->Move(cmd[2], cmd[3]);
+			//self->EnableEdit(FALSE, EMPTY);
+			break;
+		case "AddROI":
+			.ImageWnd->EndEdit(EMPTY);
+			.List[.iSel].roi->Insert(cmd[2][0], cmd[1]);
+			.List[.iSel].names->Insert(cmd[2][1], cmd[1]);
+			
+			self->OnUpdateROI();
+		//	self->EnableEdit(FALSE, EMPTY);
+			break;
+		case "DeleteROI":
+			.RoiBar->SelectRoi(cmd[1]);
+			self->OnDelete();
+			break;
+	}
+	self->OnUpdateViews();
+	.undo[.iSel].is_run = FALSE;	
+	
+|>;
+
+new MainWnd::LoadMask(void) = <|
+	new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (dir->GetLastByte() != FD)
+			dir @= SFD;
+	new ImageName = dir @ .List[.iSel]->GetWinPath();
+	new MaskName = JustDirName(ImageName) @ JustName(ImageName) @ ".bin";
+	new f = instance File(MaskName);
+	if (f->Access(ACCESS_EXIST) == TRUE)
+	{
+		f->Open("rb");
+		new bits = f->Read(-1);
+		f->Close();
+		new Image = MathImage::LoadImageSet(ImageName);
+		new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+		new iris = mask;
+		new sclera = mask;
+		sclera->SetIfNotEqual(0, 1);
+		//self->MakeBmp(sclera)->SaveToFile("f:\\sclera.bmp");
+		iris->SetIfNotEqual(0, 2);
+		//self->MakeBmp(iris)->SaveToFile("f:\\iris.bmp");
+		return <<self->MakeBmp(iris), self->MakeBmp(sclera) >>;
+		
+
+	}
+|>;
+new MainWnd::MakeBmp(refer object MathImage) = <|
+param img;
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = img->GetMaximum();
+	new Params = instance Vector(1);
+	Params = << << img, 255, 255, 255, LUT >> >>;
+	return instance MBmp(Get3BytesBits(Params), img->Width(), img->Height());
+	
+|>;
+
+
+global LoadBmpWithBlur = <|
+param ImageName;
+	new Image = LoadImageWithBlur(ImageName);
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = 255;
+	new Params = << << Image[0], 255, 0, 0, LUT >>,
+					<< Image[1], 0, 255, 0, LUT >>,
+					<< Image[2], 0, 0, 255, LUT >>
+			>>;
+	return instance MBmp(Get3BytesBits(Params), Image[0]->Width(), Image[0]->Height());
+|>;
+
+global LoadImageWithBlur = <|
+param ImageName;
+	new MaskName = JustDirName(ImageName) @ JustName(ImageName) @ ".bin";
+	new Image = MathImage::LoadImageSet(ImageName);
+	new f = instance File(MaskName);
+	if (f->Access(ACCESS_EXIST) == TRUE)
+	{
+		f->Open("rb");
+		new bits = f->Read(-1);
+		f->Close();
+		new Blur = Image;
+		new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+		new iris = mask;
+		iris->SetIfNotEqual(0, 2);
+		iris->SetIfEqual(-1, 2);
+		new iris_1 = iris;
+		iris_1 *= -1;
+		iris_1 -= 1;
+		
+		for (new i = 0; i < Blur->Len(); ++i)
+		{
+			Image[i] &= iris_1;
+			Blur[i] &= iris;
+			Blur[i] = Blur[i]->Binning(24, TRUE); 
+			Blur[i] = Blur[i]->Stretch(24, Image[i]->Width(), Image[i]->Height());
+			Blur[i] &= iris;
+			Image[i] += Blur[i];
+		}
+	}
+	return Image;
+|>;
+

@@ -1,0 +1,107 @@
+//==================================================
+//
+//==================================================
+new NetDir::ConnectDB(void) = <|
+	if (.Ds == EMPTY)
+		self->_ConnectDB();
+|>;
+//==================================================
+//
+//==================================================
+new NetDir::ReconnectDB(void) = <|
+	new numberOfAttemps = 0;
+	onerror {
+		if (numberOfAttemps > 2)
+			rollback;
+		++numberOfAttemps;
+	}
+	.Ds = EMPTY;
+	ProxyObject::NetProxy->RemoveProxyClass("OdbcDs");
+	ProxyObject::NetProxy->RemoveProxyClass("OdbcStmt");
+	self->_ConnectDB();
+|>;
+//==================================================
+//
+//==================================================
+new NetDir::_ConnectDB(void) = <|
+	onerror {
+		.Ds = EMPTY;
+		ProxyObject::NetProxy->RemoveProxyClass("OdbcDs");
+		ProxyObject::NetProxy->RemoveProxyClass("OdbcStmt");
+		rollback;
+	}
+	EndWaitCursor();
+	instance Persist()->ResetDataSource();
+	onerror {
+		.Ds = EMPTY;
+		ProxyObject::NetProxy->RemoveProxyClass("OdbcDs");
+		ProxyObject::NetProxy->RemoveProxyClass("OdbcStmt");
+		rollback;
+	}
+	EndWaitCursor();
+	instance Persist()->ResetDataSource();
+
+	ProxyObject::NetProxy->RemoveProxyClass("OdbcDs");
+	ProxyObject::NetProxy->RemoveProxyClass("OdbcStmt");
+	.Ds = instance OdbcDs();
+	new DbPath = Pluk->GetHomePath();
+	new rep = 0;
+	new DriverName = "Microsoft Access Driver (*.mdb)";
+	if (Pluk->GetVersion()[4] == 64)
+		DriverName = "Microsoft Access Driver (*.mdb, *.accdb)";
+	.Ds->ConnectTo(Printf("DRIVER={%s};DBQ=%s", DriverName, DbPath @ "AllergoEye.mdb"));
+	onerror { return; }
+	instance Persist()->ClearAll();
+	instance Persist()->ResetDataSource();
+	instance Persist()->SetDataSource(.Ds);
+	.Ds->SetUnSerializeFlg(TRUE);
+|>;
+//==================================================
+//
+//==================================================
+new NetDir::ClearDB(void) = <|
+	onerror {
+		.Ds = EMPTY;
+		ProxyObject::NetProxy->RemoveProxyClass("OdbcDs");
+		ProxyObject::NetProxy->RemoveProxyClass("OdbcStmt");
+		rollback;
+	}
+
+	new DbPath = Pluk->GetHomePath();
+	new f = instance File(DbPath @ "AllergoEye.mdb~");
+	if (f->Access(ACCESS_EXIST))
+	{
+		instance Persist()->ResetDataSource();
+		if (.Ds != EMPTY)
+		{
+			ProxyObject::NetProxy->RemoveProxyClass("OdbcDs");
+			ProxyObject::NetProxy->RemoveProxyClass("OdbcStmt");
+			.Ds->Disconnect();
+		}
+		.Ds = EMPTY;
+		f->CopyTo(DbPath @ "AllergoEye.mdb");
+	}
+	else
+	{
+		new prg = instance GProgressWnd( FALSE, "Clear AllergoEye Database", main);
+		new b =  Odml2Exec("select p from DBPatient as p", <<  >>);
+		for (new i = 0; i < b->Len(); ++i)
+		{
+			prg->SetProgress(i * 15 / b->Len());
+			b[i]->Delete();
+		}
+	}
+	.Ds = instance OdbcDs();
+	new rep = 0;
+	new DriverName = "Microsoft Access Driver (*.mdb)";
+	if (Pluk->GetVersion()[4] == 64)
+		DriverName = "Microsoft Access Driver (*.mdb, *.accdb)";
+	.Ds->ConnectTo(Printf("DRIVER={%s};DBQ=%s", DriverName, DbPath @ "AllergoEye.mdb"));
+	onerror { return; }
+	instance Persist()->ClearAll();
+	instance Persist()->ResetDataSource();
+	instance Persist()->SetDataSource(.Ds);
+	.Ds->SetUnSerializeFlg(TRUE);
+|>;
+
+

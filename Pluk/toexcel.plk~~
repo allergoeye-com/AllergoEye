@@ -1,0 +1,297 @@
+
+
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnToExcel(refer ...) = <|
+	new com;
+	onerror {
+		if (com != EMPTY)
+		{
+			com->gWorkbooks()->gItem(1)->Close(0);
+			com->Quit();
+
+		}
+		com = EMPTY;
+		return FALSE;
+	};
+	com = instance ComObj()->CreateComObject("Excel.Application", "ex");
+		
+	new prg1 = instance GProgressWnd(FALSE, "Copy To Excel ", self);
+	new bk = com->gWorkbooks()->Add();
+	com->pVisible(TRUE);
+
+	new cls = com->gWorksheets()->gItem(1)->gCells();
+	new w1 = cls->gItem(1, 1)->gColumnWidth();
+	new w2 = cls->gItem(1, 1)->gWidth();
+	w2 /= float(w1); 
+	new x, y;
+	x = y = 1;
+	new h1 = cls->gItem(1, 1)->gRowHeight();
+	new h2 = cls->gItem(1, 1)->gHeight();
+	h2 /= float(h1); 
+	new exCell;
+	new d = DEF_WORDSCALE;
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	y = 1;
+/*
+//	for (new i = 0, l = .SubRecords->Len(); i <  l; ++i)
+	{
+		new i = .IndexSubRecords;
+		new obj = .SubRecords[i][1];
+		
+		new currentList = obj->GetFileList(<<".res">>);
+		self->DrawText(.SubRecords[i][2][.FAMILY] @ " " @ .SubRecords[i][2][.NAME], cls, mdc, y, 2, d, size_mm, w2, h2);	
+		x = 1;
+		++y;
+		self->DrawText(.SubRecords[i][2][.OBJ].name, cls, mdc, y, x, d, size_mm, w2, h2);
+		++x;
+		for (new j = 0, lj = currentList->Len(); j < lj; ++j)
+		{
+		
+			new dir = .Dir @ currentList[j]->GetWinPath();
+			new path = JustDirName(dir) @ currentList[j].name;
+			new f = instance File(path);
+			if (!f->Open("rb"))
+				continue;
+			new data = f->Gets();
+			f->Close();
+			self->DrawText(data, cls, mdc, y, j + x, d, size_mm, w2, h2);	
+		}
+		++y;
+			
+	}
+*/
+	self->DrawText("First Name", cls, mdc, y, 1, d, size_mm, w2, h2);	
+	self->DrawText("Last Name", cls, mdc, y, 2, d, size_mm, w2, h2);	
+	self->DrawText("Date of Birth", cls, mdc, y, 3, d, size_mm, w2, h2);
+	self->DrawText("Test Date", cls, mdc, y, 4, d, size_mm, w2, h2);
+	self->DrawText("Test Name", cls, mdc, y, 5, d, size_mm, w2, h2);
+	self->DrawText("Image Time", cls, mdc, y, 6, d, size_mm, w2, h2);
+	self->DrawText("L/R", cls, mdc, y, 7, d, size_mm, w2, h2);
+	self->DrawText("SEM", cls, mdc, y, 8, d, size_mm, w2, h2);
+	++y;
+	new currentList = .ListSubRecord->GetListRecords();
+	currentList->QSort({|param key, elem; return key.name <> elem.name; |});
+	for (new j = 0, lj = currentList->Len(); j < lj; ++j)
+	{
+	
+		new current = currentList[j].parent->GetFile(JustName(currentList[j].name) @ ".res");
+		if (current == EMPTY)
+			continue;
+		onerror {
+			continue;
+		}
+		self->DrawText(.AllRecord[.IndexAll][.FAMILY], cls, mdc, y, 1, d, size_mm, w2, h2);	
+		self->DrawText(.AllRecord[.IndexAll][.NAME], cls, mdc, y, 2, d, size_mm, w2, h2);	
+		new bd = .AllRecord[.IndexAll][.DATE]->Tokenize("/.");
+		if (GetDim(bd) == 3)
+		{
+			Swap(bd[0], bd[2]);
+			bd = bd->SynStr("-");
+		}
+		else
+			bd = bd[0];
+		self->DrawText(bd, cls, mdc, y, 3, d, size_mm, w2, h2);
+		
+		new dir = .Dir @ current->GetWinPath();
+		new path = JustDirName(dir) @ current.name;
+		new test = JustDirName(dir)->Tokenize(SFD);
+		new test_date = test[test->Len() - 2];
+		new test_name = test[test->Len() - 1];
+		test_date = test_date->Tokenize("-");
+		test_date = Printf("%s-%s-%s", test_date[2], test_date[1], test_date[0]);
+		self->DrawText(test_date, cls, mdc, y, 4, d, size_mm, w2, h2);
+		self->DrawText(test_name, cls, mdc, y, 5, d, size_mm, w2, h2);
+
+		new image_time = JustName(current.name)->Tokenize(" ");
+		image_time = image_time[image_time->Len() - 1];
+		image_time->ReplaceAll("-", ":");
+		self->DrawText(image_time, cls, mdc, y, 6, d, size_mm, w2, h2);
+		new f = instance File(path);
+		if (!f->Open("rb"))
+			continue;
+		new s = f->Gets();
+		new data = s->Tokenize(" = \r\n");
+		data = data->Last();
+		data = data->Tokenize("+-");
+		self->DrawText(data[0], cls, mdc, y, 7, d, size_mm, w2, h2);
+		self->DrawText(data[data->Len() == 2 ? 1 : 0], cls, mdc, y, 8, d, size_mm, w2, h2);
+		f->Close();
+		++y;
+	}
+	onerror {
+		return FALSE;
+	}
+	mdc->CloseDC();
+//	com->gWorkbooks()->gItem(1)->Close(-1);
+	return TRUE;
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnReport(refer ...) = <|
+/*	new currentList = .ListSubRecord->GetListRecords();
+	new Dirs = << >>;
+	for (new i = 0; i < currentList->Len(); ++i)
+	{
+		new dir = currentList[i].parent.name;
+		if (Dirs->BFind(dir) == -1)
+			Dirs->BInsert(dir);
+	}
+	*/
+	new RepDlg = instance AE_ReportWnd(self);
+	RepDlg->Open();
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::FillReport(refer object EditReportWnd) = <|
+param report;
+	report->FillCellAndShow("PATIENT", "ID", .AllRecord[.IndexAll][.ID]);
+	report->FillCellAndShow("PATIENT", "NAME", Printf("%s %s", .AllRecord[.IndexAll][.FAMILY], .AllRecord[.IndexAll][.NAME]));
+	report->FillCellAndShow("PATIENT", "BIRTHDAY", .AllRecord[.IndexAll][.DATE]);
+//	report->FillCellAndShow("PATIENT", "BIRTHDAY", .AllRecord[.IndexAll][.DATE]);
+	report->FillCellAndShow("DATE_PLACE", "REP_DATE", instance Date()->Print());
+	new currentList = .ListSubRecord->GetListRecords();
+	currentList->QSort({|param key, elem; return key.name <> elem.name; |});
+	new dd = instance TreeDir();
+	self->GetSelectList(dd);
+	new Tests = << >>;
+	for (new i = 0; i < currentList->Len(); ++i)
+	{
+		new dir = currentList[i].parent.name;
+		if (Tests->BFind(dir) == -1)
+			trace dir, Tests->BInsert(dir), CR;
+	}
+
+	new current = currentList[0].parent->GetFile(JustName(currentList[0].name) @ ".res");
+	if (current == EMPTY)
+		return;		
+	new dir = .Dir @ current->GetWinPath();
+	new path = JustDirName(dir) @ current.name;
+	new test = JustDirName(dir)->Tokenize(SFD);
+	if (test->Len() > 2)
+	{
+		new test_date = test[test->Len() - 2];
+		test_date = test_date->Tokenize("-");
+		if (test_date->Len() >= 3)
+		{
+			report->FillCellAndShow("EXAM", "TEST_DATE", Printf("%s/%s/%s", test_date[2], test_date[1], test_date[0]));
+		}
+	}
+	if (test->Len() > 1)
+	{
+		new allergen = test[test->Len() - 1];
+		new test_name = allergen->Tokenize("_");
+		report->FillCellAndShow("EXAM", "ALLERGEN", test_name[0]);
+	}
+	new ImageIndex = instance Vector(Tests->Len());
+	ImageIndex->Set(0);
+	new MeanResult = instance Vector(Tests->Len());
+	MeanResult->Set(0.0);
+	for (new j = 0, lj = currentList->Len(); j < lj; ++j)
+	{
+	
+		current = currentList[j].parent->GetFile(JustName(currentList[j].name) @ ".res");
+		if (current == EMPTY)
+			continue;
+		onerror {
+			continue;
+		}
+		new dir = .Dir @ current->GetWinPath();
+		new ResFileName = JustDirName(dir) @ current.name;
+		new index = Tests->Find( currentList[j].parent.name);
+		new TableName = Printf("EXAM_DATA%d", index);
+		new test_name = currentList[j].parent.name->Tokenize("_");
+		if (test_name->Len() > 1)
+		{
+			if (test_name[1] == "Eingangsuntersuchung" || test_name[1] == "start test")
+				report->FillCellAndShow(TableName, "EXAM_TYPE", test_name[1]);
+			else
+			{
+				report->FillCellAndShow(TableName, "EXAM_TYPE", "Examination");
+				report->FillCellAndShow(TableName, "SOLUTION", test_name[1]);
+			}
+			if (test_name->Len() > 2)
+				report->FillCellAndShow(TableName, "POSITION", test_name[2]);
+			if (test_name->Len() > 3)
+				report->FillCellAndShow(TableName, "TIME", test_name[3]);
+		}
+		current = currentList[j].parent->GetFile(currentList[j].name);
+		dir = .Dir @ current->GetWinPath();
+		new ImageFileName = JustDirName(dir) @ current.name;
+		new bmp = instance MBmp();
+		bmp->LoadImage(ImageFileName);
+		new ImageTableName = Printf("EXAM_IMAGE%d", index);
+		report->FillCellAndShow(ImageTableName, Printf("IMAGE%d", ImageIndex[index]), bmp);
+		new res = instance File(ResFileName);
+		res->Open("rb");
+		res = res->Read(-1);
+		res = res->Tokenize(CR);
+		res = res[0]->Tokenize("+");
+		res = res[0];
+		res = res->Tokenize("=");
+		res = double(res[1]);
+		report->FillCellAndShow(ImageTableName, Printf("RESULT%d", ImageIndex[index]), Printf("%5.2f", res));
+		
+		MeanResult[index] += res;
+		ImageIndex[index] += 1;
+	}
+	for (i = 0; i < MeanResult->Len(); ++i)
+	{
+		new TableName = Printf("EXAM_DATA%d", i);
+		if (ImageIndex[i] > 0)
+			report->FillCellAndShow(TableName, "RESULT", Printf("%5.2f", MeanResult[i] / ImageIndex[i]));
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::SetHeaderAnFooterFromReport(refer object EditReportWnd) = <|
+param report;
+onerror {
+	return;
+};
+	report->FillCellAndShow("PATIENT", "ID", .AllRecord[.IndexAll][.ID]);
+	report->FillCellAndShow("PATIENT", "NAME", Printf("%s %s", .AllRecord[.IndexAll][.FAMILY], .AllRecord[.IndexAll][.NAME]));
+	report->FillCellAndShow("PATIENT", "BIRTHDAY", .AllRecord[.IndexAll][.DATE]);
+	report->FillCellAndShow("DATE_PLACE", "REP_DATE", instance Date()->Print());
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetSelect(refer object TreeDir) = <|
+param dir;
+	new currentList = .ListSubRecord->GetListRecords();
+	
+	
+	currentList->QSort({|param key, elem; return key->GetPath() <> elem->GetPath(); |});
+	for (new i = 0; i < currentList->Len(); ++i)
+	{
+		new ph = currentList[i]->GetPath();
+		new n = ph->Find('_');
+		if (n != -1)
+			ph->PutByte(n, '/');
+		new file = dir->AddFile(ph);
+		if (file != EMPTY)
+		file.result <- currentList[i];
+	}
+
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::DrawText(refer object String, refer object ComObj, refer object MDC, int, int, number, number, number,number) = <|
+param data, cls, mdc, i, j, d, size_mm, w2, h2;
+	cls->pItem(i, j, data);
+	new rc = mdc->GetStringRect(data);
+	//rc.right += data->Len();
+	new w1 = (rc.right * d/size_mm)/w2 + 0.6;
+	new exCell = cls->gItem(i, j);
+	exCell->pRowHeight((d * rc->Height()/size_mm)/h2);
+
+	if (w1 > cls->gItem(i, j)->gColumnWidth())
+		exCell->pColumnWidth(w1);
+|>;

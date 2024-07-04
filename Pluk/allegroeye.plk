@@ -1,0 +1,323 @@
+global DBEYE_ENUM = << "left", "right", "both sides" >>;
+
+global DB_ALLERGEN = << "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ambrosia", "altenaria altenata", "penicillium notatum", "cat" >>;
+
+global DB_DILUTION = << "start test", "control solution", "1-1000", "1-100", "1-10", "stock solution" >>;
+
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBCAP"))
+{
+/**
+Allergen is instance of 'DB_ALLERGEN'
+CAP is instance of 'int'
+//===============  Comments ===============
+	Atrribute 'Allergen' has enumerated values: "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ambrosia", "altenaria altenata", "penicillium notatum", "cat"
+
+#module root.database.odml.dbclasses
+**/
+class DBCAP :  Persist {
+		Allergen;
+		CAP;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBCAP::UserLoadTrigger = << >>;
+	DBCAP::UserSaveTrigger = << >>;
+	DBCAP::UserDeleteTrigger = << >>;
+	DBCAP::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBCAP", << "Persist" >>);
+	Pluk->AddMembers("DBCAP", << "Allergen", "CAP" >>);
+	Pluk->AddClassMembers("DBCAP", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBCAP::UserLoadTrigger == EMPTY) DBCAP::UserLoadTrigger = << >>;
+	if (DBCAP::UserSaveTrigger == EMPTY) DBCAP::UserSaveTrigger = << >>;
+	if (DBCAP::UserPostSaveTrigger == EMPTY) DBCAP::UserPostSaveTrigger = << >>;
+	if (DBCAP::UserDeleteTrigger == EMPTY) DBCAP::UserDeleteTrigger = << >>;
+}
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBDate"))
+{
+/**
+Allergen is instance of 'DB_ALLERGEN'
+Date is instance of 'Date'
+Path is instance of 'WString'
+Tests is vector of 'DBTest'
+//===============  Comments ===============
+	Atrribute 'Allergen' has enumerated values: "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ambrosia", "altenaria altenata", "penicillium notatum", "cat"
+
+#module root.database.odml.dbclasses
+**/
+class DBDate :  Persist {
+		Allergen;
+		Date;
+		Path;
+		Tests;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBDate::UserLoadTrigger = << >>;
+	DBDate::UserSaveTrigger = << >>;
+	DBDate::UserDeleteTrigger = << >>;
+	DBDate::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBDate", << "Persist" >>);
+	Pluk->AddMembers("DBDate", << "Allergen", "Date", "Path", "Tests" >>);
+	Pluk->AddClassMembers("DBDate", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBDate::UserLoadTrigger == EMPTY) DBDate::UserLoadTrigger = << >>;
+	if (DBDate::UserSaveTrigger == EMPTY) DBDate::UserSaveTrigger = << >>;
+	if (DBDate::UserPostSaveTrigger == EMPTY) DBDate::UserPostSaveTrigger = << >>;
+	if (DBDate::UserDeleteTrigger == EMPTY) DBDate::UserDeleteTrigger = << >>;
+}
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBPatient"))
+{
+/**
+ - Patient record
+CAP is vector of 'DBCAP'
+Date is vector of 'DBDate'
+DateOfBirth is instance of 'Date'
+FirstName is instance of 'WString'
+LastName is instance of 'WString' (indexed)
+Path is instance of 'WString' (unique) (indexed)
+PatientIDStr is instance of 'String' (unique) (indexed)
+Reports is vector of 'DBReport'
+Therapy is vector of 'DBTherapy'
+//===============  Comments ===============
+
+#module root.database.odml.dbclasses
+**/
+class DBPatient :  Persist {
+		CAP;
+		Date;
+		DateOfBirth;
+		FirstName;
+		LastName;
+		Path;
+		PatientIDStr;
+		Reports;
+		Therapy;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBPatient::UserLoadTrigger = << >>;
+	DBPatient::UserSaveTrigger = << >>;
+	DBPatient::UserDeleteTrigger = << >>;
+	DBPatient::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBPatient", << "Persist" >>);
+	Pluk->AddMembers("DBPatient", << "CAP", "Date", "DateOfBirth", "FirstName", "LastName", "Path", "PatientIDStr", "Reports", "Therapy" >>);
+	Pluk->AddClassMembers("DBPatient", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBPatient::UserLoadTrigger == EMPTY) DBPatient::UserLoadTrigger = << >>;
+	if (DBPatient::UserSaveTrigger == EMPTY) DBPatient::UserSaveTrigger = << >>;
+	if (DBPatient::UserPostSaveTrigger == EMPTY) DBPatient::UserPostSaveTrigger = << >>;
+	if (DBPatient::UserDeleteTrigger == EMPTY) DBPatient::UserDeleteTrigger = << >>;
+}
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBPicture"))
+{
+/**
+AreaL is instance of 'double' (may be empty)
+AreaR is instance of 'double' (may be empty)
+Contur is instance of 'boolean'
+Date is instance of 'Date'
+DistrL is instance of 'any' (may be empty)
+DistrR is instance of 'any' (may be empty)
+DistrTotal is instance of 'any' (may be empty)
+Names is instance of 'boolean'
+Path is instance of 'WString'
+Result is instance of 'boolean'
+ScoreL is instance of 'double' (may be empty)
+ScoreR is instance of 'double' (may be empty)
+Side is instance of 'DBEYE_ENUM'
+Time is instance of 'Time'
+//===============  Comments ===============
+	Atrribute 'Side' has enumerated values: "left", "right", "both sides"
+
+#module root.database.odml.dbclasses
+**/
+class DBPicture :  Persist {
+		AreaL;
+		AreaR;
+		Contur;
+		Date;
+		DistrL;
+		DistrR;
+		DistrTotal;
+		Names;
+		Path;
+		Result;
+		ScoreL;
+		ScoreR;
+		Side;
+		Time;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBPicture::UserLoadTrigger = << >>;
+	DBPicture::UserSaveTrigger = << >>;
+	DBPicture::UserDeleteTrigger = << >>;
+	DBPicture::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBPicture", << "Persist" >>);
+	Pluk->AddMembers("DBPicture", << "AreaL", "AreaR", "Contur", "Date", "DistrL", "DistrR", "DistrTotal", "Names", "Path", "Result", "ScoreL", "ScoreR", "Side", "Time" >>);
+	Pluk->AddClassMembers("DBPicture", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBPicture::UserLoadTrigger == EMPTY) DBPicture::UserLoadTrigger = << >>;
+	if (DBPicture::UserSaveTrigger == EMPTY) DBPicture::UserSaveTrigger = << >>;
+	if (DBPicture::UserPostSaveTrigger == EMPTY) DBPicture::UserPostSaveTrigger = << >>;
+	if (DBPicture::UserDeleteTrigger == EMPTY) DBPicture::UserDeleteTrigger = << >>;
+}
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBReport"))
+{
+/**
+Path is instance of 'WString'
+//===============  Comments ===============
+
+#module root.database.odml.dbclasses
+**/
+class DBReport :  Persist {
+		Path;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBReport::UserLoadTrigger = << >>;
+	DBReport::UserSaveTrigger = << >>;
+	DBReport::UserDeleteTrigger = << >>;
+	DBReport::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBReport", << "Persist" >>);
+	Pluk->AddMembers("DBReport", << "Path" >>);
+	Pluk->AddClassMembers("DBReport", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBReport::UserLoadTrigger == EMPTY) DBReport::UserLoadTrigger = << >>;
+	if (DBReport::UserSaveTrigger == EMPTY) DBReport::UserSaveTrigger = << >>;
+	if (DBReport::UserPostSaveTrigger == EMPTY) DBReport::UserPostSaveTrigger = << >>;
+	if (DBReport::UserDeleteTrigger == EMPTY) DBReport::UserDeleteTrigger = << >>;
+}
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBTest"))
+{
+/**
+AEScoreL is instance of 'double' (may be empty)
+AEScoreR is instance of 'double' (may be empty)
+Allergen is instance of 'DB_ALLERGEN'
+Dil is instance of 'DB_DILUTION'
+DistrL is instance of 'any' (may be empty)
+DistrR is instance of 'any' (may be empty)
+DistrTotal is instance of 'any' (may be empty)
+Incubation is instance of 'WString' (may be empty)
+OpScore is instance of 'double' (may be empty)
+OpScoreV is instance of 'any' (may be empty)
+Path is instance of 'WString'
+Pictures is vector of 'DBPicture'
+Side is instance of 'DBEYE_ENUM'
+//===============  Comments ===============
+	Atrribute 'Allergen' has enumerated values: "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ambrosia", "altenaria altenata", "penicillium notatum", "cat"
+	Atrribute 'Dil' has enumerated values: "start test", "control solution", "1-1000", "1-100", "1-10", "stock solution"
+	Atrribute 'Side' has enumerated values: "left", "right", "both sides"
+
+#module root.database.odml.dbclasses
+**/
+class DBTest :  Persist {
+		AEScoreL;
+		AEScoreR;
+		Allergen;
+		Dil;
+		DistrL;
+		DistrR;
+		DistrTotal;
+		Incubation;
+		OpScore;
+		OpScoreV;
+		Path;
+		Pictures;
+		Side;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBTest::UserLoadTrigger = << >>;
+	DBTest::UserSaveTrigger = << >>;
+	DBTest::UserDeleteTrigger = << >>;
+	DBTest::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBTest", << "Persist" >>);
+	Pluk->AddMembers("DBTest", << "AEScoreL", "AEScoreR", "Allergen", "Dil", "DistrL", "DistrR", "DistrTotal", "Incubation", "OpScore", "OpScoreV", "Path", "Pictures", "Side" >>);
+	Pluk->AddClassMembers("DBTest", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBTest::UserLoadTrigger == EMPTY) DBTest::UserLoadTrigger = << >>;
+	if (DBTest::UserSaveTrigger == EMPTY) DBTest::UserSaveTrigger = << >>;
+	if (DBTest::UserPostSaveTrigger == EMPTY) DBTest::UserPostSaveTrigger = << >>;
+	if (DBTest::UserDeleteTrigger == EMPTY) DBTest::UserDeleteTrigger = << >>;
+}
+
+///////////////////////////////////////////////
+if (!Pluk->IsClass("DBTherapy"))
+{
+/**
+Allergen is instance of 'DB_ALLERGEN'
+Medication is instance of 'WString' (may be empty)
+StartDate is instance of 'Date'
+//===============  Comments ===============
+	Atrribute 'Allergen' has enumerated values: "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ambrosia", "altenaria altenata", "penicillium notatum", "cat"
+
+#module root.database.odml.dbclasses
+**/
+class DBTherapy :  Persist {
+		Allergen;
+		Medication;
+		StartDate;
+global :
+		UserLoadTrigger;
+		UserSaveTrigger;
+		UserPostSaveTrigger;
+		UserDeleteTrigger;
+	};
+	DBTherapy::UserLoadTrigger = << >>;
+	DBTherapy::UserSaveTrigger = << >>;
+	DBTherapy::UserDeleteTrigger = << >>;
+	DBTherapy::UserPostSaveTrigger = << >>;
+}
+else
+{
+	Pluk->AddParents("DBTherapy", << "Persist" >>);
+	Pluk->AddMembers("DBTherapy", << "Allergen", "Medication", "StartDate" >>);
+	Pluk->AddClassMembers("DBTherapy", <<"UserLoadTrigger", "UserSaveTrigger", "UserPostSaveTrigger", "UserDeleteTrigger">>);
+	if (DBTherapy::UserLoadTrigger == EMPTY) DBTherapy::UserLoadTrigger = << >>;
+	if (DBTherapy::UserSaveTrigger == EMPTY) DBTherapy::UserSaveTrigger = << >>;
+	if (DBTherapy::UserPostSaveTrigger == EMPTY) DBTherapy::UserPostSaveTrigger = << >>;
+	if (DBTherapy::UserDeleteTrigger == EMPTY) DBTherapy::UserDeleteTrigger = << >>;
+}

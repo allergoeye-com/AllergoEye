@@ -1,0 +1,28 @@
+
+global PlukIni = instance IniFile(JustDirName(ExeName) @ "pluk.ini");
+
+PlukIni->ReadStr("PlukInterp", "PlukError", JustDirName(ExeName) @ "error.dat");
+PlukIni->ReadStr("PlukInterp", "PlukBin", JustDirName(ExeName));
+PlukIni->ReadStr("PlukInterp", "PlukBin64", JustDirName(ExeName));
+
+PlukIni->ReadStr("Locale", "Code", CurLocale.Code);
+PlukIni->ReadStr("Locale", "DateFormat", "dmy");
+PlukIni->ReadStr("Locale", "MoneyFormat", "eur");
+PlukIni->WriteInt("DefaultFont", "Size", 9);
+PlukIni->WriteStr("DefaultFont", "Name", "Times New Roman");
+global AllergoEyeIni = instance IniFile(JustDirName(ExeName) @ "allergoscopeeditor.ini");
+AllergoEyeIni->ReadStr("DIR", "DATA", JustDirName(ExeName) @ "Data\\");
+AllergoEyeIni->ReadStr("DIR", "GDT", JustDirName(ExeName) @ "GDT\\");
+AllergoEyeIni->ReadStr("PATH", "PLUK", JustDirName(ExeName));
+AllergoEyeIni->ReadStr("Locale", "Lang", "English");
+
+AllergoEyeIni->ReadStr("NAME", "NN", "NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn");
+
+
+global MDNSAddress = AllergoEyeIni->ReadStr("MUTICAST", "ADDRESS", "224.0.0.251");
+global MDNSPort = AllergoEyeIni->ReadInt("MUTICAST", "PORT", 5353);
+global ServerPort = AllergoEyeIni->ReadInt("MUTICAST", "SERVERPORT", 8182);
+global ServerDtgPort = AllergoEyeIni->ReadInt("MUTICAST", "SERVER_DTG_PORT", 8281);
+global ServerAddress = AllergoEyeIni->ReadStr("MUTICAST", "SERVERADDRESS","127.0.0.1");
+global mdnsServer = AllergoEyeIni->ReadStr("MUTICAST", "Server", "com.allergoscope.app");
+global mdnsClient = AllergoEyeIni->ReadStr("MUTICAST", "Client", "com.allergoscope.client");

@@ -1,0 +1,334 @@
+class NetDir {
+	fOk;
+	server;
+	mdns;
+	proxy;
+	serverAddress;
+	clockServer;
+	tmpProxy;
+	dirNode;
+	busy;
+	lastChanged;
+	Ds;
+	dbdir;
+
+	iTimerWaitServer;
+	
+};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::NetDir(void) = <|
+	.iTimerWaitServer = 0;
+	.mdns = instance MDNSClient(&self);
+	.serverAddress = instance  SocketAddress(.mdns->StrAddrToInt(ServerAddress), ServerDtgPort);
+	.busy = FALSE;
+	self->ConnectDB();
+	.dbdir = instance DBDir();
+	.dbdir.fUpdateProgress = TRUE;
+	.dbdir.root = instance DirNode();
+	.dbdir->InitDirs();
+//	.dbdir->InitDB();
+|>;
+
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::NetDir(int) = <|
+	.iTimerWaitServer = 0;
+	.busy = FALSE;
+	self->ConnectDB();
+	.dbdir = instance DBDir();
+	.dbdir->InitDB();
+|>;
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::Restart(void) = <|
+	self->Close();
+	.iTimerWaitServer = 0;
+	.mdns = EMPTY;
+	.mdns = instance MDNSClient(&self);
+|>;
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::~NetDir(void) = <|
+	onerror {
+		return;
+	};
+	.server = EMPTY;
+	if (.Ds  != EMPTY)
+		.Ds->Disconnect();
+	.Ds = EMPTY;
+|>;
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::SetProxy(any) = <|
+param proxy;
+	.proxy = proxy;
+|>;
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::Close(void) = <|
+onerror {
+.server = EMPTY;
+	return;
+};
+	if (.server != EMPTY)
+		.server->Shutdown(TRUE);
+	.server = EMPTY;
+|>;
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::ReadDir(refer object BaseString, ...) = <|
+param prm;
+parest tmpProxy;
+	.mdns = EMPTY;
+	.mdns = instance MDNSClient(&self);
+
+	.fOk = FALSE;
+	if (.serverAddress == EMPTY)
+		return EMPTY; 
+	.tmpProxy = EMPTY;
+	if (tmpProxy != EMPTY && tmpProxy->Len() > 0)
+		.tmpProxy = << tmpProxy[0], "ReadDir" >>;
+
+	if (.server == EMPTY)
+		.server = instance ToServer("READ", "DIR", .serverAddress, prm->ANSIToUTF16(), &self);
+	else
+		.server->WriteCmd("READ", "DIR", prm);
+	if (.tmpProxy == EMPTY)
+	{	
+		while (!.fOk)
+		{
+			Pluk->Idle();
+		}
+		new pars = instance ParsXml(.server.result[0]);
+		new tree = instance TreeDir(pars);
+		return tree;
+	}
+|>;
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::OnResponce(refer object BaseString, refer any) = <|
+param cmd, res;
+	if (cmd == "ReadDir")
+	{
+		new pars = instance ParsXml(res[0]);
+		.dirNode = instance TreeDir(pars);
+	
+	}
+	self->Close();
+|>;
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::ReadFile(refer object String, ...) = <|
+param prm;
+parest tmpProxy;
+	.fOk = FALSE;
+	if (.serverAddress == EMPTY) return EMPTY; 
+	.tmpProxy = EMPTY;
+	if (tmpProxy != EMPTY && tmpProxy->Len() > 0)
+		.tmpProxy = << tmpProxy[0], "ReadFile" >>;
+
+	if (.server == EMPTY)
+		.server = instance ToServer("READ", "FILE", .serverAddress, prm->ANSIToUTF16(), &self);
+	else
+		.server->WriteCmd("READ", "FILES", prm);
+	
+	if (.tmpProxy == EMPTY)
+	{	
+		while (!.fOk)
+		{
+			Pluk->Idle();
+		}
+		self->Close();	
+
+		return .server.result;
+	}
+
+|>;
+new NetDir::ReadFile(refer object WString, ...) = <|
+param prm;
+parest tmpProxy;
+	.fOk = FALSE;
+	if (.serverAddress == EMPTY) return EMPTY; 
+	.tmpProxy = EMPTY;
+	if (tmpProxy != EMPTY && tmpProxy->Len() > 0)
+		.tmpProxy = << tmpProxy[0], "ReadFile" >>;
+
+	if (.server == EMPTY)
+		.server = instance ToServer("READ", "FILE", .serverAddress, prm.Data, &self);
+	else
+		.server->WriteCmd("READ", "FILES", prm.Data);
+	
+	if (.tmpProxy == EMPTY)
+	{	
+		while (!.fOk)
+		{
+			Pluk->Idle();
+		}
+		self->Close();	
+
+		return .server.result;
+	}
+
+|>;new NetDir::InitDir(void) = <|
+	self->ReadDir("/", &self);
+|>;
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::MkDir(refer object Vector, ...) = <|
+param prm;
+parest tmpProxy;
+
+	.fOk = FALSE;
+	if (.serverAddress == EMPTY)
+		return EMPTY; 
+	tmpProxy = EMPTY;
+	if (tmpProxy != EMPTY && tmpProxy->Len() > 0)
+		.tmpProxy = << tmpProxy[0], "ReadFiles" >>;
+
+	if (.server == EMPTY)
+		.server = instance ToServer("WRITE", "MKDIR", .serverAddress, prm, &self);
+	else
+		.server->WriteCmd("WRITE", "MKDIR", prm->ANSIToUTF16());
+	if (.tmpProxy == EMPTY)
+	{	
+		while (!.fOk)
+			Pluk->Idle();
+		self->Close();	
+		return .server.result;
+	}
+
+|>;
+new NetDir::Sleep(int) = <|
+param msec;
+	new nsec = double(msec)/100.0;
+	new time = Clock();
+	while (Clock() - time < nsec);
+|>;
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::ReadFiles(refer object BaseString, ...) = <|
+param prm;
+parest tmpProxy;
+	.fOk = FALSE;
+	if (.serverAddress == EMPTY) return EMPTY; 
+	.tmpProxy = EMPTY;
+	if (tmpProxy != EMPTY && tmpProxy->Len() > 0)
+		.tmpProxy = << tmpProxy[0], "ReadFiles" >>;
+
+	if (.server == EMPTY)
+		.server = instance ToServer("READ", "FILES", .serverAddress, prm->ANSIToUTF16(), &self);
+	else
+		.server->WriteCmd("READ", "FILES", prm);
+	if (.tmpProxy == EMPTY)
+	{	
+		while (!.fOk)
+			Pluk->Idle();
+		self->Close();	
+		return .server.result;
+	}
+|>;
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::OnResponce(refer any) = <|
+param res;
+if (.busy) return;
+.busy = TRUE;
+	if (.tmpProxy == EMPTY)
+		.fOk = TRUE;
+	else
+	{
+		new tmp <- .tmpProxy; 
+		.tmpProxy = EMPTY;
+		tmp[0]->OnResponce(tmp[1], res);
+	}
+	.busy = FALSE;
+|>;
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new NetDir::OnReceive(refer object SocketAddress, refer object String ) = {|
+param addr,  str;
+	onerror {
+		.busy = FALSE;
+		return;
+	};
+
+	if (.busy || .mdns == EMPTY)
+		return;
+	.busy = TRUE;
+//	new addr = .mdns->GetPeerName();
+	new pack = instance PacketMDns(str, .mdns->IntAddrToStr(addr.Address));
+	if (addr  == .serverAddress)
+	{
+		new st = Clock();
+		if (.clockServer == EMPTY)
+			.clockServer = Clock();
+		new dt = st - .clockServer;
+		.clockServer = st;
+	/*	if (.dirNode == EMPTY)
+		{
+		.dirNode = <<>>;
+		
+		self->InitDir();
+		}
+		*/
+		if (.proxy != EMPTY)
+		if (pack.Records->Len() > 2 && pack.Records[2] != .lastChanged)
+		{
+			if (pack.Records[2]->Find(pack.Name) > -1)
+			{
+				.lastChanged = pack.Records[2];
+				.lastChanged->Tokenize(":");
+				.proxy->Reload(.lastChanged->Tokenize(":")[1]);
+			}
+			
+		}
+		else
+			.lastChanged = EMPTY;	
+	}
+	else
+	{
+		if (pack.isValid)
+		{
+
+			.iTimerWaitServer = Clock();
+			if (pack.Records->Len() > 1 && pack.Records[1] == mdnsServer)
+			{
+				.serverAddress = addr;
+				if (.clockServer == EMPTY)
+					.clockServer = Clock();
+				new st = Clock();
+				new dt = st - .clockServer;
+				.clockServer = st;
+			}
+			else	
+			if (.proxy != EMPTY)
+			{
+				.proxy->OnReceive(pack);
+			}
+		}
+	}
+	.iTimerWaitServer = Clock();
+	.busy = FALSE;
+	
+|};
+

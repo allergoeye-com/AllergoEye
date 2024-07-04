@@ -1,0 +1,279 @@
+class AproxLine {
+	_PRECISION;
+//	corners;
+};
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::AproxLine(void) = <| 
+	._PRECISION = 1.0e-6;
+	//.corners = <<>>;
+|>;
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::AproxLine(int)= <|
+param p;
+	._PRECISION = p;
+	//.corners = <<>>;
+|>;
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::Corner1(number, number, number, number) = {|
+param x1, x2, x3, x4;
+	return (-5.0 * x1 + 18.0 * x2 - 9.0 * x3 + 2.0 * x4)/6.0; 
+|};
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::Corner2(number, number, number, number) = {|
+param x1, x2, x3, x4; 
+	return (2.0 * x1 - 9.0 * x2 + 18.0 * x3 - 5.0 * x4)/6.0;
+|};
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::Corner3(number, number, number, number) = {|
+param x1, x2, x3, x4; 
+	return (2.0 * x1 - 9.0 * x2 + 18.0 * x3 - 5.0 * x4)/6.0;
+|};
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::PathBezier(number, number, number, number, number, number, number, number, refer object Vector) = {|
+param x1, y1, x2, y2, x3, y3, x4, y4, pt;
+	new A = y4 - y1;
+	new B = x1 - x4;
+	new C = -B * y1 - x1 * A;
+	new AB  = A * A + B * B;
+	if (AB <= ._PRECISION)
+	{
+		pt @= instance POINT(x4, y4);
+		return;
+	}
+	new f1 = A * x2 + B * y2 + C;
+	if ((f1 * f1) < AB)
+	{
+		f1 = A * x3 + B * y3 + C;
+		if ((f1 * f1) < AB)
+		{
+			pt @= instance POINT(x4, y4);
+			return;
+		}
+	}
+	new x12 = x1 + x2;
+	new y12 = y1 + y2;
+	new x23 = x2 + x3;
+	new y23 = y2 + y3;
+	new x34 = x3 + x4;
+	new y34 = y3 + y4;
+	new x1223 = x12 + x23;
+	new y1223 = y12 + y23;
+	new x2334 = x23 + x34;
+	new y2334 = y23 + y34;
+	new x = x1223 + x2334;
+	new y = y1223 + y2334;
+	self->PathBezier(x1, y1, x12/2.0, y12/2.0, x1223/4.0, y1223/4.0, x/8.0, y/8.0, pt);
+	self->PathBezier(x/8.0f, y/8.0, x2334/4.0, y2334/4.0, x34/2.0, y34/2.0, x4, y4, pt);
+|};
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::PathBezier(number, number, number, number, number, number, refer object Vector) = <|
+param x1, y1, x2, y2, x3, y3, pt;
+
+	new  A = y3 - y1;
+	new  B = x1 - x3;
+	new  C = y1 * (x3 - x1) - x1 * ( y3 - y1);
+	new  AB  = A * A + B * B;
+	if (AB <= 1.0e-6)
+	{
+		pt @= instance POINT(x3, y3);
+	
+		return;
+	}
+	if ((A * x2 + B * y2 + C) * (A * x2 + B * y2 + C) < AB)
+	{
+		pt @= instance POINT(x3, y3);
+		return;
+	}
+	new x12 = x1 + x2;
+	new y12 = y1 + y2;
+	new x23 = x2 + x3;
+	new y23 = y2 + y3;
+	new x1223 = x12 + x23;
+	new y1223 = y12 + y23;
+	self->PathBezier(x1, y1, x12/2, y12/2, x1223/4.0, y1223/4.0, pt);
+	self->PathBezier(x1223/4.0, y1223/4.0, x23/2.0, y23/2, x3, y3, pt);
+
+|>;
+new AproxLine::PathBezier(refer object POINT, refer object POINT, refer object POINT, refer object POINT, refer object Vector) = <|
+param a, b, c, d, res;
+	self->PathBezier(a.x, a.y, b.x, b.y,
+								c.x, c.y,
+								d.x,
+								d.y, res);
+
+|>;
+new AproxLine::PathBezier(refer object POINT, refer object POINT, refer object POINT, refer object Vector) = <|
+param a, b, c, d, res;
+	self->PathBezier(a.x, a.y, b.x, b.y, c.x, c.y, res);
+
+|>;
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::ToBezier(refer object POINT, refer object POINT, refer object POINT, refer object POINT, refer object Vector) = {|
+param a, b, c, d, res;
+	new r = <<>>;
+	self->PathBezier(a.x, a.y, self->Corner1(a.x, b.x, c.x, d.x),
+								self->Corner1(a.y, b.y, c.y, d.y),
+								self->Corner2(a.x, b.x, c.x, d.x),
+								self->Corner2(a.y, b.y, c.y, d.y), d.x, d.y, r);
+	if (r->Len() > 6)
+	{
+		for (new i = 0, l = r->Len(); i < l; i += 2)
+		 res @= r[i];
+	}
+	else
+		res @= r;	
+	//.corners @= <<a, b, c>>;
+|};
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::ToBezier(refer object POINT, refer object POINT, refer object POINT, refer object Vector) = <|
+param a, b, c, res;
+	self->PathBezier(a.x, a.y, 2.0 * b.x - (c.x + a.x)/2.0,
+								2.0 * b.y - (c.y + a.y)/2.0,
+								c.x, c.y, res);
+	//.corners @= <<a, b>>;
+|>;
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::Exec (refer object Vector, refer object Vector, int) = <|
+param in, out, step;
+	new i, count = in->Len() - 1;
+	while (step > 0 && !(count/step >= 3))
+		--step;
+	if (step == 0)
+	{
+		out @= in;
+		return;
+	}
+	new ext = count - (count/(step * 3) * step * 3);
+	i = 0;
+	
+	if (ext > 0)
+	{
+		new n = ext/3;
+		if (n == 0)
+		{
+			new p = in->Left(ext);
+			self->Exec (p, out, step);
+		}
+		else
+		{
+			out @= in[0];
+			self->ToBezier(in[0], in[n], in[n * 2], in[ext - 1], out);		
+		}
+		i = ext;
+	}
+	else
+		out @= in[0];
+
+	new s3 = step * 3;
+	 new s2 = step * 2;
+	count -= s3;
+	for (; i < count; i += s3)
+		self->ToBezier(in[i], in[i + step], in[i + s2], in[i + s3], out);
+	count += s3;
+	self->ToBezier(in[i], in[i + step], in[i + s2], in[count], out);
+	//.corners @= in[count];	
+	
+|>;
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new AproxLine::Exec (refer object Vector, refer object Vector) = <|
+param in, out;
+
+	new i = 0, count = in->Len() - 1;
+	count -= 2;
+	for (; i < count; i += 2)
+		self->ToBezier(in[i], in[i + 1], in[i + 2], out);
+	count += 2;	
+	self->ToBezier(in[i], in[i + 1], in[count], out);
+
+//	.corners @= in[count];	
+	
+|>;
+
+//==============================================
+/**
+param REBUILD_LEN; ( REBUILD_LEN >= 5 )
+#rus 	ѕерестроить слайн дл€ получени€ линейной зависмоти длины кривой от параметра
+#rus 		— этой целью € ищу точку на сплайне, где рассто€ние от предыдущей точки
+#rus 	равно GetLength() / REBUILD_LEN. ( REBUILD_LEN - новое число контрольных точек )
+**/
+//==============================================
+new BetaContour::RebuildEx(int) = {|
+
+param REBUILD_LEN;
+
+	if ( REBUILD_LEN < 5 )
+		REBUILD_LEN = 5;
+	self->GetContour();
+	new P = .Contour;
+	self->Init(P, .skew, .tension );
+	self->GetContour();
+
+	new vec = instance Vector(4 * REBUILD_LEN);
+	new st = self->GetLength() / REBUILD_LEN;
+	new step0 = 1.0 / .Contour->Len();
+	new mu0 = 0.0;
+	new mu = step0;
+	new pos = 0.0;
+	new pos1 = st;
+    new realpos = 0.0;
+
+	vec[0] = self(0.0);
+	for ( new i = 1; mu < 1.0; ++i)
+	{
+		new cnt = 0.0;
+		new p0 = vec[i - 1];
+		if (vec->Len() <= i)
+			vec->SetLen(vec->Len() + 100);
+		while (TRUE)
+		{
+			vec[i] = self(mu);
+			cnt += (vec[i] - p0)->Module();
+			if (cnt >= st || mu >= 1.0 || (vec[i] - vec[i - 1])->Module() < cnt * 3 / 4)
+				break;
+			p0 = vec[i];
+			if (mu < 1.0)
+			{
+				mu += step0;
+				if (mu > 1.0)
+					mu = 1.0;
+			}
+			else
+				break;
+		}
+	}
+	vec->SetLen(i);
+//	self->Init( vec, .skew, .tension );
+	.A = <<vec[vec->Len() - 2], vec[vec->Len() - 1] >> @ vec @ << vec[0] >>;
+	.Contour = EMPTY;
+	self->GetContour();
+|};
+
+
+

@@ -1,0 +1,30 @@
+global SetLocalLang = <|
+	switch (CurLocale.Code)
+	{
+	case "eng" :
+		Pluk->SetThreadLocale(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+		break;
+	case "ger" :
+		Pluk->SetThreadLocale(LANG_GERMAN, SUBLANG_GERMAN);
+		break;
+	case "esp" :
+		Pluk->SetThreadLocale(LANG_SPANISH, SUBLANG_SPANISH);
+		break;
+	case "fra" :
+		Pluk->SetThreadLocale(LANG_FRENCH, SUBLANG_FRENCH);
+		break;
+	case "pol" :
+		Pluk->SetThreadLocale(LANG_POLISH, SUBLANG_POLISH_POLAND);
+		break;
+	case "prt" :
+		Pluk->SetThreadLocale(LANG_PORTUGUESE, SUBLANG_PORTUGUESE);
+		break;
+	case "rus" :
+		Pluk->SetThreadLocale(LANG_RUSSIAN, SUBLANG_RUSSIAN_RUSSIA);
+		break;
+	default :
+		Pluk->SetThreadLocale(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+		break;
+	}
+|>;
+SetLocalLang();

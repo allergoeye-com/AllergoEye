@@ -1,0 +1,383 @@
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+class StrSearchNode {
+	Char;
+	data;
+	index;
+};
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearchNode::StrSearchNode(refer object BaseString, refer int, refer any) = <|
+param str, pos, index;
+	
+	self->Add(str, pos, index);
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearchNode::Add(refer object BaseString, refer int, refer any) = <|
+param str, pos, index;
+	.Char = str->GetByte(pos);
+	++pos;
+	if (pos < str->Len())
+	{
+		if (.data == EMPTY)
+		{
+			.data = instance Vector(1);
+			.data[0] = instance StrSearchNode(str, pos, index);
+		}
+		else
+		{
+			new i = .data->BFind(str->GetByte(pos), <| param key, elem; return key <> elem.Char; |>);
+			if (i == -1)
+				i = .data->BInsert(instance StrSearchNode(str, pos, index), <| param key, elem; return key.Char <> elem.Char; |>);
+			else
+				.data[i]->Add(str, pos, index);
+
+		} 
+	}
+	
+	else
+	{
+		if (.index == EMPTY)
+		{
+			.index = instance Vector(1);
+			.index[0] = index;
+		}
+		else
+		{
+			.index @= index; 
+		}
+	}
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearchNode::AddIndex(refer object Vector) = <|
+param v;
+	if (.index != EMPTY)
+	{
+		
+		for (new i = 0, l = .index->Len(); i < l; ++i)
+		v @= << <<v->Len(), .index[i] >> >>;
+	}
+	if (.data != EMPTY)
+		for (new i = 0, l = .data->Len(); i < l; ++i)
+			.data[i]->AddIndex(v);
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearchNode::Search(refer object BaseString, refer int, refer object Vector) = <|
+param str, pos, v;
+	++pos;
+	if (pos < str->Len())
+	{
+			new i = .data->BFind(str->GetByte(pos), <| param key, elem; return key <> elem.Char; |>);
+			if (i != -1)
+				.data[i]->Search(str, pos, v);
+	
+	}
+	else
+		self->AddIndex(v);
+|>;
+
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+class StrSearch {
+	data;
+};
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearch::StrSearch(void) = <| |>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearch::Add(refer object BaseString, refer any) = <|
+param str, index;
+	new pos = 0;
+	if (pos < str->Len())
+	{
+		if (.data == EMPTY)
+		{
+			.data = instance Vector(1);
+			.data[0] = instance StrSearchNode(str, pos, index);
+		}
+		else
+		{
+			new i = .data->BFind(str->GetByte(pos), <| param key, elem; return key <> elem.Char; |>);
+			if (i == -1)
+				i = .data->BInsert(instance StrSearchNode(str, pos, index), <| param key, elem; return key.Char <> elem.Char; |>);
+			else
+				.data[i]->Add(str, pos, index);
+			
+		} 
+	}
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new StrSearch::Search(refer object BaseString, refer object Vector) = <|
+param str, v;
+new pos = 0;
+	if (.data != EMPTY && pos < str->Len())
+	{
+			new i = .data->BFind(str->GetByte(pos), <| param key, elem; return key <> elem.Char; |>);
+			if (i != -1)
+				.data[i]->Search(str, pos, v);
+	
+	}
+	else
+	{
+		if (.data != EMPTY)
+			for (new i = 0, l = .data->Len(); i < l; ++i)
+				.data[i]->AddIndex(v);
+	
+	}
+	v->QSort(<|param key, elem; return key[1] <> elem[1]; |>);
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+class SubSearchNode {
+	Sub;
+	data;
+	index;
+};
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new SubSearchNode::SubSearchNode(refer object Vector, refer int, refer any) = <|
+param str, pos, index;
+	
+	self->Add(str, pos, index);
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new SubSearchNode::Add(refer object Vector, refer int, refer any) = <|
+param str, pos, index;
+	.Sub = str[pos];
+	++pos;
+	if (pos < str->Len())
+	{
+		if (.data == EMPTY)
+		{
+			.data = instance Vector(1);
+			.data[0] = instance SubSearchNode(str, pos, index);
+		}
+		else
+		{
+			new i = .data->BFind(str[pos], <| param key, elem; return key <> elem.Sub; |>);
+			if (i == -1)
+				i = .data->BInsert(instance SubSearchNode(str, pos, index), <| param key, elem; return key.Sub <> elem.Sub; |>);
+			else
+				.data[i]->Add(str, pos, index);
+
+		} 
+	}
+	
+	else
+	{
+		if (.index == EMPTY)
+		{
+			.index = instance Vector(1);
+			.index[0] = index;
+		}
+		else
+		{
+			.index @= index; 
+		}
+	}
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new SubSearchNode::AddIndex(refer object Vector) = <|
+param v;
+	if (.index != EMPTY)
+	{
+		for (new i = 0, l = .index->Len(); i < l; ++i)
+		v @= << <<v->Len(), .index[i] >> >>;
+	}
+	if (.data != EMPTY)
+		for (new i = 0, l = .data->Len(); i < l; ++i)
+			.data[i]->AddIndex(v);
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new SubSearchNode::Search(refer object Vector, refer int, refer object Vector) = <|
+param str, pos, v;
+	
+	++pos;
+	if (pos < str->Len())
+	{
+			new i = .data->BFind(str[pos], <| param key, elem; return key <> elem.Sub; |>);
+			if (i != -1)
+				.data[i]->Search(str, pos, v);
+	
+	}
+	else
+		self->AddIndex(v);
+	
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+class DateSearch {
+	data;
+};
+new DateSearch::Add(refer object BaseString, refer any) = <|
+param str, index;
+	self->Add(str, index, TRUE);
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new DateSearch::Add(refer object BaseString, refer any, boolean) = <|
+param str, index, flg;
+	new v = str->Tokenize("/- ");
+	new tok = v;
+	new s = instance Silent();
+	for (new n = 0, i = 0, l = tok->Len(); i < l; ++i)
+	{
+		onerror {
+			continue;
+		}
+		tok[n] = flg ? int(v[l - i - 1]) : int(v[i]);
+		++n;
+	}
+	s = EMPTY;
+	if (n == 0)
+	{
+		return;
+	}
+	tok->SetLen(n);
+	new pos = 0;
+	if (pos < tok->Len())
+	{
+		if (.data == EMPTY)
+		{
+			.data = instance Vector(1);
+			.data[0] = instance SubSearchNode(tok, pos, index);
+		}
+		else
+		{
+			new i = .data->BFind(tok[0], <| param key, elem; return key <> elem.Sub; |>);
+			if (i == -1)
+				i = .data->BInsert(instance SubSearchNode(tok, pos, index), <| param key, elem; return key.Sub <> elem.Sub; |>);
+			else
+				.data[i]->Add(tok, pos, index);
+			
+		} 
+	}
+	
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new DateSearch::Search(refer object BaseString, refer object Vector) = <|
+param str, v;
+new pos = 0;
+	new v1 = str->Tokenize("/-_ ");
+	new tok = v1;
+	for (new i = 0, l = tok->Len(); i < l; ++i)
+		tok[i] = int(v1[l - i - 1]);
+
+	if (.data != EMPTY && pos < tok->Len())
+	{
+		new i = .data->BFind(tok[pos], <| param key, elem; return key <> elem.Sub; |>);
+		if (i != -1)
+			.data[i]->Search(tok, pos, v);
+	
+	}
+	else
+	{
+		if (.data != EMPTY)
+			for (new i = 0, l = .data->Len(); i < l; ++i)
+				.data[i]->AddIndex(v);
+	
+	}
+	v->QSort(<|param key, elem; return key[1] <> elem[1]; |>);
+	
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+class SubSearch {
+	data;
+};
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new SubSearch::Add(refer object BaseString, refer any) = <|
+param str, index;
+	new v = str->Tokenize("_ ");
+	
+	new pos = 0;
+	if (pos < v->Len())
+	{
+		if (.data == EMPTY)
+		{
+			.data = instance Vector(1);
+			.data[0] = instance SubSearchNode(v, pos, index);
+		}
+		else
+		{
+			new i = .data->BFind(v[0], <| param key, elem; return key <> elem.Sub; |>);
+			if (i == -1)
+				i = .data->BInsert(instance SubSearchNode(v, pos, index), <| param key, elem; return key.Sub <> elem.Sub; |>);
+			else
+				.data[i]->Add(v, pos, index);
+			
+		} 
+	}
+	
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new SubSearch::Search(refer object BaseString, refer object Vector) = <|
+param str, v;
+new pos = 0;
+	new tok = str->Tokenize("_ ");
+
+	if (.data != EMPTY && pos < tok->Len())
+	{
+		new i = .data->BFind(tok[pos], <| param key, elem; return key <> elem.Sub; |>);
+		if (i != -1)
+			.data[i]->Search(tok, pos, v);
+	
+	}
+	else
+	{
+		if (.data != EMPTY)
+			for (new i = 0, l = .data->Len(); i < l; ++i)
+				.data[i]->AddIndex(v);
+	
+	}
+	v->QSort(<|param key, elem; return key[1] <> elem[1]; |>);
+
+	
+|>;

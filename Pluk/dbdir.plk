@@ -1,0 +1,1255 @@
+class DBDir : TreeDir {
+	Dir;
+	lastOrder;
+	lastParam;
+	lastQuery;
+	ID;
+	fUpdateProgress;
+global :
+	SORT_ID;
+	SORT_LastName;
+	SORT_FirstName;
+	SORT_DateOfBirth;
+
+};
+DBDir::SORT_ID = 0;
+DBDir::SORT_LastName = 1;
+DBDir::SORT_FirstName = 2;
+DBDir::SORT_DateOfBirth = 3;
+
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::DBDir(void) = <|
+	self->TreeDir();
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	.lastParam = <<>>;
+	.lastQuery = "";
+	.ID = <<>>;
+	.fUpdateProgress = FALSE;
+	self->SetOrder(.SORT_LastName);
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::ResetQuery(void) = <|
+	.lastQuery = "";
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::InitDirs(void) = <|
+	self->TreeDir();
+	.root = instance DirNode(EMPTY, EMPTY, .Dir, <<>>, FALSE);
+|>;
+
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::InitDB(void) = <|
+	self->InitDirs();
+	self->AddLevelRoot();
+	.root = instance DirNode();
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::Reset(void) = <|
+
+	.root = instance DirNode();
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::MakeDBPatient(refer object BaseString) = <|
+param str;
+	new v = str->Tokenize("/_");
+	new p = instance DBPatient();
+	p.LastName = v[0];
+	p.FirstName = v[1];
+	p.Date = <<>>;
+	p.PatientIDStr = Print(v[2]);
+	p.Path = str;
+	p.Reports = <<>>;
+	p.oID = "";
+	return p;
+|>;		
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::CleardDB(refer ...) = <|
+parest Parent;
+	onerror {
+		return;
+	};
+	main.netDir->ClearDB();
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	/*
+	new prg = instance GProgressWnd( FALSE, "Clear AllergoEye Database", [Parent] );
+	new b =  Odml2Exec("select p from DBPatient as p", <<  >>);
+	for (new i = 0; i < b->Len(); ++i)
+	{
+		prg->SetProgress(i * 15 / b->Len());
+		b[i]->Delete();
+	}
+	*/
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::RebuildDB(refer ...) = <|
+parest Parent;
+	onerror {
+		return;
+	};
+	self->CleardDB([Parent]);
+	.root = instance DirNode();
+	
+	self->InitDirs();
+	self->AddLevelRoot([Parent]);
+	.root = instance DirNode();
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddLevelRoot(refer ...) = <|
+parest Parent;
+	onerror {
+		return;
+	};
+	new list = .root->GetFileList(<<".ini">>, TRUE);
+	new id;
+	new b =  Odml2Exec("select p from DBPatient as p", <<  >>);
+	{
+		for (new i = 0, l = b->Len(); i < l; ++i)
+			if (.root->Get(b[i].Path) == EMPTY)
+				b[i]->Delete();
+	}
+	new progress;
+	if (.fUpdateProgress)
+	{
+		if (Parent != << >>)
+			progress = instance GProgressWnd( FALSE, W1_UPDATE @ " AllergoEye Database", [Parent] );
+		else
+			progress = instance GProgressWnd( FALSE, W1_UPDATE @ " AllergoEye Database");
+	}
+
+	for (new i = 0, l = list->Len(); i < l; ++i)
+	{
+		if (.fUpdateProgress)
+			progress->SetProgress( i * 100 / l);
+		self->AddPatient(list[i].parent);	
+	}
+|>;
+//=================================================
+//
+//=================================================
+new DBDir::ReloadFolder(refer object BaseString) = <|
+param name;
+	return .root->ReloadFolder(.Dir, name);
+|>;
+//=================================================
+//
+//=================================================
+new DBDir::AddPatient(pointer object DirNode) = <|
+param node;
+	new list = <<>>;
+  	node->GetFileList(<<".ini">>, TRUE, list);
+  	if (list->Len() == 0)
+  		return;
+	if (list[0].name == "info.ini" && list[0]->Level() == 1)
+	{
+		new info = instance IniFile(.Dir @ list[0]->GetWinPath());
+		new p = instance DBPatient();
+		p.LastName = info->ReadStrW("CARD", "FAMILY", "");
+		p.FirstName = info->ReadStrW("CARD", "NAME", "");
+		new d = instance String(info->ReadStrW("CARD", "DATE", ""));
+		d = d->Tokenize("/.");
+		if (d->Len() < 2)
+			d = instance Date()->PrintDMY();
+		new y = int(d[2]);
+		if (y < 1000)
+			y = y % 100;
+		if (y < 100)
+		{
+			if (y > 25)
+				y += 1900;
+			else
+				y += 2000;
+		}
+		else
+		{
+			if (y > 20000)
+				y = 2000 + y % 1000;
+			else
+			if (y > 19000)
+				y = 1900 + y % 1000;
+		}
+		p.DateOfBirth = instance Date(int(d[0]), int(d[1]), y);
+		p.Date = <<>>;
+		new str = instance String(info->ReadStrW("CARD", "ID", ""));
+		new ID = p.PatientIDStr = Print(str);
+		p.Path = node->GetPath();
+		p.Reports = <<>>;
+		new old_p = Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << ID >>);
+		if (old_p == << >>)
+		{
+			onerror {
+				MessageBox(W1_ERROR, Pluk->CGetError() @ CR @ Pluk->CGetErrorEx(), MB_OK | MB_ICONSTOP);
+				rollback;
+			}
+			p->Save();
+			old_p = Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << ID >>);
+		}
+		self->AddLevelReports(old_p[0], node);
+		self->AddLevelDate(old_p[0], node);
+		new f = instance File(JustDirName(.Dir @ list[0]->GetWinPath()) @ "therapy.txt");
+		if (f->Access(ACCESS_EXIST))
+		{
+			f->Open("rb");
+			new csv = f->wReadCSV();
+			for (new k = 0; k < csv->Len(); ++k)
+			{
+				if (csv[k]->Len() == 3)
+				{
+					new tp = instance DBTherapy();
+					tp.StartDate = instance Date(csv[k][0]);
+					tp.Allergen = GetAllergenEng(CheckForDepricatedNames(csv[k][1]));
+					if (csv[k][2] != EMPTY)
+						tp.Medication = instance WString(csv[k][2]);
+					else
+						tp.Medication = instance WString("");
+					if (old_p[0].Therapy->Find(<< tp.StartDate->Date::Print(), tp.Allergen >>, 0,
+							<|param key, elem;
+								return key[0] == elem.StartDate->Date::Print() && key[1] == elem.Allergen; |>) == -1)
+					{
+						old_p[0]->AppendTherapy(tp);
+						old_p = Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << ID >>);
+					}
+				}
+			}
+		}
+		f = instance File(JustDirName(.Dir @ list[0]->GetWinPath()) @ "cap.txt");
+		if (f->Access(ACCESS_EXIST))
+		{
+			f->Open("rb");
+			new cap = f->wReadCSV();
+			for (new j = 0; j < cap->Len(); ++j)
+			{
+				if (GetDim(cap[j]) == 2)
+				{
+					new i_cap = int(cap[j][0]);
+					new allr = cap[j][1];
+					new index = -1;
+					if ((index = old_p[0].CAP->Find(allr, 0, <|param key, elem; return key == elem.Allergen; |>)) == -1)
+					{
+						new dbcap = instance DBCAP();
+						dbcap.CAP = i_cap;
+						dbcap.Allergen = allr;
+//						old_p[0].CAP ,= dbcap;
+						old_p[0]->AppendCAP(dbcap);
+					}
+					else
+					{
+						old_p[0].CAP[index].CAP = i_cap;
+						old_p[0].CAP[index].Allergen = allr;
+						old_p[0].CAP[index]->Save();
+					}
+				}					
+			}
+			old_p[0]->Save();
+		}
+	}
+	return TRUE;
+|>;
+//=================================================
+//
+//=================================================
+new DBDir::ReloadPatient(pointer object DirNode) = <|
+param dir;
+	onerror {
+		return EMPTY;
+	};
+	new old_p = Odml2Exec("select p from DBPatient as p where p.Path = ?", << dir->GetPath() >>);
+
+	new i = dir.childs->Find("info.ini", 0, <| param key, elem; return key == elem.name; |> );
+	if (i == -1) return EMPTY;
+	new info = instance IniFile(.Dir @ dir.childs[i]->GetWinPath());
+	new p = instance DBPatient();
+	p.LastName = info->ReadStrW("CARD", "FAMILY", "");
+	p.FirstName = info->ReadStrW("CARD", "NAME", "");
+	new d = info->ReadStrW("CARD", "DATE", "");
+	d = d->Tokenize("/.");
+	if (d->Len() < 2)
+		d = instance Date()->PrintDMY()->Tokenize("/.");
+	new y = int(d[2]);
+	if (y < 1000)
+		y = y % 100;
+	if (y < 100)
+	{
+		if (y > 25)
+			y += 1900;
+		else
+			y += 2000;
+	}
+	else
+	{
+		if (y > 20000)
+			y = 2000 + y % 1000;
+		else
+		if (y > 19000)
+			y = 1900 + y % 1000;
+	}
+	p.DateOfBirth = instance Date(int(d[0]), int(d[1]), y);
+	p.Date = <<>>;
+	new str = info->ReadStrW("CARD", "ID", "");
+	p.PatientIDStr = str;
+	p.Path = dir->GetPath();
+	p.Reports = <<>>;
+	old_p = Odml2Exec("select p from DBPatient as p where p.Path = ?", << p.Path >>);
+	if (old_p == << >>)
+	{
+		new _onerr = 0;
+		onerror {
+			if (_onerr > 5)  return EMPTY;
+			++_onerr; 
+			new PatientID = int(Rand(Clock()) * 100);
+			p.PatientIDStr = Print(PatientID);
+		}
+		
+		p->Save();
+		if (_onerr > 0)
+		{
+			info->WriteStrW("CARD", "ID",  Print(p.PatientIDStr) ); 
+		}
+		old_p = Odml2Exec("select p from DBPatient as p where p.Path = ?", << p.Path >>);
+	}
+	old_p[0]->DeleteDate();
+	self->AddLevelDate(old_p[0], dir);
+	self->AddLevelReports(old_p[0], dir);
+	return old_p->Len() > 0  ?  old_p[0] : EMPTY;
+			
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::CheckDB(refer object Vector, refer object Vector) = <|
+param b, res;
+	for (new i = 0, l = b->Len(); i < l; ++i)
+		if (.root->Get(b[i].Path) == EMPTY)
+		{
+			b->Remove(i);
+			--i;
+			--l;
+		}
+
+|>;		
+new DBDir::CheckDB(refer object Vector, pointer object Vector) = DBDir::CheckDB(refer object Vector, refer object Vector);
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::CheckDB(pointer object DirNode, refer object Vector) = <|
+param dir, b;
+	for (new i = 0, l = b->Len(); i < l; ++i)
+	{
+		if (dir->Get(b[i].Path->Right(b[i].Path->Len() - b[i].Path->FindReverse("/"))) == EMPTY)
+		{
+			b->Remove(i);
+			--i;
+			--l;
+		}
+	}
+|>;		
+new DBDir::CheckDB(pointer object DirNode, pointer object Vector) = DBDir::CheckDB(pointer object DirNode, refer object Vector);
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddLevelReports(refer object DBPatient, pointer object DirNode) = <|
+param p0, dir;
+onerror {
+	return;
+};
+
+	new N = 0;
+	new b =  &p0.Reports;
+	new len = b->Len();
+	self->CheckDB(dir, b);
+	if (len != b->Len())
+		++N;
+	b->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+	new bb = <<>>;
+
+	for (new i = 0, l = dir.childs->Len(); i < l; ++i)
+	{
+		if (!dir.childs[i]->IsDir() && dir.childs[i].name->Right(5) == ".srpj")
+		{
+			new pa = dir.childs[i]->GetPath();
+			
+			new n = b->BFind(pa, {| param key, elem; return key <> elem.Path; |});
+			if (n == -1)
+			{
+				++N;
+				new p = instance DBReport();
+				p.Path = dir.childs[i]->GetPath();;
+//				if (Odml2Exec("select p.Reports[index1] from DBPatient as p where p.Path = ? and p.Reports[index1].Path = ?", <<p0.Path, p.Path >>)->Len() == 0)
+				{
+					bb @= p;
+				}
+			}
+		}
+	}
+	if (N > 0)
+	{
+		p0.Reports @= bb;
+		for (new k = 0; k < p0.Reports->Len(); ++k)
+			p0.Reports[k]->Save();
+		p0->Save();
+		p0->Load();
+	}
+	return N;
+
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddLevelDate(refer object DBPatient, pointer object DirNode) = <|
+param p0, dir;
+	onerror {
+		return;
+	};
+
+	new N = 0;
+	new b =  &p0.Date; //Odml2Exec("select p.Date[i] from DBPatient as p where p.Path = ?" , <<p0.Path >>);
+	new len = b->Len();
+	self->CheckDB(dir, b);
+	if (len != b->Len())
+		++N;
+	b->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+	new v = << >>;
+	new bb = << >>;
+	for (new i = 0, l = dir.childs->Len(); i < l; ++i)
+	{
+		if (dir.childs[i]->IsDir())
+		{
+			v @= dir.childs[i]->Ptr();
+			new n = b->BFind(dir.childs[i]->GetPath(), {| param key, elem; return key <> elem.Path; |});
+			if (n == -1)
+			{
+				++N;
+				new p = instance DBDate();
+				new _v = dir.childs[i].name->Tokenize("-");
+				new d = _v[2] @ "/" @_v[1] @ "/" @_v[0];
+				p.Date  = instance Date(d);
+				
+				p.Path = dir.childs[i]->GetPath();
+				p.Tests = << >>;
+				new Allergens = << >>;
+				for (new k = 0; k < dir.childs[i].childs->Len(); ++k)
+				{
+					new sb = dir.childs[i].childs[k].name->Tokenize("_");
+					sb = GetAllergenEng(CheckForDepricatedNames(sb[0]));
+					if (Allergens->BFind(sb) == -1)
+						Allergens->BInsert(sb);
+				}
+				for (k = 0; k < Allergens->Len(); ++k)
+				{
+					p.Allergen = Allergens[k];
+					bb @= p;
+				}
+			}
+			else
+			{
+				new Allergens = << >>;
+				for (new k = 0; k < dir.childs[i].childs->Len(); ++k)
+				{
+					new sb = dir.childs[i].childs[k].name->Tokenize("_");
+					sb = GetAllergenEng(CheckForDepricatedNames(sb[0]));
+					if (Allergens->BFind(sb) == -1)
+						Allergens->BInsert(sb);
+				}
+				if (Allergens->Len() > 1)
+				{
+					for (k = 0; k < Allergens->Len(); ++k)
+					{
+						new n1 = b->Find(<< dir.childs[i]->GetPath(), Allergens[k] >>, 0, {| param key, elem; return key[0] == elem.Path && key[1] == elem.Allergen; |});
+						if (n1 == -1)
+						{
+							new p = instance DBDate();
+							p.Date  = b[n].Date;
+							p.Path = b[n].Path;
+							p.Tests = << >>;
+							p.Allergen = Allergens[k];
+							bb @= p;
+							++N;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (N > 0)
+	{
+		p0.Date @= bb;
+		for (new k = 0; k < p0.Date->Len(); ++k)
+			p0.Date[k]->Save();
+		p0->Save();
+		p0->Load();
+	}
+	b =  @p0.Date;
+	b->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+	for (i = 0; i < b->Len(); ++i)
+	{
+		new n = v->Find(b[i].Path, 0, <|param key, elem; return key == elem->GetPath(); |>);
+		self->AddLevelTest(p0, b[i], v[n]);
+	}
+	return N;
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddLevelTest(refer object DBPatient, pointer object DBDate, pointer object DirNode) = <|
+param patient, pDate, dir;
+	onerror {
+		return;
+	};
+	
+	new N = 0;
+	new b =  &pDate.Tests; //Odml2Exec("select p.Date[index1].Tests[index2] from DBPatient as p where p.Path = ? and p.Date[index1].Path = ?", <<patient.Path, pDate.Path>>);
+	new len = b->Len();
+	self->CheckDB(dir, b);
+	if (len != b->Len())
+	{
+		++N;
+	/*	pDate.Tests = b;
+		pDate->Save();
+		pDate->Load();
+		b =  pDate.Tests;	*/
+	}
+	b->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+	new v = <<>>;
+	new bb = <<>>;
+	for (new i = 0; i < dir.childs->Len(); ++i)
+	{
+		if (dir.childs[i]->IsDir())
+		{
+			v @= dir.childs[i]->Ptr();
+	
+			new n = b->BFind(dir.childs[i]->GetPath(), {| param key, elem; return key <> elem.Path; |});
+			if (n == -1)
+			{
+				new v1 = dir.childs[i].name->Tokenize("_");
+				if (v1->Len() < 3)
+				{
+					dir.childs->Remove(i);
+					v->SetLen(v->Len() - 1);
+					--i;
+					continue;
+				}
+				new allergen = GetAllergenEng(CheckForDepricatedNames(v1[0]));
+				if (pDate.Allergen == allergen)
+				{
+					++N;
+					new pTest = instance DBTest();
+					pTest.Path = dir.childs[i]->GetPath();
+					pTest.Pictures = <<>>;
+					pTest.Allergen = allergen;
+					pTest.Dil = GetDilitionEng(CheckForDepricatedNames(v1[1]));
+					pTest.Side = GetSideEng(v1[2]);
+					if (v1->Len() == 4)
+						pTest.Incubation = GetIncubationEng(v1[3]);
+					bb @= pTest;
+				}
+			}
+		}
+	}
+	if (N > 0)
+	{
+		pDate.Tests @= bb;
+		new rootDir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		for (new k = 0; k < pDate.Tests->Len(); ++k)
+		{
+			new name = rootDir @ pDate.Tests[k].Path @ SFD @ "opscore.txt";
+			new f = instance File(name);
+			if (f->GetAttribute() != -1)
+			{
+				f->Open("rb");
+				new data = f->ReadCSV();
+				f->Close();
+				pDate.Tests[k].OpScoreV = instance Vector(4);
+				new sum = 0.0;
+				for (new m = 0; m < 4; ++m)
+					sum += pDate.Tests[k].OpScoreV[m] = float(data[1][m]);
+				pDate.Tests[k].OpScore = sum;
+			}
+		}
+		pDate.Tests->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+		for (i = 0; i < v->Len(); ++i)
+		{
+			new n = pDate.Tests->BFind(v[i]->GetPath(), {| param key, elem; return key <> elem.Path; |});
+			if (n >= 0)
+				self->AddLevelPicture(patient, pDate, &pDate.Tests[n], v[i]);
+		}
+		for (k = 0; k < pDate.Tests->Len(); ++k)
+		{
+			pDate.Tests[k]->CalculateScore();
+			pDate.Tests[k]->Save();
+		}
+		pDate->Save();
+		pDate->Load();
+	}
+	else
+	{
+		pDate.Tests->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+		for (i = 0; i < v->Len(); ++i)
+		{
+			new n = pDate.Tests->BFind(v[i]->GetPath(), {| param key, elem; return key <> elem.Path; |});
+			if (n >= 0)
+				self->AddLevelPicture(patient, pDate, &pDate.Tests[n], v[i]);
+		}
+	}
+	return N;
+
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBPicture::ReadScore(refer object File) = <|
+param f1;
+	onerror {
+		return;
+	}
+	f1->Open("rb");
+	new r = f1->Read(-1);
+	f1->Close();
+	r = r->Tokenize(CR);
+	new Res = 0;
+	new ScoreR, AreaR;
+	new ScoreL, AreaL;
+	for (new k = 0; k < r->Len(); ++k)
+	{
+		new v = r[k]->Tokenize(" =+");
+		switch (v[0])
+		{
+		case "Right" :
+		case "Rechts" :
+			ScoreR = float(v[1]);
+			break;
+		case "Left" :
+		case "Links" :
+			ScoreL = float(v[1]);
+			break;
+		case "Right-area" :
+		case "Rechts-area" :
+			AreaR = float(v[1]);
+			break;
+		case "Left-area" :
+		case "Links-area" :
+			AreaL = float(v[1]);
+			break;
+		}
+	}
+	if (ScoreR != .ScoreR || ScoreL != .ScoreL || AreaR != .AreaR || AreaL != .AreaL)
+	{
+		.ScoreR = ScoreR;
+		.ScoreL = ScoreL;
+		.AreaR = AreaR;
+		.AreaL = AreaL;
+		return 1;
+	}
+	return 0;
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBPicture::ReadDistr(refer object File) = <|
+param f1;
+	onerror {
+		return;
+	}
+	f1->Open("rb");
+	new r = f1->Getv();
+	new DistrR = r[0];
+	new DistrL = r[1];
+	if (r->Len() == 3)
+		.DistrTotal = r[2];
+	f1->Close();
+	if (.DistrR != DistrR || .DistrL != DistrL)
+	{
+		.DistrR = DistrR;
+		.DistrL = DistrL;
+		return 1;
+	}
+	return 0;
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::GetSide(object BaseString) = <|
+param Eye;
+
+	new eye = "both";
+	
+	switch (instance String(Eye)->ToLower())
+	{
+	case "links":
+	case "left" :
+		return "left";
+		break;
+	case "rechts":
+	case "right" :
+		return "right";
+		break;
+	case "beidseits" :
+	case "both":
+	case "both sides" :
+		return "both";
+	default :
+		break;
+	}
+	return "both";
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddLevelPicture(refer object DBPatient, pointer object DBDate, pointer object DBTest, pointer object DirNode) = <|
+param pPatient, pDate, pTest, dir;
+onerror {
+	return;
+};
+
+	new N = 0;
+	new b = &pTest.Pictures; ////Odml2Exec("select p.Date[index1].Tests[index2].Pictures[index3] from DBPatient as p where p.Path = ? and p.Date[index1].Path = ? and  p.Date[index1].Tests[index2].Path = ?", <<pPatient.Path, pDate.Path, pTest.Path>>);
+	new len = b->Len();
+	self->CheckDB(dir, b);
+	if (len != b->Len())
+	{
+		++N;
+		/*pTest.Pictures = b;
+		pTest->Save();
+		pTest->Load();
+		b = pTest.Pictures;*/
+	}
+	b->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+	new v = <<>>;
+	new bb = <<>>;
+
+	for (new i = 0, l = dir.childs->Len(); i < l; ++i)
+	{
+		if (!dir.childs[i]->IsDir() && dir.childs[i].name->Right(4) == ".jpg")
+		{
+			new t_name = dir.name->Tokenize("_");
+			new eye = self->GetSide(t_name[t_name->Len() - 2]);
+			v @=  dir.childs[i]->Ptr();
+			new pa = dir.childs[i]->GetPath();
+			new jpg = .Dir @ dir.childs[i]->GetPath();
+			new n = b->BFind(pa, {| param key, elem; return key <> elem.Path; |});
+			if (n != -1)
+			{
+				jpg->ReplaceAll(".jpg", ".ctr");
+				new f1 = instance File(jpg);
+				new Contur  = f1->GetAttribute() != -1;
+				jpg->ReplaceAll(".ctr", ".nam");
+				f1 = instance File(jpg);
+				new Names  = f1->GetAttribute() != -1;
+				jpg->ReplaceAll(".nam", ".res");
+				f1 = instance File(jpg);
+				new Result  = f1->GetAttribute() != -1;
+				if (Result)
+					N += b[n]->ReadScore(f1);
+
+				jpg->ReplaceAll(".res", ".dst");
+				f1 = instance File(jpg);
+				if (f1->GetAttribute() != -1)
+					N += b[n]->ReadDistr(f1);
+			
+				if (Contur !=  b[n].Contur || Names !=  b[n].Names || Result != b[n].Result)
+				{
+					b[n].Contur = Contur;
+					b[n].Names =  Names;
+					b[n].Result = Result;
+					++N;
+				}
+			}
+			else
+			{
+				++N;
+				new p = instance DBPicture();
+				p.Path = dir.childs[i]->GetPath();;
+				new v1 = dir.childs[i].name->Tokenize(" ");
+				new v = v1[0]->Tokenize("-");
+				new d = v[2] @ "/" @v[1] @ "/" @v[0];
+				p.Date  = instance Date(d);
+				v = v1[1]->Tokenize("-.");
+				new t = v[0] @ ":" @v[1] @ ":" @v[2];
+				p.Time  = instance Time(t);
+				jpg->ReplaceAll(".jpg", ".ctr");
+				new f1 = instance File(jpg);
+				p.Contur  = f1->GetAttribute() != -1;
+				jpg->ReplaceAll(".ctr", ".nam");
+				f1 = instance File(jpg);
+				p.Names  = f1->GetAttribute() != -1;
+				jpg->ReplaceAll(".nam", ".res");
+				f1 = instance File(jpg);
+				p.Result  = f1->GetAttribute() != -1;
+				if (p.Result)
+					N += p->ReadScore(f1);
+
+				jpg->ReplaceAll(".res", ".dst");
+				f1 = instance File(jpg);
+				if (f1->GetAttribute() != -1)
+					N += p->ReadDistr(f1);
+
+				p.Side = eye;
+			
+			//	if (Odml2Exec("select p.Date[index1].Tests[index2].Pictures[index3] from DBPatient as p where p.Path = ? and p.Date[index1].Path = ? and  p.Date[index1].Tests[index2].Path = ? and p.Date[index1].Tests[index2].Pictures[index3].Path=?", <<pPatient.Path, pDate.Path, pTest.Path, p.Path >>)->Len() == 0)
+				{
+					bb @= p;
+				}
+			}
+		}
+	}
+	if (N > 0)
+	{
+		pTest.Pictures @= bb;
+		for (new k = 0; k < pTest.Pictures->Len(); ++k)
+			pTest.Pictures[k]->Save();
+		pTest->UpdateDistributions();
+		pTest->CalculateScore();
+		pTest->Save();
+		pTest->Load();
+	}
+	return N;
+
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::ListPatient(refer object BaseString, refer object Vector) = <|
+param xml, ret;
+	new pars = instance ParsXml(xml);
+	new tree = instance TreeDir(pars);
+	new ss = <<>>;
+	tree.root->GetListPaths(ss);
+	for (new i = 0; i < ss->Len(); ++i)
+	{
+	
+		onerror {
+			continue;
+		};
+		self->listPatient(ss[i], ret);
+	}
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::ListPatient1(refer object TreeDir, refer object Vector) = <|
+param tree, ret;
+	new ss = <<>>;
+	tree.root->GetListPaths(ss);
+	for (new i = 0; i < ss->Len(); ++i)
+	{
+	
+		onerror {
+			continue;
+		};
+		self->listPatient1(ss[i], ret);
+	
+	}
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::ListPatient2(refer object TreeDir, refer object Vector) = <|
+param tree, ret;
+	new ss = <<>>;
+	tree.root->GetListPaths(ss);
+	for (new i = 0; i < ss->Len(); ++i)
+	{
+	
+		onerror {
+			continue;
+		};
+		self->listPatient2(ss[i], ret);
+	
+	}
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::listPatient(refer object BaseString, refer object Vector) = <|
+param ss, ret;
+	new v = ss->Tokenize("/");
+	new p1 = "";
+	new p = <<>>;
+	new q1 = "";
+	for (new i = 0; i < v->Len(); ++i)
+	{
+		if (i == 0)
+			q1 = "select p from DBPatient as p where p.Path=?";
+		else
+		if (i == 1)
+			q1 @= " and p.Date[index1].Path=?";
+		else
+		if (i == 2)
+			q1 @= " and p.Date[index1].Tests[index2].Path=?";			
+		else
+		if (i == 3)
+			q1 @= " and p.Date[index1].Tests[index2].Pictures[index3].Path=?";
+		p1  @= "/" @ v[i];
+		p @= p1;
+			
+	}
+	
+	ret @= << << q1, p >> >>; 
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::listPatient1(refer object BaseString, refer object Vector) = <|
+param ss, ret;
+	new v = ss->Tokenize("/");
+	new p1 = "";
+	new p = <<>>;
+	new q1 = "";
+	new ret1 = <<>>;
+	for (new i = 0; i < v->Len(); ++i)
+	{
+		if (i == 0)
+		{
+			q1 = "select p from DBPatient as p where p.Path=?";
+		}
+		else
+		if (i == 1)
+		{
+			q1 @=  " and p.Date[index1].Path=?";
+		}
+		else
+		if (i == 2)
+		{
+			q1 @= " and p.Date[index1].Tests[index2].Path=?";
+		}
+		else
+		if (i == 3)
+		{
+			q1 @= " and p.Date[index1].Tests[index2].Pictures[index3].Path=?";
+		}
+		p1  @= "/" @ v[i];
+		p @= p1;
+		ret1 @=  <<  << q1, p>>  >>;
+			
+	}
+	ret @= << ret1 >>; 
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::listPatient2(refer object BaseString, refer object Vector) = <|
+param ss, ret;
+	new v = ss->Tokenize("/");
+	new p1 = "";
+	new p = <<>>;
+	new q1 = "";
+	new q2 = "";
+	new ret1 = <<>>;
+	for (new i = 0; i < v->Len(); ++i)
+	{
+		if (i == 0)
+		{
+			q2 = "p ";
+			q1 = "from DBPatient as p where p.Path=?";
+		}
+		else
+		if (i == 1)
+		{
+			q2 = "p, p.Date[index1].oID ";
+			q1 @=  " and p.Date[index1].Path=?";
+		}
+		else
+		if (i == 2)
+		{
+			q2 = "p, p.Date[index1].oID, p.Date[index1].Tests[index2].oID ";
+			q1 @= " and p.Date[index1].Tests[index2].Path=?";
+		}
+		else
+		if (i == 3)
+		{
+			q2 = "p, p.Date[index1].oID, p.Date[index1].Tests[index2].oID , p.Date[index1].Tests[index2].Pictures[index3] ";
+			q1 @= " and p.Date[index1].Tests[index2].Pictures[index3].Path=?";
+		}
+		p1  @= "/" @ v[i];
+		p @= p1;
+		ret1 @= << << "select  " @ q2 @ q1, p >> >>; 
+			
+	}
+	ret @= << << "select  " @ q2 @ q1, p, ret1 >> >>; 
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddDirTree(refer object TreeDir, refer object DBPatient) = <|
+param tree, p;
+		if (p.Date != EMPTY )  
+		{
+			p.Date->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+			for (new i = 0, l = p.Date->Len(); i< l; ++i)
+			{
+				if (p.Date[i].Tests != EMPTY && p.Date[i].Tests->Len() > 0)
+				{
+					p.Date[i].Tests->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+					for (new j = 0, jl = p.Date[i].Tests->Len(); j < jl; ++j)
+					{
+						
+						if (p.Date[i].Tests[j].Pictures != EMPTY && p.Date[i].Tests[j].Pictures->Len() > 0)
+						{
+							p.Date[i].Tests[j].Pictures->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+							for (new k = 0, kl = p.Date[i].Tests[j].Pictures->Len(); k < kl; ++k)
+							{
+								new m = p.Date[i].Tests[j].Pictures[k];
+								new ph = m.Path;
+								tree->AddFile(m.Path);
+								if (m.Contur)
+								{
+									ph->ReplaceAll(".jpg", ".ctr");
+									tree->AddFile(ph);
+								}
+								if (m.Names)
+								{
+									ph = m.Path;
+									ph->ReplaceAll(".jpg", ".nam");
+									tree->AddFile(ph);
+								}
+								if (m.Result)
+								{
+									ph = m.Path;
+									ph->ReplaceAll(".jpg", ".res");
+									tree->AddFile(ph);
+								}
+					
+							}
+						
+						}
+						else
+							tree->AddDir(p.Date[i].Tests[j].Path);
+					}
+							
+				}
+				else
+				tree->AddDir(p.Date[i].Path);
+			}
+			
+		}
+		if (p.Reports != EMPTY )  
+		{
+			p.Reports->QSort( {| param key, elem; return key.Path <> elem.Path; |});
+			for (new i = 0, l = p.Reports->Len(); i< l; ++i)
+				tree->AddFile( p.Reports[i].Path);
+		}
+			
+		new nod =  tree->AddDir(p.Path);
+		nod.result = p.oID; 
+		return nod;
+	
+|>;
+
+
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::AddDirTree(refer object DBPatient) = <|
+param p;
+	return self->AddDirTree(self, p);
+	
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::GetMinMaxDate(void) = <|
+	new n = Odml2Exec("select MIN(p.Date[index1].Date), MAX(p.Date[index1].Date)  from DBPatient p", << >>);
+	return n[0];
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::SetQuery(refer object BaseString,  refer object BaseString, refer object BaseString,  refer object BaseString, refer object BaseString, refer object BaseString, refer object BaseString, boolean, boolean, boolean) = <|
+param id, lastname, fromdate, todate, allergen, dil, medication,  NoOpRecord, FailedContours, IsTreated;
+	new q = "";
+	.lastParam = <<>>;
+	.lastQuery = "";
+	if (id->Len() > 0)
+	{
+		q = " p.PatientIDStr like ?";
+		.lastParam @= id @ "%";
+	}
+	if (lastname->Len() > 0)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= " p.LastName like ?";
+		.lastParam @= lastname @ "%";
+	}
+	if (fromdate->Len() > 0)
+	{
+	//	fromdate->ReplaceAll("/", "-");	
+		if (q->Len() > 0) q @=  " and";
+		q @= " p.Date[index1].Date >= ?"; // @ fromdate @ "' ";
+		.lastParam @= instance Date(fromdate);
+		
+	}
+	if (todate->Len() > 0)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= " p.Date[index1].Date <= ?";
+		.lastParam @= instance Date(todate);
+		
+		
+	}
+	
+	if (allergen->Len() > 0)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= " p.Date[index1].Tests[index2].Allergen = ? ";
+		.lastParam @= GetAllergenEng(allergen);
+	}
+	if (dil->Len() > 0)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= " p.Date[index1].Tests[index2].Dil = ?";
+		.lastParam @= GetDilitionEng(dil);
+	}
+	if (NoOpRecord)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= " p.Date[Index1].Tests[Index2].OpScoreV is null";
+	}
+	if (FailedContours)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= " (p.Date[Index1].Tests[Index2].Pictures[Index3].DistrL is null) or (p.Date[Index1].Tests[Index2].Pictures[Index3].DistrR is null)";
+	}
+	if (IsTreated)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= "(p.Therapy[Index1].StartDate is not null)";
+	}
+	if (medication->Len() > 0)
+	{
+		if (q->Len() > 0) q @=  " and";
+		q @= "p.Therapy[Index1].Medication = ?";
+		.lastParam @= medication;
+	}
+	if (q->Len() > 0)
+		.lastQuery =  " where " @ q;
+
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::GetListPatient(void) = <|
+//trace "select p from DBPatient as p " @ .lastQuery @ .lastOrder, CR;
+//	new st = Clock();
+	new res = Odml2Exec("select distinct p from DBPatient as p " @ .lastQuery @ .lastOrder, .lastParam);
+//	trace "GetPat = ", Clock() - st, CR;
+	new l = res->Len();
+	.ID = instance Vector(l);
+	for (new i = 0; i < l; ++i)
+		.ID[i] = <<res[i].oID, i >>;
+	.ID->QSort( {| param key, elem; return key[0] <> elem[0]; |});
+	return res;
+		
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::GetListDate(refer object BaseString) = <|
+param poID;
+//trace "select p from DBPatient as p " @ .lastQuery @ " and p.oID" @ .lastOrder, .lastParam, CR;
+	new res = Odml2Exec("select distinct p.Date[index1].oID from DBPatient as p " @  .lastQuery @ " and p.oID = ?", .lastParam @ poID);
+	return res;
+		
+|>;
+
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::GetIndex(refer object BaseString) = <|
+param id;
+	new res =  .ID->BFind(id, {| param key, elem; return key <> elem[0]; |});
+	return res == -1 ? EMPTY : .ID[res][1]; 
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+new DBDir::SetOrder(int) = <|
+param b;
+	switch (b)
+	{
+	case .SORT_ID:
+		.lastOrder = " order by p.PatientIDStr";
+		break;
+	case .SORT_LastName:
+		.lastOrder = " order by p.LastName";
+		break;
+	case .SORT_FirstName:
+		.lastOrder = " order by p.FirstName";
+		break;
+	case .SORT_DateOfBirth:
+		.lastOrder = " order by p.DateOfBirth";
+		break;
+	default:
+		.lastOrder = "";;
+	} 
+|>;
+//-----------------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------------
+/*
+new DBDir::ImportTherapyFrom(void) = <|
+	new f = instance File(instance GOpenDialog("txt", "", "*.txt|*.txt")->Open());
+	f->Open("rb");
+	new Csv = f->wReadCSV();
+	for (new i = 0; i < Csv->Len(); ++i)
+	{
+		onerror {
+			continue;
+		}
+		new csv = Csv[i];
+		if (csv->Len() == 1)
+			continue;
+		new date = instance Date(csv[1]);
+		new allergen = GetAllergenEng(CheckForDepricatedNames(csv[2]));
+		new res = Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << csv[0] >>)[0];
+		new index;
+		if (res.Therapy->Len() == 0 || (index = res.Therapy->Find(<< date->Date::PrintDMY(), allergen >>, 0, <|param key, elem; return key[0] == elem.StartDate->Date::PrintDMY() && key[1] == elem.Allergen; |>)) == -1)
+		{
+			new tp = instance DBTherapy();
+			tp.StartDate = date;
+			tp.Allergen = allergen;
+			tp.Medication = csv[3];
+			res->AppendTherapy(tp);
+		}
+		else
+		{
+			res.Therapy[index].Allergen = allergen;
+			res.Therapy[index].Medication = csv[3];
+			res.Therapy[index]->Save();
+		}
+		
+		new rootDir = AllergoEyeIni->ReadStrW("DIR", "DATA");
+		new f = instance File(rootDir @ res.Path @ SFD @ "therapy.txt");
+		f->Open("wb");
+		f->Write("\xff\xfe");
+		for (new k = 0; k < res.Therapy->Len(); ++k)
+		{
+			new txt = instance WString(res.Therapy[k].StartDate->Date::PrintDMY());
+			txt @= ", ";
+			f->Write(txt.Data, txt.Data->Len() - 1);
+			txt = instance WString(res.Therapy[k].Allergen);
+			txt @= ", ";
+			f->Write(txt.Data, txt.Data->Len() - 1);
+			txt = instance WString(res.Therapy[k].Medication);
+			txt @= CR;
+			f->Write(txt.Data, txt.Data->Len() - 1);
+		}
+	}
+|>;
+
+*/

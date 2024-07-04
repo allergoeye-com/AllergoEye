@@ -1,0 +1,232 @@
+class NewROI {
+	Points;
+	Edit;
+	View;
+	pointMove;
+	indexMove;
+	vMoved;
+	
+	pointStartLine;
+global :
+	pointLine;
+
+};
+NewROI::pointLine = TRUE;
+
+//=============================================
+//
+//=============================================
+new NewROI::NewROI(void) = <|
+	.Points = <<>>;
+	.Edit = TRUE;
+	.View = TRUE;
+	.vMoved = <<>>;
+|>;
+//=============================================
+//
+//=============================================
+
+new NewROI::OnDraw(refer object MDC, refer object Transform2D, refer object GWnd) = {| 
+param mdc, trans, Parent;
+	if (!.View) return;
+	if (.Points->Len() == 0)
+		return;
+	
+	mdc->SetFgColor(CLR_LIGHTRED);
+	mdc->SetBgColor(CLR_LIGHTRED);
+	new pt = .Points;
+	trans->Lp2Dp(pt, pt);
+	new len = .Points->Len();
+	if (len > 2)
+	{
+		new curve = instance BetaCurve(pt);
+		new  contour = curve->GetContour();
+		mdc->PolyLine(contour);
+	}
+	else
+		mdc->PolyLine(pt);
+
+	
+	if (.Edit)
+	{
+
+		for (new i = 0; i < len; ++i)
+		{		
+			mdc->Bar(pt[i].x - 4, pt[i].y - 4, pt[i].x + 3, pt[i].y + 3);
+		
+		}
+		if (.pointLine && .pointStartLine != EMPTY)
+		{
+			if (len > 1)
+			{
+				pt = <<.Points[len - 1] >>;
+				pt @= .pointStartLine;
+			}
+			else
+				pt = .pointStartLine;
+			
+			
+			trans->Lp2Dp(pt, pt);
+			mdc->PolyLine(pt);
+		}
+	}
+
+|};
+//=============================================
+//
+//=============================================
+new NewROI::OnLButtonDown(int, int, refer object Transform2D, refer any) = <|
+param x, y, trans, Parent;
+.vMoved = <<>>;
+	if (self->OnSelect(x, y, trans, Parent)) return TRUE;
+	new lpt = .pointMove;
+	
+	.indexMove = .Points->Len();
+	trans->Dp2Lp(lpt);
+	//if (.Points->Len() == 0)
+		//.Points @= lpt;
+	if (lpt.y >= 0 && lpt.y < Parent.Bmp->GetHeight() && lpt.x >= 0 && lpt.x < Parent.Bmp->GetWidth())
+	{
+		if (.pointLine)
+		.pointStartLine = <<lpt>>;
+		.Points @= lpt;
+		return TRUE;
+	}
+
+	return FALSE;
+|>;
+//=============================================
+//
+//=============================================
+new NewROI::OnSelect(int, int, refer object Transform2D, refer any) = <|
+param x, y, trans, Parent;
+	.pointMove = instance POINT(x, y);
+	if (.Points->Len() > 0)
+	{	
+		new pt = .Points;
+		trans->Lp2Dp(pt, pt);
+		new len = pt->Len();
+		new i, cur, d, dist = 100.0;
+		for (i = 0; i < len; ++i)
+		{
+			
+			if ((d = ((pt[i].x - x)**2 + (pt[i].y - y)**2)) < dist)
+			{
+				dist = d;
+				cur = i;
+			}
+		}
+		if (cur != EMPTY)
+		{
+			.indexMove = cur;
+//			.pointMove = pt[cur];
+			.vMoved = <<.Points[cur], .Points[cur], .indexMove>>;
+
+			return TRUE;
+		}
+	}
+	return FALSE;
+|>;
+//=============================================
+//
+//=============================================
+new NewROI::Delete(void) = <|
+	if (.indexMove != EMPTY)
+	{
+		.Points->Remove(.indexMove);
+		.pointMove = EMPTY;
+		.indexMove = EMPTY;
+	}
+|>;
+new NewROI::Len(void) = <|
+	return .Points->Len();
+|>;
+//=============================================
+//
+//=============================================
+new NewROI::OnLButtonUp(int, int, refer object Transform2D, refer any) = {|
+param x, y, trans, Parent;
+onerror {
+	.pointMove = EMPTY;
+	.indexMove = EMPTY;
+}
+	new fRet = FALSE;
+	if (.pointMove != EMPTY && .indexMove != EMPTY)
+	{
+		new lpt = instance POINT(x, y);
+		trans->Dp2Lp(lpt);
+		if (lpt.y >= 0 && lpt.y < Parent.Bmp->GetHeight() && lpt.x >= 0 && lpt.x < Parent.Bmp->GetWidth())
+		{
+			if (.pointLine && .pointStartLine != EMPTY && .pointStartLine->Len() > 5)
+			{
+				.indexMove = .Points->Len();
+				.Points  @= .pointStartLine[.pointStartLine->Len() - 1];
+				.pointStartLine = <<lpt>>;	
+			}
+			else
+			{
+				.Points[.indexMove] = lpt;
+				if (.vMoved->Len() > 1)
+					.vMoved[1] = lpt;
+			}
+			fRet = TRUE;		
+
+		}
+		
+	
+	}
+	.pointMove = EMPTY;
+	.indexMove = EMPTY;
+	.pointStartLine = EMPTY;
+	return fRet;
+	
+
+
+|};
+//=============================================
+//
+//=============================================
+new NewROI::OnMouseMove(int, int, refer object Transform2D, refer any) = {|
+param x, y, trans, Parent;
+		new lpt = instance POINT(x, y);
+	new fRet = FALSE;
+	if (.pointMove != EMPTY && .indexMove != EMPTY && (.pointMove.x != x || .pointMove.y != y))
+	{
+		
+		.pointMove = lpt;
+		trans->Dp2Lp(lpt);
+		if (lpt.y >= 0 && lpt.y < Parent.Bmp->GetHeight() && lpt.x >= 0 && lpt.x < Parent.Bmp->GetWidth())
+		{
+			if (.pointLine && .indexMove != 0 && .pointStartLine != EMPTY)
+			{
+				
+				new pt = .Points[.Points->Len() - 1];
+				trans->Lp2Dp(pt);
+				pt.x -= .pointMove.x;
+				pt.y -= .pointMove.y;
+				if (.pointStartLine->Len() > 0 && pt.x * pt.x + pt.y * pt.y > 1024) 
+			//	if (.pointStartLine->Len() == 15)
+				{
+					.indexMove = .Points->Len();
+					.Points  @= .pointStartLine[.pointStartLine->Len() - 1];
+					.pointStartLine = <<lpt>>;	
+				}
+				else
+				.pointStartLine @= lpt;	
+
+			}
+			else
+			{
+				if (.vMoved->Len() > 1)
+					.vMoved[1] = lpt;
+				.Points[.indexMove] = lpt;
+
+			}
+			fRet = TRUE;
+		}
+		
+	}
+	return fRet;	
+|};
+
+

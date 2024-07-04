@@ -1,0 +1,12 @@
+class DlgOpScore : ModalForm {
+	Score;
+};
+
+
+new DlgOpScore::DlgOpScore(object Vector, refer object GWnd) = <|
+param Score, Parent;
+	.Score = Score;
+	self->ModalForm("DLG_OP_SCORE", Parent);
+	self->Bind(self);
+|>;
+

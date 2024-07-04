@@ -1,0 +1,22 @@
+new Lang = AllergoEyeIni->ReadStr("Locale", "Lang", "English");
+switch (Lang)
+{
+case "English":
+	CurLocale.Code = "eng";
+	break;
+case "Deutsch":
+	CurLocale.Code = "ger";
+	break;
+case "Spanish":
+	CurLocale.Code = "esp";
+	break;
+case "French":
+	CurLocale.Code = "fra";
+	break;
+case "Polish":
+	CurLocale.Code = "pol";
+	break;
+default :
+	CurLocale.Code = "eng";
+	break;
+}

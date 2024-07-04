@@ -1,0 +1,246 @@
+//================================================
+//
+//================================================
+
+class PacketMDns {
+	Name;
+	ip;
+	Records;
+	dir;
+	isValid;
+	
+};
+//------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------
+new PacketMDns::PacketMDns(refer object String, refer object String) = {|
+param str, ip;
+	.dir = instance TreeDir();
+onerror {
+	trace "pack error ", str, CR;
+	.isValid = FALSE;
+	return;
+	};
+
+	if (str->Find("allergoscope") == -1)
+	{
+		.isValid = FALSE;
+		 return;
+	 }
+	.isValid = FALSE;
+	.ip = ip;
+	new l;
+	
+	.Records = <<>>;
+	new L = 0;
+	if (str->Len() < 12) return;
+	new ID = 0;
+	l = "";
+	l @= str->GetByte(L + 1);
+	l @= str->GetByte(L);
+	
+	l->StringToInt16(0, ID);
+	L += 2;
+	new Flags = 0;
+	l = "";
+	l @= str->GetByte(L + 1);
+	l @= str->GetByte(L);
+	
+	l->StringToInt16(0, Flags);
+	if (Flags != 0x84)
+		return;
+
+	L += 2;
+	new QuestionCount = 0;
+	l = "";
+	l @= str->GetByte(L + 1);
+	l @= str->GetByte(L);
+	
+	l->StringToInt16(0, QuestionCount);
+	L += 2;
+	new AnswerCount = 0;
+	l = "";
+	l @= str->GetByte(L + 1);
+	l @= str->GetByte(L);
+	
+	l->StringToInt16(0, AnswerCount);
+	L += 2;
+	new NameServerRecords = 0;
+	l = "";
+	l @= str->GetByte(L + 1);
+	l @= str->GetByte(L);
+	
+	l->StringToInt16(0, NameServerRecords);
+	L += 2;
+	new nRec = 0;
+	l = "";
+	l @= str->GetByte(L + 1);
+	l @= str->GetByte(L);
+	l->StringToInt16(0, nRec);
+	L += 2;
+    new len = str->GetByte(L);
+    ++L;
+   .Name = str->Mid(L, len)->UTF8ToANSI();
+    L += len;
+    new d;
+    while ((d = str->GetByte(L)) != 0)
+    {
+    	++L;
+    	new ss = "";
+    	//trace str->Mid(L, d), CR;
+    	L += d;
+    }
+ 
+    while (nRec > 0)
+    {
+	    new Type = 0;
+	    new Class = 0;
+	    new TTL = 0;
+		if (L + 12 >= str->Len())
+			return;
+
+		str->StringToInt16(L, Type);
+		L += 2;
+		str->StringToInt32(L, Class);
+		L += 4;
+		str->StringToInt32(L, TTL);
+		L += 4;
+		l = "";
+		l @= str->GetByte(L + 1);
+		l @= str->GetByte(L);
+		l->StringToInt16(0, len);
+		L += 2;
+		if (len <= 0 || L + len > str->Len())
+			return;
+		
+				
+		
+		if (Type == 0x1000)
+		{
+			.Records @= str->Mid(L, len - 1)->UTF8ToANSI();
+		}
+		else
+		if (Type == 0x1100)
+		{
+
+			new s = "";
+			new w = instance WString();
+			w->CopyStringAsIs(str->Mid(L, len - 2));
+			//s->CopyString(w);
+			.Records @= w;
+		}
+	//	else
+	//		return;
+		L += len;
+		--nRec;
+	}
+	.isValid = TRUE;
+	
+|};
+//------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------
+class MDNSClient : MulticastReader
+{
+	Parent;
+	Port;
+	Address;
+	fOnReceive;
+	count;
+};
+//=========================================================
+//
+//=========================================================
+new MDNSClient::MDNSClient(refer any) =
+<|
+param p;
+
+	.count = 0;
+	.fOnReceive = FALSE;
+	onerror {
+		return;
+	}
+	.Parent = &p;
+	.Address = MDNSAddress; //AllergoEyeIni->ReadStr("MUTICAST", "ADDRESS", "224.0.0.251");
+	.Port = MDNSPort; //AllergoEyeIni->ReadInt("MUTICAST", "PORT", 5353);
+	self->MulticastReader(.Address, .Port);
+	self->Start();
+|>;
+//=========================================================
+//
+//=========================================================
+/*
+new MDNSClient::OnReceive( void ) = {|
+
+	new step = 0;
+	++.count;
+	if (.fOnReceive == TRUE)
+		return;
+
+	onerror {
+		trace Printf("Error step %d\r\n", step);
+		self->LeaveGroup();
+		self->JoinGroup(.Address);
+		.fOnReceive = FALSE;	
+		return;
+	};
+	
+	.fOnReceive = TRUE;
+//	stop;
+//	self->LeaveGroup();
+	do {
+		
+		new str = self->Receive();
+
+	step = 1;
+		.Parent->OnReceive(str);
+		--.count;
+		step = 3;
+	}
+	while(.count > 0);
+
+//	self->JoinGroup(.Address);
+//	trace Clock(), CR;
+	step = 4;
+	.fOnReceive = FALSE;	
+|};
+*/
+new MDNSClient::OnReceive( void ) = <|
+	new res, step = 0;
+	++.count;
+	if (.fOnReceive == TRUE)
+		return;
+
+	onerror {
+		trace Printf("Error step %d\r\n", step);
+		.fOnReceive = FALSE;	
+		return;
+	};
+	
+	.fOnReceive = TRUE;
+
+	do {
+
+step = 1;
+		--.count;
+		step = 1;
+		res = self->Receive();
+		if (res != EMPTY)
+		{
+			.Parent->OnReceive(res.mSocketAddress, res.mString);
+
+		}
+		step = 3;
+	}
+	while(.count > 0 && res != EMPTY);
+	.fOnReceive = FALSE;	
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new MDNSClient::~MDNSClient( void ) =
+<|
+	
+|>;

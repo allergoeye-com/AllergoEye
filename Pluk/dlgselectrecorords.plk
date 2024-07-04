@@ -1,0 +1,194 @@
+class DlgSelectRecorords  : ModalForm , FormTriggers {
+	List;
+	SubRecords;
+	Record;
+	parentIndex;
+	Selected;
+	Dir;
+	fOpen;
+	Index;
+	
+};
+event WND_SIZE, DlgSelectRecorords::OnSize;
+event WND_UPDATE, DlgSelectRecorords::OnUpdate;
+
+//=========================================================
+//
+//=========================================================
+new DlgSelectRecorords::DlgSelectRecorords(int, pointer object DirNode, refer object GWnd ) = <|
+param Index,  record, parent;
+	.parentIndex = Index;
+	.Record = record;
+	new list = <<>>;
+	.Record->GetDirList(list);
+	.SubRecords = <<>>;
+	.fOpen = FALSE;
+	for (new i = 0, l = list->Len(); i < l; ++i)
+	{
+		.SubRecords @=  << <<FALSE, list[i] >> >>;	
+	} 
+	
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (.Dir->GetLastByte() != FD)
+		.Dir @= SFD;
+	self->ModalForm( "ID_SELECT_RECORD", parent );
+	self->AllowEvent( WND_SIZE );
+	self->AllowEvent(WND_UPDATE);
+
+|>;
+
+new DlgSelectRecorords::~DlgSelectRecorords(void) = <|
+	.List = <<>>;
+|>;
+
+ 
+//==========================================
+//
+//==========================================
+new DlgSelectRecorords::Setup( void ) =
+<|
+	.List = instance BmpListView(TRUE, self);
+	self->ModalForm::Setup();
+	self->Bind(self);
+	self->SetCaption(.Record.name);
+|>;
+
+//==========================================
+//
+//==========================================
+new DlgSelectRecorords::DlgSelectRecorords(void) = <|
+	if (.List != EMPTY)
+	{
+		new pos = self->GetItemPos(ID_TREE);
+		new size = self->GetItemSize(ID_TREE);
+		pos[0] += size[0] + 20; 
+		.List->SetPos(pos[0], pos[1]);
+		
+		new s = self->GetSize();
+		.List->SetSize(s[0] - pos[0] - 20, size[1]);
+		.List->Invalidate(FALSE);
+		.List->SetFocus();
+	}
+
+|>;
+
+//=============================================
+//
+//=============================================
+new DlgSelectRecorords::OnUpdate(void) = <|
+	onerror {
+		new mdc = instance MDC(self);
+		mdc->OpenDC();
+		mdc->CloseDC();
+		return;
+	}
+	if (!.fOpen	)
+		self->UpdateSize();		
+	
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	mdc->CloseDC();
+	if (.List != EMPTY)
+		.List->OnUpdate();
+|>;
+
+new DlgSelectRecorords::OnSize(...) =
+<|
+param code, width, height;
+
+	if (code != SIZE_MINIMIZED)
+	{
+		self->UpdateSize();		
+	}
+|>;
+
+//==========================================
+//
+//==========================================
+new DlgSelectRecorords::UpdateSize(void) = <|
+	if (.List != EMPTY)
+	{
+		new pos = self->GetItemPos(ID_TREE);
+		new size = self->GetItemSize(ID_TREE);
+		pos[0] += size[0] + 20; 
+		.List->SetPos(pos[0], pos[1]);
+		
+		new s = self->GetSize();
+		.List->SetSize(s[0] - pos[0] - 20, size[1]);
+		.List->Invalidate(FALSE);
+		.List->SetFocus();
+		.fOpen = TRUE;
+	}
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new DlgSelectRecorords::OnOk(refer ...) = <|
+	self->UpdateForm();
+	.List->Clear();
+	self->ModalForm::Close(IDOK);
+|>;
+//=========================================================
+//
+//=========================================================
+new DlgSelectRecorords::OnSelect(refer ...) = <|
+param data, par;
+	new Table = instance GTable(ID_TREE, self);
+	new pos = Table->GetNotifyPos();
+	
+	if (pos[1] == 0)
+	{
+		.SubRecords[pos[0]][pos[1]] = !.SubRecords[pos[0]][pos[1]];
+		self->UpdateForm();
+		
+		if (.SubRecords[pos[0]][0])
+		{
+			self->OnSel(.SubRecords[pos[0]][1]);
+			.SubRecords[pos[0]][1]->Select(.parentIndex, TRUE);
+
+		}
+		else
+		{
+			.SubRecords[pos[0]][1]->Select(.parentIndex, FALSE);
+			.List->Clear();
+			.List->RecalcLayout();
+			.List->Invalidate(TRUE);
+		}
+	}		
+	
+|>;
+
+//=========================================================
+//
+//=========================================================
+new DlgSelectRecorords::OnSel(pointer object DirNode) = <|
+param m;
+		new currentList = m->GetFileList(<<".jpg", ".tif">>);
+		.List->Clear();
+		for (new i = 0, l = currentList->Len(); i < l; ++i)
+		{
+			new dir = .Dir @ currentList[i]->GetWinPath();
+			if (currentList[i].parent.childs->Find(JustName(dir) @ ".ctr", 0,  <| param key, elem; return key == elem.name; |>) != -1)
+			{
+				new v = <<>>;
+				new names = << >>;
+				new distr = << >>;
+				currentList[i].result = main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+				currentList[i].res_distr <- distr;
+				if (v->Len() > 0)
+				{
+					currentList[i].roi <- v;
+					currentList[i].names <- names;
+				}
+			}
+			new bmp = LoadBmpWithBlur(dir);
+/*			new bmp = instance MBmp();
+			bmp->LoadImage(dir);*/
+			.List->AddBmp(bmp, currentList[i]);
+		}
+		.List->RecalcLayout();
+		.List->Invalidate(TRUE);
+	
+|>;	
