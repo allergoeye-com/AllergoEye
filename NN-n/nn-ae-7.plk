@@ -1,0 +1,310 @@
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+//===============================================
+/**
+param inNC, X, Y, outNC;
+**/
+//===============================================
+new PNNBlock::GetSpec_AE_Encoder(int, int, int, int) = <|
+param inNC, X, Y, outNC;
+	return <<
+		<< 1, << inNC, X, Y >> >>,
+		<< 1, "NeuronConv2D", <<inNC, 5, 5, outNC >>, << "RELU", 0.0, "" >>, 1, 2 >>,
+		<< 2, << outNC, X, Y >> >>,
+		<< 2, "NeuronConv2D", <<outNC, 5, 5, outNC >>, << "RELU", 0.0, "" >>, 2, 3 >>,
+		<< 3, << outNC, X, Y >> >>,
+		<< 3, "NeuronConv2D", <<outNC, 5, 5, outNC >>, << "RELU", 0.0, "" >>, 3, 4 >>,
+		<< 4, << outNC, X, Y >> >>
+		>>;
+|>;
+//===============================================
+/**
+param inNC, X, Y, outNC;
+**/
+//===============================================
+new PNNBlock::GetSpec_AE_Decoder(int, int, int, int) = <|
+param inNC, X, Y, outNC;
+	return <<
+		<< 1, << inNC, X, Y >> >>,
+		<< 1, "NeuronConv2D", <<inNC, 3, 3, outNC >>, << "RELU", 0.0, "" >>, 1, 2 >>,
+		<< 2, << outNC, X, Y >> >>,
+		<< 2, "NeuronConv2D", <<outNC, 3, 3, outNC >>, << "RELU", 0.0, "" >>, 2, 3 >>,
+		<< 3, << outNC, X, Y >> >>,
+		<< 3, "NeuronConv2D", <<outNC, 3, 3, outNC >>, << "RELU", 0.0, "" >>, 3, 4 >>,
+		<< 4, << outNC, X, Y >> >>
+		>>;
+|>;
+//===============================================
+//
+//===============================================
+new PNN::BuildAE(int, int) = <|
+param X, Y;
+
+	.UseClassWeights = FALSE;
+	.GT_type = "Custom";
+	.SaveBest = TRUE;
+	.TestRep = 3;
+	.MaxTestSize = 10;
+	.NormilizeSample = FALSE;
+	.Name = Printf("NAE-7-bin2");
+
+	new X2 = X / 2 + (X % 2);
+	new Y2 = Y / 2 + (Y % 2);
+
+	new X4 = X2 / 2 + (X2 % 2);
+	new Y4 = Y2 / 2 + (Y2 % 2);
+
+	new X8 = X4 / 2 + (X4 % 2);
+	new Y8 = Y4 / 2 + (Y4 % 2);
+
+	new X16 = X8 / 2 + (X8 % 2);
+	new Y16 = Y8 / 2 + (Y8 % 2);
+
+	new LayersList = <<
+			<< 1, << 3, X, Y >> >>,
+			<< 10, "NeuronNormalize", 0.99, 1, 10 >>,
+			<< 10, << 3, X, Y >> >>,
+//			<< 20, "NNBlock", self->GetSpec_AE_Encoder(3, X, Y, 8), 10, 20 >>,
+//			<< 20, << 8, X, Y >> >>,
+	
+			<< 30, "NeuronBlurPool2x2", 3, 10, 30 >>,
+			<< 30, << 3, X2, Y2 >> >>,
+			<< 40, "NNBlock", self->GetSpec_AE_Encoder(3, X2, Y2, 16), 30, 40 >>,
+			<< 40, << 16, X2, Y2 >> >>,
+
+			<< 50, "NeuronBlurPool2x2", 3, 30, 50 >>,
+			<< 50, << 3, X4, Y4 >> >>,
+			<< 60, "NNBlock", self->GetSpec_AE_Encoder(3, X4, Y4, 32), 50, 60 >>,
+			<< 60, << 32, X4, Y4 >> >>,
+	
+			<< 70, "NeuronBlurPool2x2", 32, 60, 70 >>,
+			<< 70, << 32, X8, Y8 >> >>,
+			<< 80, "NNBlock", self->GetSpec_AE_Encoder(32, X8, Y8, 64), 70, 80 >>,
+			<< 80, << 64, X8, Y8 >> >>,
+			
+//////////////////////////////////////////////////////////
+
+			<< 90, "NeuronMaxPool2x2", 64, 80, 90 >>,
+			<< 90, << 64, X16, Y16 >> >>,
+			<<100, "NNBlock", self->GetSpec_AE_Encoder(64, X16, Y16, 128), 90, 100 >>,
+			<<100, << 128, X16, Y16 >> >>,
+
+			<<110, "NeuronConv2D", << 128, 5, 5, 128 >>, << "RELU", 0.0, "" >>, 100, 110 >>,
+			<<110, << 128, X16, Y16 >> >>,
+
+			<<170, "NeuronConv2D", <<128, 3, 3, 32 >>, << "RELU", 0.0, "" >>, 110, 170 >>,
+			<<170, << 32, X16, Y16 >> >>,
+	
+			<<175, "NeuronConvC", <<32, 3 >>, << "SOFTMAX", 0.0, "" >>, 170, 175 >>,
+			<<175,	<< 3, X16, Y16 >> >>,
+
+		<<180, "NeuronLossFunc", "CROSSENTROPY_BINARY", << >>, << 2, 16, 10.0 >>, 175, 180  >>,
+			<<180, << 3, X16, Y16 >> >>,
+
+
+//////////////////////////////////////////////////////////
+// 	<< "BlockBackPropagation" >>,
+
+			<<185, "NeuronUpSize2x2", 3, 175, 185 >>,
+			<<185, << 3, X8, Y8 >> >>,
+
+			<<190, "NeuronUpSize2x2", 128, 110, << 200, 0, 128 >> >>,
+			<<190, "NeuronNormalize", 1.0, 80, << 200, 128, 64 >> >>,
+			<<200, <<192, X8, Y8 >> >>,
+			
+			<<210, "NNBlock", self->GetSpec_AE_Decoder(198, X8, Y8, 64), 200, 210 >>,
+			<<210, << 64, X8, Y8 >> >>,
+			
+//////////////////////////////////////////////////////////
+// 	<< "BlockBackPropagation" >>,
+
+			<<245, "NeuronUpSize2x2", 3, 185, 245 >>,
+			<<245, <<3, X4, Y4 >> >>,
+			
+			<<247, "NeuronUpSize2x2", 64, 210, << 250, 0, 64 >> >>,
+			<<250, "NeuronNormalize", 1.0, 60, << 250, 64, 32 >> >>,
+			<<250, <<96, X4, Y4 >> >>,
+			
+			<<260, "NNBlock", self->GetSpec_AE_Decoder(96, X4, Y4, 64), 250, 260 >>,
+			<<260, << 64, X4, Y4 >> >>,
+
+//////////////////////////////////////////////////////////
+
+//	<< "BlockBackPropagation" >>,
+
+			<<305, "NeuronUpSize2x2", 3, 245, 305 >>,
+			<<305, <<3, X2, Y2 >> >>,
+
+			<<310, "NeuronUpSize2x2", 64, 260, << 320, 0, 64 >> >>,
+			<<320, "NeuronNormalize", 1.0, 40, << 320, 64, 16 >> >>,
+			<<320, <<80, X2, Y2 >> >>,
+			
+
+			<<330, "NNBlock", self->GetSpec_AE_Decoder(80, X2, Y2, 64), 320, 330 >>,
+			<<330, <<64, X2, Y2 >> >>,
+			<<335, <<"NeuronForkB", 305, << 340, 0, 3 >> >>,
+			<<340, "NeuronNormalize", 1.0, 330, << 340, 3, 64 >> >>,
+			<<340, <<67, X2, Y2 >> >>,
+
+			<<330, "NeuronConv2D", << 67, 3, 3, 64 >>, << "RELU", 0.0, "" >>, 340, 350>>,
+			<<350,	<< 64, X2, Y2 >> >>,
+			<<360, "NeuronConvC", <<64, 3 >>, << "SOFTMAX", 0.0, "" >>, 350, 360 >>,
+			<<360,	<< 3, X2, Y2 >> >>,
+	
+		<<370, "NeuronLossFunc", "CROSSENTROPY_BINARY", << >>, << 3, 2, 30.0 >>, 360, 370  >>,
+			<<370, << 3, X2, Y2 >> >>,
+
+			<< "ExitNN", << 360,  2 >> >>,
+			<< "ExitNN", << 175, 16 >> >>
+		>>;
+	self->Build(LayersList);
+	if (.UseOCL)
+		self->InitOCLMem();
+
+|>;
+//===============================================
+//
+//===============================================
+PNN::Cache_Name = << >>;
+PNN::Cache_Image = << >>;
+
+//===============================================
+//
+//===============================================
+new PNN::InitAE(void) = <|
+ new X = 1200;
+ new Y = 316;
+	new X2 = X / 2 + (X % 2);
+	new Y2 = Y / 2 + (Y % 2);
+
+	new X4 = X2 / 2 + (X2 % 2);
+	new Y4 = Y2 / 2 + (Y2 % 2);
+
+	new X8 = X4 / 2 + (X4 % 2);
+	new Y8 = Y4 / 2 + (Y4 % 2);
+
+	new X16 = X8 / 2 + (X8 % 2);
+	new Y16 = Y8 / 2 + (Y8 % 2);
+
+	.GetSample = Printf({|
+		param Self, Samples;
+		
+		new Name = Samples[0][Samples[1]];
+		if (PNN::Cache_Name == EMPTY)
+			PNN::Cache_Name = << >>;
+		new index = PNN::Cache_Name->BFind(Name);
+		if (index == -1)
+		{
+			index = PNN::Cache_Name->BInsert(Name);
+			new Images = MathImage::LoadImageSet(Name);
+			new W = %d;
+			new H = %d;
+			if (W != Images[0]->Width() || H != Images[0]->Height())
+			{
+				for (new i = 0; i < Images->Len(); ++i)
+					Images[i] = Images[i]->Stretch(0.0, W, H);
+			}
+			new W2 = W / 2 + (W %% 2);
+			new H2 = H / 2 + (H %% 2);
+			new W4 = W2 / 2 + (W2 %% 2);
+			new H4 = H2 / 2 + (H2 %% 2);
+			new W8 = W4 / 2 + (W4 %% 2);
+			new H8 = H4 / 2 + (H4 %% 2);
+			new W16 = W8 / 2 + (W8 %% 2);
+			new H16 = H8 / 2 + (H8 %% 2);
+
+			new Src = instance Vector(3);
+			for (new i = 0; i < Src->Len(); ++i)
+				Src[i] = instance FMathImage(Images[i]);
+
+			new Label1 = instance Vector(3);
+			for (i = 0; i < Label1->Len(); ++i)
+				Label1[i] = instance FMathImage(Images[i + 3]);
+
+			new Label2 = instance Vector(3);
+			for (i = 0; i < Label2->Len(); ++i)
+				Label2[i] = Label1[i]->Stretch(0.0, W2, H2);
+
+			new Label4 = instance Vector(3);
+			for (i = 0; i < Label4->Len(); ++i)
+				Label4[i] = Label2[i]->Stretch(0.0, W4, H4);
+
+			new Label8 = instance Vector(3);
+			for (i = 0; i < Label8->Len(); ++i)
+				Label8[i] = Label4[i]->Stretch(0.0, W8, H8);
+
+			new Label16 = instance Vector(3);
+			for (i = 0; i < Label16->Len(); ++i)
+				Label16[i] = Label8[i]->Stretch(0.0, W16, H16);
+
+			new cache = << instance NNBufferF(Src),
+						instance NNBufferF(Label1),
+						instance NNBufferF(Label2),
+						instance NNBufferF(Label4),
+						instance NNBufferF(Label8),
+						instance NNBufferF(Label16),
+						Rect
+						>>;
+			if (PNN::Cache_Image == EMPTY)
+			{
+				PNN::Cache_Image = << EMPTY >>;
+				PNN::Cache_Image[0] <- cache;
+			}
+			else
+			{
+				PNN::Cache_Image->Insert(EMPTY, index);
+				PNN::Cache_Image[index] <- cache;
+			}
+		}
+		return PNN::Cache_Image[index][0];
+	|}, X, Y);
+	
+	.GetLabel = {|
+		param Self, Samples;
+		parest Binning;
+		new Name = Samples[0][Samples[1]];
+		new index = PNN::Cache_Name->BFind(Name);
+		new bin = Binning == << >> ? 1 : Binning[0];
+
+		switch (bin)
+		{
+		case 1 :
+			return PNN::Cache_Image[index][1];
+		case 2 :
+			return PNN::Cache_Image[index][2];
+		case 4 :
+			return PNN::Cache_Image[index][3];
+		case 8 :
+			return PNN::Cache_Image[index][4];
+		case 16 :
+			return PNN::Cache_Image[index][5];
+		}	
+	|};
+	
+	.CustomCompare = {|
+		param binning, b, Self;
+		new bin_index = Self.GTBinning->Find(binning);
+		new res;
+
+		if (binning == 16)
+		{
+			res = Self->GetResultLayer(binning)[b];
+			return res->CompareClassMasks(*&Self.GroundTruth[bin_index][b]);
+		}
+		else
+		if (binning == 2)
+		{
+			res = Self->GetResultLayer(binning)[b];
+			return res->CompareClassMasks(*&Self.GroundTruth[bin_index][b]);
+		}
+		return;
+	|};
+	self->BuildAE(X, Y);
+|>;
+

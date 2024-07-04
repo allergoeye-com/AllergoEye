@@ -1,0 +1,313 @@
+class NNGlobal {
+	NN;
+};
+global wnd;
+//=======================================
+//
+//=======================================
+new NNGlobal::NNGlobal(void) = <|
+|>;
+//=======================================
+//
+//=======================================
+new NNGlobal::Init(void)  = <|
+	new f = instance File(/*JustDirName(ExeName) @ */CmdLine[0]); //"G:\\NN-2019-11-08-L21-0.976831--29172.5.nn");
+	f->Open("rb");
+	.NN = f->Getv();
+	f->Close();
+|>;
+//============================================
+//
+//============================================
+new NNGlobal::BuildMasks(refer object String) = <|
+param SrcName;
+
+	new Image = MathImage::LoadImageSet(SrcName);
+	new img = instance Vector(3);
+
+	for (new k = 0; k < 3; ++k)
+		Image[k] = instance FMathImage(Image[k], 0, 0, 1200, 316);
+
+	img = << Image[0] - 103.939, Image[1] - 116.779, Image[2] - 123.68 >>;
+
+
+	new st = Clock();
+	.NN->MapImage(img);
+	trace Printf("NN time = %g\r\n", Clock() -  st);
+
+	new mask = .NN->GetMapImage()[0];
+	mask = instance MathImage(mask * 255);
+	if (.NN.Binning > 1)
+		mask = mask->StretchWithBilinearInterpolation(.NN.Binning);
+	mask->ToBilevel(100, 1);
+
+	new iris = .NN->GetMapImage()[1];
+	iris = instance MathImage(iris * 255);
+	if (.NN.Binning > 1)
+		iris = iris->StretchWithBilinearInterpolation(.NN.Binning);
+	iris->ToBilevel(150, 1);
+
+	new irsi_ctr = iris->GetContours();
+	for (new i = irsi_ctr->Len() - 1; i >= 0; --i)
+	{
+		if (irsi_ctr->Len() > 1 && irsi_ctr[i]->Len() < 60)
+			irsi_ctr->Remove(i);
+	}
+
+	new ctr = mask->GetContours();
+
+	mask->Set(0);
+	iris->Set(0);
+	
+	for (i = irsi_ctr->Len() - 1; i >= 0; --i)
+	{
+		for (new j = irsi_ctr[i]->Len() - 1; j >= 0; --j)
+			irsi_ctr[i][j] = instance POINT(irsi_ctr[i][j][0], irsi_ctr[i][j][1]);
+		new ctr_mask = mask->GetSplineMask(instance BetaContour(irsi_ctr[i]));
+		iris |= ctr_mask;
+		ctr_mask *= -2;
+		mask |= ctr_mask;
+	}
+	iris *= -1;
+	iris -= 1;
+	iris *= -1;
+
+	new dm = iris->BuildDistanceMap();
+	for (i = ctr->Len() - 1; i >= 0; --i)
+	{
+		if (ctr->Len() > 1 && ctr[i]->Len() < 70)
+			ctr->Remove(i);
+		else 
+		{
+			for (new j = ctr[i]->Len() - 1; j >= 0; --j)
+				ctr[i][j] = instance POINT(ctr[i][j][0], ctr[i][j][1]);
+			new ctr_mask = mask->GetSplineMask(instance BetaContour(ctr[i]));
+			new inv = ctr_mask;
+			inv->InverseBilevel();
+			inv *= -100;
+			new ctr_dm = ctr_mask & dm;
+			ctr_dm += inv;
+			if (ctr_dm->GetMinimum() > 30)
+				ctr->Remove(i);
+			else
+				mask |= ctr_mask * -1;
+		}
+	}
+	mask->SetIfEqual(2, 3);
+	return mask;
+|>;
+//============================================
+//
+//============================================
+new NNGlobal::SaveMaskContour(refer object String, refer object MathImage, boolean) = <|
+param SrcName, mask, SaveMask;
+	if (SaveMask)
+	{
+		new MaskName = JustDirName(SrcName) @ JustName(SrcName) @ ".bin";
+		new f = instance File(MaskName);
+		f->Open("wb");
+		f->Write(mask->GetBits(1));
+		f->Close();
+	}
+	new iris = mask;
+	new corner = mask;
+	corner->SetIfNotEqual(0, 4);
+	iris->SetIfNotEqual(0, 2);
+	mask->SetIfNotEqual(0, 1);
+	new Image = MathImage::LoadImageSet(SrcName);
+	new _ContourName = JustDirName(SrcName) @ JustName(SrcName) @ ".nam";
+	new ContourName = JustDirName(SrcName) @ JustName(SrcName) @ ".ctr";
+	new iris_ctr = iris->GetContours();
+	new corner_ctr = corner->GetContours();
+	new ctr = mask->GetContours();
+	new f = instance File(ContourName);
+	f->Open("wb");
+	f->Write("CTR01");
+
+	new f1 = instance File(_ContourName);
+	f1->Open("wb");
+
+	new len = ctr->Len() + iris_ctr->Len() + corner_ctr->Len();
+	new buff = instance String(2);
+	buff->Int16ToString(0, len);
+	f->Write(buff);
+	new buff_len = instance String(4);
+	new buff_p = instance String(8);
+	for (new i = 0; i < ctr->Len(); ++i)
+	{
+		len = ctr[i]->Len();
+		buff_len->Int32ToString(0, len);
+		f->Write(buff_len);
+		for (new j = 0; j < len; ++j)
+		{
+			new x = float(ctr[i][j][0]);
+			new y = float(Image[0]->Height() - ctr[i][j][1]);
+			buff_p->FloatToString(0, x);
+			buff_p->FloatToString(4, y);
+			f->Write(buff_p);
+		}
+		f1->Write("sclera\r\n");
+	}
+	for (i = 0; i < iris_ctr->Len(); ++i)
+	{
+		len = iris_ctr[i]->Len();
+		buff_len->Int32ToString(0, len);
+		f->Write(buff_len);
+		for (new j = 0; j < len; ++j)
+		{
+			new x = float(iris_ctr[i][j][0]);
+			new y = float(Image[0]->Height() - iris_ctr[i][j][1]);
+			buff_p->FloatToString(0, x);
+			buff_p->FloatToString(4, y);
+			f->Write(buff_p);
+		}
+		f1->Write("iris\r\n");
+	}
+	for (i = 0; i < corner_ctr->Len(); ++i)
+	{
+		len = corner_ctr[i]->Len();
+		buff_len->Int32ToString(0, len);
+		f->Write(buff_len);
+		for (new j = 0; j < len; ++j)
+		{
+			new x = float(corner_ctr[i][j][0]);
+			new y = float(Image[0]->Height() - corner_ctr[i][j][1]);
+			buff_p->FloatToString(0, x);
+			buff_p->FloatToString(4, y);
+			f->Write(buff_p);
+		}
+		f1->Write("corner\r\n");
+	}
+	f->Close();
+|>;
+
+//============================================
+//
+//============================================
+new NNGlobal::Calculate(refer object String, refer object MathImage) = <|
+param SrcName, mask;
+	mask->SetIfNotEqual(0, 1);
+	new mask_ = instance MathImage(600, 316);
+	new mask_r = mask;
+	mask_r->Set(mask_, 600, 0);
+	new mask_l = mask;
+	mask_l->Set(mask_, 0, 0);
+	new area_l = float(mask_l->Integral());
+	new area_r = float(mask_r->Integral());
+	mask_l *= -1;
+	mask_r *= -1;
+	new L = instance Vector(3);
+	new R = instance Vector(3);
+	new Image = MathImage::LoadImageSet(SrcName);
+	for (new i = 0; i < Image->Len(); ++i)
+	{
+		Image[i] = instance MathImage(Image[i], 0, 0, 1200, 316);
+		L[i] = Image[i] & mask_l;
+		R[i] = Image[i] & mask_r;
+	}
+	R = Colorimetry(R, 0);
+	L = Colorimetry(L, 0);
+	trace Printf("area_l = %g, area_r = %g\r\n", area_l, area_r);
+	if (L != EMPTY)
+	{
+		trace Printf("L = %v+-%v\r\n", L[0], Sqrt(L[1]));
+	}
+	if (R != EMPTY)
+	{
+		trace Printf("R = %v+-%v\r\n", R[0], Sqrt(R[1]));
+	}
+
+	new ResultName = JustDirName(SrcName) @ JustName(SrcName) @ ".res";
+	new f = instance File(ResultName);
+	if (area_l > 0.0 && area_r > 0.0)
+	{
+		L[0] += 1.0 / 3.0;
+		R[0] += 1.0 / 3.0;
+		new res = R[0] / L[0];
+		new disp = res ** 2.0 * (L[1] / L[0] ** 2.0 + R[1] / R[0] ** 2.0);
+		new txt;
+		switch (CurLocale.Code)
+		{
+		case "ger" :
+			txt = Printf("Rechts/Links Rötungsverhältnis = %5.3f+-%5.3f", res, Sqrt(disp));
+//			txt = Printf("Rötung links gegen rechts = %5.3f+-%5.3f", res, Sqrt(disp));
+			break;
+		case "eng" :
+			txt = Printf("Right/Left Redness Ratio = %5.3f+-%5.3f", res, Sqrt(disp));
+			break;
+		}
+		trace txt, CR;
+		f->Open("wb");
+		f->Printf(txt);
+		f->Close();
+	}
+	else
+	{
+		if (area_l > 0.0)
+		{
+			new txt = Printf("Left = %5.2f+-%5.3f\r\n", L[0], Sqrt(L[1]));
+			trace txt, CR;
+			f->Open("wb");
+			f->Printf(txt);
+			f->Close();
+		}
+		else
+		if (area_r > 0.0)
+		{
+			new txt = Printf("Right = %5.2f+-%5.3f\r\n", R[0], Sqrt(R[1]));
+			trace txt, CR;
+			f->Open("wb");
+			f->Printf(txt);
+			f->Close();
+		}
+		else
+		{
+			f->Open("wb");
+			switch (CurLocale.Code)
+			{
+			case "ger" :
+				f->Printf("Links/Rechts Rötungsverhältnis = FEHLER");
+				break;
+			case "eng" :
+				f->Printf("Right/Left Red Ratio = FAILURE");
+				break;
+			}
+			f->Close();
+		}
+	}
+|>;
+/*
+PlukCOMServer::Server->SetNameServer("ANNGlobal");
+PlukCOMServer::Server->AddClass("NNGlobal", <<"Init", "FindMasks">>);
+
+PlukCOMServer::Server->SetAutoKill(TRUE);
+PlukCOMServer::Server->SetTypeObject(REGCLS_SINGLEUSE);
+*/
+trace CmdLine, CR; 	
+global nn = instance NNGlobal();
+
+if (CmdLine->Len() > 0)
+{
+	onerror {
+		end;
+	}
+	new MaskName = JustDirName(CmdLine[1]) @ JustName(CmdLine[1]) @ ".bin";
+	new f = instance File(MaskName);
+	if (CmdLine->Len() >= 3 && CmdLine[2] == "/recalc" && f->Access(ACCESS_EXIST) == TRUE)
+	{
+		f->Open("rb");
+		new bits = f->Read(-1);
+		f->Close();
+		new mask = instance MathImage(1, bits, 0, 1200, 316);
+		nn->SaveMaskContour(CmdLine[1], mask, FALSE);
+		nn->Calculate(CmdLine[1], mask);
+	}
+	else
+	{
+		nn->Init();
+		new mask = nn->BuildMasks(CmdLine[1]);
+		nn->SaveMaskContour(CmdLine[1], mask, TRUE);
+		nn->Calculate(CmdLine[1], mask);
+	}
+	end;
+}

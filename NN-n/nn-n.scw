@@ -1,0 +1,4 @@
+form "DLG_MAIN"
+{
+	closeon: IDCLOSE, IDOK;
+}

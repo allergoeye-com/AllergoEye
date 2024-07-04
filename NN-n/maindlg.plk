@@ -1,0 +1,181 @@
+class MainDlg : Form
+{
+	tryIcon;
+	ini;
+	ImageNameList;
+	fRecalc;
+};
+event WND_LBUTTONDOWN, 	MainDlg::OnLButtonDown;
+event WND_TIMER, MainDlg::OnTimer;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new MainDlg::MainDlg(void) =
+<|
+
+	self->Form("DLG_MAIN");
+	.ini = instance IniFile(JustDirName(ExeName) @ "allergoscopeeditor.ini");
+	.ImageNameList=  <<>>;
+	self->Bind(self);
+	self->Open();
+
+
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new MainDlg::ReadStr(refer object BaseString ) = <|
+param ImageName;
+onerror {
+	.ImageNameList = <<>>;
+	return FALSE;
+}
+	.fRecalc = FALSE;
+
+
+	new f0 = instance File(ImageName);
+	if (f0->Access(ACCESS_EXIST) == TRUE)
+	{
+		f0->Open("rb");
+		new Buff = f0->Read(-1);
+		new List = instance WString(Buff->Len() / 2);
+		List.Data <- Buff;
+		.ImageNameList = List->Tokenize(CR);
+		f0->Close();
+		f0->Remove();
+		return TRUE;
+	}
+	return FALSE;
+	
+|>;
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new MainDlg::ReadVect(refer object BaseString ) = <|
+param ImageName;
+onerror {
+	.ImageNameList = FALSE;
+	.fRecalc = FALSE;
+	return FALSE;
+}
+new s = instance Silent();
+	.fRecalc = FALSE;
+
+		new f0 = instance File(ImageName);
+		if (f0->Access(ACCESS_EXIST) == TRUE)
+		{
+			f0->Open("rb");
+			.fRecalc = f0->Getv() == "recalc";
+			for (new n = f0->Getv(); n != EMPTY; n = f0->Getv())
+				.ImageNameList ,= n;
+			f0->Close();
+			f0->Remove();
+			return TRUE;
+		}
+		return FALSE;
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+
+new MainDlg::OnTimer( int, ... ) = <|
+param timerNo;
+	if (timerNo == 1000)
+	{
+		new DirName = JustDirName(ExeName) @  "AEExchange" @ SFD;
+		new dir = instance DirW(DirName);
+		if (dir->Access(ACCESS_EXIST) != TRUE)
+			dir->Create();
+		dir->Read("*.tmp");
+
+//		new NN = .ini->ReadStr("NAME", "NN", "NN=NN-NAE-6-bin2d-0.94654--2.4069.nn");
+//		if (dir->GetNumbFiles() > 0)
+//			nn->Init(JustDirName(ExeName) @ NN);
+
+		for (new i = 0; i < dir->GetNumbFiles(); ++i)
+		{
+				new f = dir.DirName @ dir->FileName(i);
+				if (!self->ReadVect(f))
+					if (!self->ReadStr(f))
+					{
+						new f0 = instance File(f);
+						if (f0->Access(ACCESS_EXIST) == TRUE)
+							f0->Remove();
+						contirue;
+					}
+				
+				if (.fRecalc)
+				{
+					for (new it = 0; it < .ImageNameList->Len(); ++it)
+					{
+						new ImageName = .ImageNameList[it];
+						trace ImageName, CR;
+						trace 	"Recalc = TRUE", CR;
+						new MaskName = JustDirName(ImageName) @ JustName(ImageName) @ ".bin";
+						new f = instance File(MaskName);
+						if (f->Access(ACCESS_EXIST) == TRUE)
+						{
+							f->Open("rb");
+							new bits = f->Read(-1);
+							f->Close();
+							new Image = MathImage::LoadImageSet(ImageName);
+							new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+							new NumbRegions = nn->SaveMaskContour(ImageName, mask, FALSE);
+							nn->Calculate(ImageName, mask, NumbRegions);
+						}
+					}
+				}
+				else
+				{
+					for (new it = 0; it < .ImageNameList->Len(); ++it)
+					{
+						trace 	"Recalc = FALSE", CR;
+						new ImageName = .ImageNameList[it];
+						if (JustExtension(ImageName) == "bin")
+							ImageName = JustDirName(ImageName) @ JustName(ImageName) @ ".jpg";
+						new mask = nn->BuildMasks(ImageName);
+						new NumbRegions = nn->SaveMaskContour(ImageName, mask, TRUE);
+						nn->Calculate(ImageName, mask, NumbRegions);
+					}
+				}
+	
+		}
+		
+
+	}
+|>;
+//=============================================
+//
+//=============================================
+new MainDlg::OnLButtonDown(int, int) = <|
+param x, y;
+trace "clil", CR;
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+new MainDlg::Setup( void ) =
+<|
+	self->Form::Setup();
+	self->UpdateForm();
+	.tryIcon = instance  GTaskbarIcon(self, "NN-TEST", "TRY_CON");
+	self->AllowEvent(WND_TIMER);
+	self->AllowEvent(WND_LBUTTONDOWN);
+	new NN_Name = .ini->ReadStr("NAME", "NN", "NN=NN-NAE-6-bin2d-0.94654--2.4069.nn");
+	nn->Init(JustDirName(ExeName) @ NN_Name);
+
+	self->SetTimer(1000, 1000);
+	
+	
+|>;
+
+//--------------------------------------------------------------------
+//
+//--------------------------------------------------------------------
+
+new MainDlg::OnClose(refer ...) = <|
+	end;
+|>;

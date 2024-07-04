@@ -1,0 +1,9 @@
+//new f = instance File("F:/Yura_Yarin/Allergoscope_Data/046 046/test P90994/046 P9099441 1000.dst");
+//new f = instance File("F:/Yura_Yarin/Allergoscope_Data/042 042/test P90993/042 P9099396 Leer.dst");
+
+//new f = instance File("f:/Yura_Yarin/Allergoscope_Data/109 109/test P32101/109 P3210098 Leer.dst");
+//new f = instance File("f:/Yura_Yarin/Allergoscope_Data/109 109/test P32101/109 P3210100 100.dst");
+new f = instance File("f:/Yura_Yarin/Allergoscope_Data/109 109/test P32101/109 P3210102 1000.dst");
+f->Open("rb");
+new h = f->Getv();
+wnd.GraphWnd[0]->AddCurve(h[0]);

@@ -1,0 +1,151 @@
+Pluk->SetThreadLocale(LANG_GERMAN, SUBLANG_GERMAN);
+trace CmdLine, CR;
+global nn = instance NNGlobal();
+
+if (CmdLine->Len() > 0)
+{
+	onerror {
+		end;
+	}
+//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
+	new ImageName;
+	if (CmdLine->Len() >= 3 && CmdLine[2] == "/recalc")
+		ImageName = CmdLine[1];
+	else
+	if (CmdLine->Len() == 2 && CmdLine[1] == "/recalc")
+		ImageName = CmdLine[0];
+	else
+	if (CmdLine->Len() == 2 && CmdLine[1] != "/recalc")
+		ImageName = CmdLine[1];
+
+	new ImageNameList = << >>;
+	if (JustExtension(ImageName) == "tmp" && JustName(ImageName) != "ae_exchange")
+	{
+		new f0 = instance File(ImageName);
+		if (f0->Access(ACCESS_EXIST) == TRUE)
+		{
+			f0->Open("rb");
+			new Buff = f0->Read(-1);
+			new List = instance WString(Buff->Len() / 2);
+			List.Data <- Buff;
+			ImageNameList = List->Tokenize(CR);
+			f0->Close();
+			f0->Remove();
+		}
+	}
+	else
+	{
+		new f0 = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
+		trace f0, CR;
+		if (f0->Access(ACCESS_EXIST) == TRUE)
+		{
+			f0->Open("rb");
+			for (new n = f0->Getv(); n != EMPTY; n = f0->Getv())
+				ImageNameList ,= n;
+			f0->Close();
+			f0->Remove();
+		}
+	}
+//!!!!!!!!!!!!!!!!!!!!! 2021-06-17 !!!!!!!!!!!!!!!!!!!!
+	if (ImageNameList != << >> && CmdLine->Len() >= 3 && CmdLine[2] == "/recalc")
+	{
+		for (new it = 0; it < ImageNameList->Len(); ++it)
+		{
+			ImageName = ImageNameList[it];
+			trace ImageName, CR;
+			new MaskName = JustDirName(ImageName) @ JustName(ImageName) @ ".bin";
+			new f = instance File(MaskName);
+			if (f->Access(ACCESS_EXIST) == TRUE)
+			{
+				f->Open("rb");
+				new bits = f->Read(-1);
+				f->Close();
+				new Image = MathImage::LoadImageSet(ImageName);
+				new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+				new NumbRegions = nn->SaveMaskContour(ImageName, mask, FALSE);
+				nn->Calculate(ImageName, mask, NumbRegions);
+			}
+		}
+		end;
+	}
+
+	if (CmdLine->Len() == 2 && CmdLine[1] == "/recalc")
+	{
+		if (ImageNameList == << >>)
+			ImageNameList = << ImageName >>;
+		for (new it = 0; it < ImageNameList->Len(); ++it)
+		{
+			ImageName = ImageNameList[it];
+			new MaskName = JustDirName(ImageName) @ JustName(ImageName) @ ".bin";
+			new f = instance File(MaskName);
+			if (f->Access(ACCESS_EXIST) == TRUE)
+			{
+				f->Open("rb");
+				new bits = f->Read(-1);
+				f->Close();
+				new Image = MathImage::LoadImageSet(ImageName);
+				new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+				new NumbRegions = nn->SaveMaskContour(ImageName, mask, FALSE);
+				nn->Calculate(ImageName, mask, NumbRegions);
+			}
+		}
+		end;
+	}
+	if (CmdLine->Len() == 2 && CmdLine[1] != "/recalc")
+	{
+		nn->Init(JustDirName(ExeName) @ JustFileName(CmdLine[0]));
+		if (ImageNameList == << >>)
+			ImageNameList = << ImageName >>;
+		for (new it = 0; it < ImageNameList->Len(); ++it)
+		{
+			ImageName = ImageNameList[it];
+			if (JustExtension(ImageName) == "bin")
+				ImageName = JustDirName(ImageName) @ JustName(ImageName) @ ".jpg";
+			new mask = nn->BuildMasks(ImageName);
+			new NumbRegions = nn->SaveMaskContour(ImageName, mask, TRUE);
+			nn->Calculate(ImageName, mask, NumbRegions);
+		}
+	}
+	end;
+}
+/*
+global ProcSet = <|
+param dir;
+	trace dir.DirName, CR;
+	dir->Read("*.bin");
+	for (new i = 0; i < dir->GetNumbFiles(); ++i)
+	{
+		new name = dir->FileName(i);
+		trace "   ", name;
+		name = dir.DirName @ name;
+		new i_name = JustDirName(name) @ JustName(name) @ ".tif";
+		new f = instance File(name);
+		f->Open("rb");
+		new bits = f->Read(-1);
+		f->Close();
+		new Image = MathImage::LoadImageSet(i_name);
+		new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+		new NumbRegions = nn->SaveMaskContour(i_name, mask, FALSE);
+		nn->Calculate(i_name, mask, NumbRegions);
+	}		
+	dir->ReadSubDirs();	
+	for (i = 0; i < dir->GetNumbSubDir(); ++i)
+	{
+		new s_name = dir->SubDirName(i);
+		if (s_name->Len() >= 2 && s_name->GetByte(0) == '.' || s_name->GetByte(1) == ':')
+			continue;
+		new s_dir = instance Dir(dir.DirName @ s_name);
+		ProcSet(s_dir);
+	}
+|>;
+
+new dir = instance GDirDialog()->Open(); 
+ProcSet(dir);
+trace "Done", CR;
+*/
+/*
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/046 046/test P90994/046 P9099441 1000.tif" /recalc
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/042 042/test P90993/042 P9099396 Leer.tif" /recalc
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/042 042/test P90994/042 P9099404 10000.tif" /recalc
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/074 074/test R00103/074 R0010377 Leer.tif" /recalc
+*/

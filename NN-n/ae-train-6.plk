@@ -1,0 +1,180 @@
+global InitSampleSet = <|
+	new dir = instance DirW();
+//	dir->ChangeDir("f:/AllergoEyeData_NN/");
+	dir->ChangeDir("d:/WorkData/NN_Test/AE-dataset/");
+	
+	dir->Read("*.mtf");
+	global NameList = instance Vector(dir->GetNumbFiles());
+
+	for (new i = 0; i < dir->GetNumbFiles(); ++i)
+		NameList[i] = dir.DirName @ dir->FileName(i);
+
+	global SampleSet = instance Vector(NameList->Len() * 3 / 4);
+	global TestSet = instance Vector(NameList->Len() / 5);
+	new si = instance Vector(NameList->Len());
+	si->Set(FALSE);
+
+	for (i = 0; i < SampleSet->Len(); ++i)
+	{
+		new index;
+		do {
+			index = int(Rand(NameList->Len()));
+			if (!si[index])
+			{
+				SampleSet[i] = NameList[index];
+				si[index] = TRUE;
+				break;
+			}
+		}
+		while (TRUE);
+	}
+
+	for (i = 0; i < TestSet->Len(); ++i)
+	{
+		new index;
+		do {
+			index = int(Rand(NameList->Len()));
+			if (!si[index])
+			{
+				TestSet[i] = NameList[index];
+				si[index] = TRUE;
+				break;
+			}
+		}
+		while (TRUE);
+	}
+|>;
+global ShowRes = <|
+param sNN;
+	wnd.CommonScale = FALSE;
+	wnd.Columns = 3;
+	wnd.StretchFactor = 0.5;
+	new bin = sNN.GTBinning;
+	bin->QSort();
+	bin = bin[1];
+	new mask_id;
+	switch (bin)
+	{
+	case 17 :
+//		mask_id = 165;
+		break;
+	case 16 :
+//		mask_id = 165;
+		break;
+	case 8 :
+//		mask_id = 225;
+		break;
+	}
+	if (bin == 17)
+	{
+		new g_mask_id = 167;
+		new src = sNN->GetLayer(1)[0]->GetImageSet();
+		new rmask = sNN->GetLayer(mask_id)[0]->GetImageSet();
+		new gmask = sNN->GetLayer(g_mask_id)[0]->GetImageSet();
+		for (new i = 0; i < src->Len(); ++i)
+			src[i] = src[i]->Stretch(0.0, rmask[0]->Width(), rmask[0]->Height());
+		src[0] *= rmask[0];
+		src[1] *= gmask[0];
+		wnd->SetImages(src);
+	}
+	else
+	{
+		new gt = sNN->GetGroundTruth(0, bin)->GetImageSet();
+		new src = sNN->GetLayer(10)[0]->GetImageSet();
+		for (new i = 0; i < src->Len(); ++i)
+			src[i] = src[i]->Stretch(0.0, gt[0]->Width(), gt[0]->Height());
+		if (mask_id != EMPTY)
+		{
+			new mask = sNN->GetLayer(mask_id)[0]->GetImageSet();
+			src[0] *= mask[0];
+		}
+		if (bin <= 4)
+		{
+			new res = sNN->GetResultLayer(bin)[0]->GetImageSet();
+			new res1 = sNN->GetResultLayer(bin * 2)[0]->GetImageSet();
+			new gt1 = sNN->GetGroundTruth(0, bin * 2)->GetImageSet();
+			for (new i = 0; i < res1->Len(); ++i)
+			{
+				res1[i] = res1[i]->Stretch(0.0, res[0]->Width(), res[0]->Height());
+				gt1[i] = gt1[i]->Stretch(0.0, res[0]->Width(), res[0]->Height());
+			}
+			new res0 = sNN->GetResultLayer(bin * 4)[0]->GetImageSet();
+			new gt0 = sNN->GetGroundTruth(0, bin * 4)->GetImageSet();
+			for (i = 0; i < res0->Len(); ++i)
+			{
+				res0[i] = res0[i]->Stretch(0.0, res[0]->Width(), res[0]->Height());
+				gt0[i] = gt0[i]->Stretch(0.0, res[0]->Width(), res[0]->Height());
+			}
+			wnd->SetImages(src @ gt0 @ res0 @ gt1 @ res1 @ gt @ res);
+		}
+		else
+		if (bin <= 8)
+		{
+			new res = sNN->GetResultLayer(bin)[0]->GetImageSet();
+			new res0 = sNN->GetResultLayer(bin * 2)[0]->GetImageSet();
+			for (new i = 0; i < res0->Len(); ++i)
+				res0[i] = res0[i]->Stretch(0.0, res[0]->Width(), res[0]->Height());
+			new gt0 = sNN->GetGroundTruth(0, bin * 2)->GetImageSet();
+			for (i = 0; i < res0->Len(); ++i)
+				gt0[i] = gt0[i]->Stretch(0.0, res[0]->Width(), res[0]->Height());
+			wnd->SetImages(src @ gt0 @ res0 @ gt @ res);
+		}
+		else
+		{
+			new res = sNN->GetResultLayer(bin)[0]->GetImageSet();
+			wnd->SetImages(src @ gt @ res);
+		}
+	}
+|>;
+
+/*
+	InitSampleSet();
+
+	global graph, wnd;
+
+	if (graph == EMPTY || !graph->IsOpen())
+		graph = instance GraphicWnd();
+	if (wnd == EMPTY || !wnd->IsOpen())
+		wnd = instance ImageWnd();
+
+
+	new MaxBatchSize = 2;
+	global NN = instance PNN(MaxBatchSize);
+	NN.OCL = EMPTY;
+	NN->InitOCL();
+
+	NN->InitAE();
+	NN->LoadWeights("d:/WorkData/NN_Test/AE-new-4/NN-NAE-6-bin2c-0.960036--1.74556.nn");
+	NN.ClassWeights = EMPTY;
+	NN.ClassWeightsCount = EMPTY;
+
+
+	NN.ShowImagesCallback = ShowRes;
+	NN.Verbose = TRUE;
+	NN.TraceTimer = TRUE;
+//	NN.SavePath = "f:/AE-NN/";
+	NN.SavePath = "d:/WorkData/NN_Test/AE-new-4/";
+
+	NN.RegularizeGrad = EMPTY;
+	NN.RegularizeGrad = << "L2", 0.0001 >>;
+
+	NN.GraphWnd = &graph;
+	NN.X = << >>;
+	NN.Y = << >>;
+	NN.Disp = << >>;
+	NN.LY = << >>;
+	NN.LDisp = << >>;
+	NN.VerboseStep = 3;
+	NN.ValidationSet = << TestSet, TestSet >>;
+//	NN.Pause = TRUE;
+	NN->Learn(SampleSet, SampleSet, 200, 0.00001);
+	NN->SaveFinal();
+
+	NN.Pause = TRUE;
+	NN.Pause = FALSE;
+
+
+	NN.Stop = TRUE;
+	NN.Stop = FALSE;
+*/
+E:\Development\pluk\Bin64u\nn-test.exe NN-NAE-6-bin2d-0.94654--2.4069.nn E:\Development\pluk\Bin64u\ae_exchange.tmp /lE:\Development\pluk\Bin64u\nn-test.log

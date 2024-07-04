@@ -1,0 +1,194 @@
+/////////////////////////////////////////////////
+//
+/////////////////////////////////////////////////
+class ReadMNIST {
+	Lables;
+	Images;
+	FImages;
+};
+//=============================================
+//
+//=============================================
+new ReadMNIST::Import(void) = <|
+	new LableFile = instance GOpenDialog("", "", "");
+	LableFile->SetCaption("Choose Lable File");
+	LableFile = instance File(LableFile->Open());
+	LableFile->Open("rb");
+	new Lables = LableFile->Read(-1);
+	if (Lables->Left(4) != "\0x00\0x00\0x08\0x01")
+	{
+		trace "Wrong format", CR;
+		rollback;
+	}
+	new N = int(Lables->GetByte(4)) * 16777216 + int(Lables->GetByte(5)) * 65536 + int(Lables->GetByte(6)) * 256 + int(Lables->GetByte(7));
+	trace "N = ", N, CR;
+	.Lables = instance Vector(N);
+	for (new i = 0; i < N; ++i)
+		.Lables[i] = int(Lables->GetByte(8 + i));
+
+	new ImageFile = instance GOpenDialog("", "", "");
+	ImageFile->SetCaption("Choose Image File");
+	ImageFile = instance File(ImageFile->Open());
+	ImageFile->Open("rb");
+	new Images = ImageFile->Read(-1);
+
+	if (Images->Left(4) != "\0x00\0x00\0x08\0x03")
+	{
+		trace "Wrong format", CR;
+		rollback;
+	}
+	new N1 = int(Images->GetByte(4)) * 16777216 + int(Images->GetByte(5)) * 65536 + int(Images->GetByte(6)) * 256 + int(Images->GetByte(7));
+	trace "N = ", N1, CR;
+	if (N != N1)
+	{
+		trace "Different number of labels and images", CR;
+		rollback;
+	}
+	.Images = instance Vector(N1);
+	new Width = int(Images->GetByte(8)) * 16777216 + int(Images->GetByte(9)) * 65536 + int(Images->GetByte(10)) * 256 + int(Images->GetByte(11));
+	new Height = int(Images->GetByte(12)) * 16777216 + int(Images->GetByte(13)) * 65536 + int(Images->GetByte(14)) * 256 + int(Images->GetByte(15));
+	trace "W = ", Width, ", H = ", Height, CR;
+	new offset = 16;
+	for (i = 0; i < N1; ++i)
+	{
+		new buff = Images->Mid(offset, Width * Height);
+		offset += Width * Height;
+		.Images[i] = instance MathImage(CMID_BYTE, buff, 0, Width, Height);
+		.Images[i]->FlipV();
+	}
+|>;
+//=============================================
+//
+//=============================================
+new ReadMNIST::Save(void) = <|
+	new File = instance File(instance GSaveDialog("mnist", "", "*.mnist|*.mnist")->Open());
+	File->Open("wb");
+	File->Putv3("MNIST");
+	File->Putv3(.Lables);
+	File->Putv3(.Images);
+|>;
+//=============================================
+//
+//=============================================
+new ReadMNIST::Load(void) = <|
+	new Name = instance GOpenDialog("mnist", "", "*.mnist|*.mnist")->Open();
+	self->Load(Name);
+|>;
+//=============================================
+//
+//=============================================
+new ReadMNIST::Load(object String) = <|
+param Name;
+	new File = instance File(Name);
+	File->Open("rb");
+	if (File->Getv() == "MNIST")
+	{
+		.Lables = File->Getv();
+		.Images = File->Getv();
+		.FImages = instance Vector(.Images->Len());
+		for (new i = 0; i < .FImages->Len(); ++i)
+		{
+			.FImages[i] = instance FMathImage(.Images[i]);
+			.FImages[i] *= 1.0 / 256.0;
+		}
+		trace "N = ", .Lables->Len(), CR;
+	}
+	else
+		trace "wrong format", CR;
+|>;
+
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+class SplitMask {
+	};
+//=================================
+//
+//=================================
+new SplitMask::Split_ex(refer object Vector) = <|
+param FileList;
+	new Images = instance Vector(3, FileList->Len());
+	for (new i = 0; i < FileList->Len(); ++i)
+	{
+		new img = MathImage::LoadImageSet(FileList[i]);
+		for (new k = 0; k < img->Len(); ++k)
+			img[k] = instance FMathImage(img[k], 0, 0, 1200, 316);
+		Images[0][i] = << img[0] - 103.939, img[1] - 116.779, img[2] - 123.68 >>;
+
+		new mask = << img[3], img[4], img[5] >>;
+
+		new Weight = img[6];
+		if (NN.Binning > 1)
+		{
+			mask[0] = mask[0]->Binning(NN.Binning, TRUE);
+			mask[1] = mask[1]->Binning(NN.Binning, TRUE);
+			mask[2] = mask[2]->Binning(NN.Binning, TRUE);
+			Weight = Weight->Binning(NN.Binning, TRUE);
+		}
+		Images[1][i] = mask;
+		Images[2][i] = Weight;
+	}
+	return Images;
+|>;
+
+
+//=================================
+//
+//=================================
+global ShowImages = <|
+	new label = NN->GetLabelImage();
+	if (typeof(label[0]) != "FMathImage")
+	{
+		trace "oh", CR;
+		return;
+	}
+	new org = NN->GetMapImage(0);
+	new Offset = << 103.939, 116.779, 123.68 >>;
+	for (new k = 0; k < org->Len(); ++k)
+	{
+		org[k] += Offset[k];
+		if (NN.Binning > 1)
+			org[k] = instance MathImage(org[k])->Binning(NN.Binning, TRUE);
+		else
+			org[k] = instance MathImage(org[k]);
+	}
+	new res = NN->GetMapImage();
+	if (res->Len() > label->Len())
+		res->SetLen(label->Len());
+	res @= label;
+	for (new i = 0; i < res->Len(); ++i)
+		res[i] = instance MathImage(res[i] * 255);
+	wnd->SetImages(org @ res/* @ self->GetWeightImages()*/);
+	Pluk->FlushIdle();
+|>;
+
+//=================================
+//
+//=================================
+global LookImage = <|
+param Index, Binning;
+//	new res = nn.NN->GetMapImage(Index);
+	new res = nn.NN->GetMapImage();
+
+	for (new i = 0; i < res->Len(); ++i)
+	{
+		res[i] -= res[i]->GetMinimum();
+		if (res[i]->GetMaximum() > 0)
+			res[i] *= 255.0 / res[i]->GetMaximum();
+		if (Binning > 1)
+			res[i] = instance MathImage(res[i])->Binning(Binning, TRUE);
+		else
+			res[i] = instance MathImage(res[i]);
+	}
+	wnd->SetImages(res);
+	Pluk->FlushIdle();
+|>;
+
+/*
+ShowImages();
+
+new Images = instance SplitMask()->Split_ex(<< TestList[0] >> );
+nn.NN->MapImage(Images[0][0]);
+LookImage(22, 1);
+LookImage(0, 2);
+*/

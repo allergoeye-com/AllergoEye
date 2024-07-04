@@ -1,0 +1,91 @@
+trace CmdLine, CR; 	
+global nn = instance NNGlobal();
+
+if (CmdLine->Len() > 0)
+{
+	onerror {
+		end;
+	}
+	if (CmdLine->Len() >= 3 && CmdLine[2] == "/recalc")
+	{
+		new MaskName = JustDirName(CmdLine[1]) @ JustName(CmdLine[1]) @ ".bin";
+		new f = instance File(MaskName);
+		if (f->Access(ACCESS_EXIST) == TRUE)
+		{
+			f->Open("rb");
+			new bits = f->Read(-1);
+			f->Close();
+			new Image = MathImage::LoadImageSet(CmdLine[1]);
+			new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+			new NumbRegions = nn->SaveMaskContour(CmdLine[1], mask, FALSE);
+			nn->Caluclate(CmdLine[1], mask, NumbRegions);
+			end;
+		}
+	}
+
+	if (CmdLine->Len() == 2 && CmdLine[1] == "/recalc")
+	{
+		new MaskName = JustDirName(CmdLine[0]) @ JustName(CmdLine[0]) @ ".bin";
+		new f = instance File(MaskName);
+		if (f->Access(ACCESS_EXIST) == TRUE)
+		{
+			f->Open("rb");
+			new bits = f->Read(-1);
+			f->Close();
+			new Image = MathImage::LoadImageSet(CmdLine[0]);
+			new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+			new NumbRegions = nn->SaveMaskContour(CmdLine[0], mask, FALSE);
+			nn->Caluclate(CmdLine[0], mask, NumbRegions);
+			end;
+		}
+	}
+	if (CmdLine->Len() == 2 && CmdLine[1] != "/recalc")
+	{
+		nn->Init(CmdLine[0]);
+		new mask = nn->BuildMasks(CmdLine[1]);
+		new NumbRegions = nn->SaveMaskContour(CmdLine[1], mask, TRUE);
+		nn->Caluclate(CmdLine[1], mask, NumbRegions);
+	}
+	end;
+}
+/*
+global ProcSet = <|
+param dir;
+	trace dir.DirName, CR;
+	dir->Read("*.bin");
+	for (new i = 0; i < dir->GetNumbFiles(); ++i)
+	{
+		new name = dir->FileName(i);
+		trace "   ", name;
+		name = dir.DirName @ name;
+		new i_name = JustDirName(name) @ JustName(name) @ ".tif";
+		new f = instance File(name);
+		f->Open("rb");
+		new bits = f->Read(-1);
+		f->Close();
+		new Image = MathImage::LoadImageSet(i_name);
+		new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+		new NumbRegions = nn->SaveMaskContour(i_name, mask, FALSE);
+		nn->Caluclate(i_name, mask, NumbRegions);
+	}		
+	dir->ReadSubDirs();	
+	for (i = 0; i < dir->GetNumbSubDir(); ++i)
+	{
+		new s_name = dir->SubDirName(i);
+		if (s_name->Len() >= 2 && s_name->GetByte(0) == '.' || s_name->GetByte(1) == ':')
+			continue;
+		new s_dir = instance Dir(dir.DirName @ s_name);
+		ProcSet(s_dir);
+	}
+|>;
+
+new dir = instance GDirDialog()->Open(); 
+ProcSet(dir);
+trace "Done", CR;
+*/
+/*
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/046 046/test P90994/046 P9099441 1000.tif" /recalc
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/042 042/test P90993/042 P9099396 Leer.tif" /recalc
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/042 042/test P90994/042 P9099404 10000.tif" /recalc
+"C:/AllergoEyeApp/NN-2019-12-08-SMALL-3C-L24-0.976015--33644.2.nn" "F:/Yura_Yarin/Allergoscope_Data/074 074/test R00103/074 R0010377 Leer.tif" /recalc
+*/

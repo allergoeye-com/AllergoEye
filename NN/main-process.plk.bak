@@ -1,0 +1,378 @@
+class NNGlobal {
+	NN;
+};
+global wnd;
+//=======================================
+//
+//=======================================
+new NNGlobal::NNGlobal(void) = <|
+|>;
+//=======================================
+//
+//=======================================
+new NNGlobal::Init(object String)  = <|
+param NN_Name;
+	new f = instance File(NN_Name);
+	f->Open("rb");
+	.NN = f->Getv();
+	f->Close();
+|>;
+//============================================
+//
+//============================================
+new NNGlobal::BuildMasks(refer object String) = <|
+param SrcName;
+
+	new Image = MathImage::LoadImageSet(SrcName);
+	new img = instance Vector(3);
+	
+	for (new k = 0; k < 3; ++k)
+		Image[k] = instance FMathImage(Image[k]);
+	new W = Image[0]->Width();
+	new H = Image[0]->Height();
+	if (W != 1200 || H != 316)
+	{
+		for (k = 0; k < 3; ++k)
+			Image[k] = Image[k]->Stretch(0.0, 1200, 316);
+	}
+
+	img = << Image[0] - 103.939, Image[1] - 116.779, Image[2] - 123.68 >>;
+
+	new st = Clock();
+	.NN->MapImage(img);
+	trace Printf("NN time = %g\r\n", Clock() -  st);
+
+	new sclera = .NN->GetMapImage()[0];
+	sclera = instance MathImage(sclera * 255);
+	if (.NN.Binning > 1)
+		sclera = sclera->StretchWithBilinearInterpolation(.NN.Binning);
+	if (W != 1200 || H != 316)
+		sclera = sclera->Stretch(0.0, W, H);
+	sclera->ToBilevel(100, 1);
+
+	new iris = .NN->GetMapImage()[1];
+	iris = instance MathImage(iris * 255);
+	if (.NN.Binning > 1)
+		iris = iris->StretchWithBilinearInterpolation(.NN.Binning);
+	if (W != 1200 || H != 316)
+		iris = iris->Stretch(0.0, W, H);
+	iris->ToBilevel(150, 1);
+
+	new iris_ctr = iris->GetContours();
+	new iris_list = instance Vector(iris_ctr->Len(), 2);
+	for (new i = iris_ctr->Len() - 1; i >= 0; --i)
+	{
+		if (iris_ctr->Len() > 1 && iris_ctr[i]->Len() < 100)
+		{
+			iris_ctr->Remove(i);
+			iris_list->Remove(i);
+		}
+		else
+		{
+			new center = EMPTY;
+			for (new j = iris_ctr[i]->Len() - 1; j >= 0; --j)
+			{
+				iris_ctr[i][j] = instance POINT(iris_ctr[i][j][0], iris_ctr[i][j][1]);
+				if (center == EMPTY)
+					center = iris_ctr[i][j];
+				else
+					center += iris_ctr[i][j];
+			}
+			center *= 1.0f / iris_ctr[i]->Len();
+			iris_list[i][1] = center;
+			iris_list[i][0] <- iris_ctr[i];
+		}
+	}
+	iris_list->QSort({|param key, elem; return key[1].x <> elem[1].x; |});
+
+	for (i = iris_list->Len() - 1; i > 0; --i)
+	{
+		if (iris_list->Len() > 1)
+		{
+			if (iris_list[i][1].x < W / 2 &&  iris_list[i - 1][1].x < W / 2)
+			{
+				if (iris_list[i][0]->Len() > iris_list[i - 1][0]->Len())
+				{
+					 iris_list->Remove(i - 1);
+					 --i;
+				}
+				else
+					 iris_list->Remove(i);
+				if (i < iris_list->Len())
+					++i;
+			}
+			else
+			if (iris_list[i][1].x > W / 2 &&  iris_list[i - 1][1].x > W / 2)
+			{
+				if (iris_list[i][0]->Len() > iris_list[i - 1][0]->Len())
+				{
+					 iris_list->Remove(i - 1);
+					 --i;
+				}
+				else
+					 iris_list->Remove(i);
+				if (i < iris_list->Len())
+					++i;
+			}
+		}
+	}
+	iris_ctr->SetLen(iris_list->Len());
+	for (i = iris_list->Len() - 1; i >= 0; --i)
+		iris_ctr[i] <- iris_list[i][0];
+	
+	new ctr = sclera->GetContours();
+	for (i = ctr->Len() - 1; i >= 0; --i)
+	{
+		if (ctr->Len() > 1 && ctr[i]->Len() < 120)
+			ctr->Remove(i);
+	}
+
+	new mask = instance MathImage(W, H);
+	iris = instance MathImage(W, H);
+	
+	for (i = iris_ctr->Len() - 1; i >= 0; --i)
+	{
+		new iris_mask = iris->GetSplineMask(instance BetaContour(iris_ctr[i]));
+		iris |= iris_mask;
+		mask |= iris_mask * -2;
+	}
+	iris *= -1;
+	iris -= 1;
+	iris *= -1;
+
+	new dm = iris->BuildDistanceMap();
+	for (i = ctr->Len() - 1; i >= 0; --i)
+	{
+		for (new j = ctr[i]->Len() - 1; j >= 0; --j)
+			ctr[i][j] = instance POINT(ctr[i][j][0], ctr[i][j][1]);
+		new sclera_mask = mask->GetSplineMask(instance BetaContour(ctr[i]));
+		new inv = sclera_mask;
+		inv->InverseBilevel();
+		inv *= -100;
+		new ctr_dm = sclera_mask & dm;
+		ctr_dm += inv;
+		if (ctr_dm->GetMinimum() > 30)
+			ctr->Remove(i);
+		else
+			mask |= sclera_mask * -1;
+	}
+	mask->SetIfEqual(2, 3);
+	return mask;
+|>;
+//============================================
+//
+//============================================
+new NNGlobal::SaveMaskContour(refer object String, refer object MathImage, boolean) = <|
+param SrcName, mask, SaveMask;
+	if (SaveMask)
+	{
+		new MaskName = JustDirName(SrcName) @ JustName(SrcName) @ ".bin";
+		new f = instance File(MaskName);
+		f->Open("wb");
+		f->Write(mask->GetBits(1));
+		f->Close();
+	}
+	new iris = mask;
+	new corner = mask;
+	corner->SetIfNotEqual(0, 4);
+	iris->SetIfNotEqual(0, 2);
+	mask->SetIfNotEqual(0, 1);
+	new Image = MathImage::LoadImageSet(SrcName);
+	new H = Image[0]->Height();
+	new W = Image[0]->Width();
+	new _ContourName = JustDirName(SrcName) @ JustName(SrcName) @ ".nam";
+	new ContourName = JustDirName(SrcName) @ JustName(SrcName) @ ".ctr";
+	new iris_ctr = iris->GetContours();
+	new corner_ctr = corner->GetContours();
+	new ctr = mask->GetContours();
+	new f = instance File(ContourName);
+	f->Open("wb");
+	f->Write("CTR01");
+
+	new f1 = instance File(_ContourName);
+	f1->Open("wb");
+
+	new len = ctr->Len() + iris_ctr->Len() + corner_ctr->Len();
+	new buff = instance String(2);
+	buff->Int16ToString(0, len);
+	f->Write(buff);
+	new buff_len = instance String(4);
+	new buff_p = instance String(8);
+	new NumbSclera = 0;
+	for (new i = 0; i < ctr->Len(); ++i)
+	{
+		len = ctr[i]->Len();
+		buff_len->Int32ToString(0, len);
+		f->Write(buff_len);
+		for (new j = 0; j < len; ++j)
+		{
+			new x = float(ctr[i][j][0]);
+			new y = float(H - ctr[i][j][1]);
+			buff_p->FloatToString(0, x);
+			buff_p->FloatToString(4, y);
+			f->Write(buff_p);
+		}
+		f1->Write("sclera\r\n");
+		++NumbSclera;
+	}
+	new NumbIris = 0;
+	for (i = 0; i < iris_ctr->Len(); ++i)
+	{
+		len = iris_ctr[i]->Len();
+		buff_len->Int32ToString(0, len);
+		f->Write(buff_len);
+		for (new j = 0; j < len; ++j)
+		{
+			new x = float(iris_ctr[i][j][0]);
+			new y = float(H - iris_ctr[i][j][1]);
+			buff_p->FloatToString(0, x);
+			buff_p->FloatToString(4, y);
+			f->Write(buff_p);
+		}
+		f1->Write("iris\r\n");
+		++NumbIris;
+	}
+	new NumbCorner = 0;
+	for (i = 0; i < corner_ctr->Len(); ++i)
+	{
+		len = corner_ctr[i]->Len();
+		buff_len->Int32ToString(0, len);
+		f->Write(buff_len);
+		for (new j = 0; j < len; ++j)
+		{
+			new x = float(corner_ctr[i][j][0]);
+			new y = float(H - corner_ctr[i][j][1]);
+			buff_p->FloatToString(0, x);
+			buff_p->FloatToString(4, y);
+			f->Write(buff_p);
+		}
+		f1->Write("corner\r\n");
+		++NumbCorner;
+	}
+	f->Close();
+	return << NumbSclera, NumbIris, NumbCorner >>;
+|>;
+
+//============================================
+//
+//============================================
+new NNGlobal::Caluclate(refer object String, refer object MathImage, object Vector) = <|
+param SrcName, mask, NumbRegions;
+	mask->SetIfNotEqual(0, 1);
+	new H = mask->Height();
+	new W = mask->Width();
+	new area_l, area_r;
+	new L, R;
+	new L_distr, R_distr;
+	if (NumbRegions[0] > 1)
+	{
+		new mask_ = instance MathImage(W / 2, H);
+		new mask_r = mask;
+		mask_r->Set(mask_, W / 2, 0);
+		new mask_l = mask;
+		mask_l->Set(mask_, 0, 0);
+		area_l = float(mask_l->Integral());
+		area_r = float(mask_r->Integral());
+		mask_l *= -1;
+		mask_r *= -1;
+		L = instance Vector(3);
+		R = instance Vector(3);
+		new Image = MathImage::LoadImageSet(SrcName);
+		for (new i = 0; i < Image->Len(); ++i)
+		{
+			L[i] = Image[i] & mask_l;
+			R[i] = Image[i] & mask_r;
+		}
+		R_distr = ColorimetryDistr(R, 0, 30);
+		R = Colorimetry(R, 0);
+		L_distr = ColorimetryDistr(L, 0, 30);
+		L = Colorimetry(L, 0);
+		trace Printf("area_l = %g, area_r = %g\r\n", area_l, area_r);
+		if (L != EMPTY)
+			trace Printf("%s = %v+-%v\r\n", LEFT, L[0], Sqrt(L[1]));
+		if (R != EMPTY)
+			trace Printf("%s = %v+-%v\r\n", RIGHT, R[0], Sqrt(R[1]));
+	}
+	else
+	{
+		area_r = float(mask->Integral());
+		mask *= -1;
+		R = instance Vector(3);
+		new Image = MathImage::LoadImageSet(SrcName);
+		for (new i = 0; i < Image->Len(); ++i)
+			R[i] = Image[i] & mask;
+
+		if (area_r == 0.0)
+		{
+			R = <<0.0, 0.0 >>;
+			trace Printf("One eye area = %g\r\n", area_r);
+			trace Printf("S = %s\r\n", FAILURE);
+		}
+		else
+		{
+			R_distr = ColorimetryDistr(R, 0, 30);
+			R = Colorimetry(R, 0);
+			trace Printf("One eye area = %g\r\n", area_r);
+			trace Printf("S = %v+-%v\r\n", R[0], Sqrt(R[1]));
+		}
+	}
+	new DistrName = JustDirName(SrcName) @ JustName(SrcName) @ ".dst";
+	new f = instance File(DistrName);
+	f->Open("wb");
+	f->Putv3(<<R_distr, L_distr>>);
+	f->Close();
+	new ResultName = JustDirName(SrcName) @ JustName(SrcName) @ ".res";
+	f = instance File(ResultName);
+	if (area_l > 0.0 && area_r > 0.0)
+	{
+		new shift = 1.0 / 3.0 - Min(Min(0.0, L[0]), R[0]);
+		L[0] += shift;
+		R[0] += shift;
+		new res = R[0] - L[0];
+		new disp = L[1] + R[1];
+
+		new txt = Printf("%s = %4.3f+-%5.3f\r\n", RIGHT_LEFT, res, Sqrt(disp));
+		trace txt, CR;
+		f->Open("wb");
+		f->Printf(txt);
+		txt = Printf("%s = %4.2f+-%5.3f\r\n", LEFT, L[0], Sqrt(L[1]));
+		f->Printf(txt);
+		txt = Printf("%s = %4.2f+-%5.3f\r\n", RIGHT, R[0], Sqrt(R[1]));
+		f->Printf(txt);
+		f->Close();
+	}
+	else
+	{
+		if (area_l > 0.0)
+		{
+			new txt = Printf("%s = %4.2f+-%5.3f\r\n", LEFT, L[0], Sqrt(L[1]));
+			trace txt, CR;
+			f->Open("wb");
+			f->Printf(txt);
+			f->Close();
+		}
+		else
+		if (area_r > 0.0)
+		{
+			new txt = Printf("%s = %4.2f+-%5.3f\r\n", RIGHT, R[0], Sqrt(R[1]));
+			trace txt, CR;
+			f->Open("wb");
+			f->Printf(txt);
+			f->Close();
+		}
+		else
+		{
+			f->Open("wb");
+			f->Printf("%s = %s", RIGHT_LEFT, FAILURE);
+			f->Close();
+		}
+	}
+|>;
+
+/*
+PlukCOMServer::Server->SetNameServer("ANNGlobal");
+PlukCOMServer::Server->AddClass("NNGlobal", <<"Init", "FindMasks">>);
+
+PlukCOMServer::Server->SetAutoKill(TRUE);
+PlukCOMServer::Server->SetTypeObject(REGCLS_SINGLEUSE);
+*/

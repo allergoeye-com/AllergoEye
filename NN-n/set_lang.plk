@@ -1,0 +1,12 @@
+new Ini = instance IniFile("allergoscopeeditor.ini", TRUE);
+new Lang = Ini->ReadStr("Locale", "Lang", "English");
+
+switch (Lang)
+{
+case "English":
+	CurLocale.Code = "eng";
+	break;
+case "Deutsche":
+	CurLocale.Code = "ger";
+	break;
+}

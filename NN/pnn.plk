@@ -1,0 +1,820 @@
+Pluk->AddMembers("NN", << "Name", "ShowError", "Verbose", "VerboseCount", "VerboseStep", "X", "Y", "Disp", "ValidationSet", "TraceTimer", "MaxAcc", "MaxLossValue", "Binning" >>);
+
+//================================================
+//
+//================================================
+new NN::ImportConvW(refer object BaseString, int, int, int, int, int) = {|
+param FileName, LayerIndex, X, Y, NC_in, NC;
+	new f = instance File(FileName);
+	f->Open("rb");
+	new buff = f->Read(-1);
+	new w = instance String(buff->Len());
+	new off = 0;
+	new wSize = X * Y * NC_in;
+	for (new y = 0; y < Y; ++y)
+		for (new x = 0; x < X; ++x)
+		{
+			for (new nc_in = 0; nc_in < NC_in; ++nc_in)
+			{
+				for (new nc = 0; nc < NC; ++nc)
+				{
+					new v;
+					buff->StringToFloat(off, v);
+					off += 4;
+					new off1 = (nc * wSize + (y * X + x) * NC_in + nc_in) * 4;
+					w->FloatToString(off1, v);
+				}
+			}
+		}
+	self->SetW(LayerIndex, w);
+|};
+//================================================
+//
+//================================================
+new NN::ImportConvWex(refer object BaseString, int, int, int, int, int, int, int) = {|
+param FileName, LayerIndex, X, Y, NC_in, NC, newNC_in, newNC;
+	new f = instance File(FileName);
+	f->Open("rb");
+	new buff = f->Read(-1);
+	new w = instance String(buff->Len());
+	new off = 0;
+	new wSize = X * Y * newNC_in;
+	for (new y = 0; y < Y; ++y)
+		for (new x = 0; x < X; ++x)
+		{
+			for (new nc_in = 0; nc_in < NC_in; ++nc_in)
+			{
+				for (new nc = 0; nc < NC; ++nc)
+				{
+					new v;
+					buff->StringToFloat(off, v);
+					off += 4;
+					if (nc < newNC && nc_in < newNC_in)
+					{
+						new off1 = (nc * wSize + (y * X + x) * newNC_in + nc_in) * 4;
+						w->FloatToString(off1, v);
+					}
+				}
+			}
+		}
+	self->SetW(LayerIndex, w);
+|};
+//================================================
+//
+//================================================
+new NN::ImportConvB(refer object BaseString, int) = {|
+param FileName, LayerIndex;
+	new f = instance File(FileName);
+	f->Open("rb");
+	new b = f->Read(-1);
+	self->SetB(LayerIndex, b);
+|};
+//================================================
+//
+//================================================
+new NN::Learn(refer object Vector, refer object Vector, int, int, number) = <|
+param Images, Labels, BatchSize, nEpoch, step0;
+	.VerboseCount = 0;
+	.MaxAcc = 0.0;
+	.MaxLossValue = -1e37;
+	if (GetDim(Images[0]) > 0 &&  IsNumber(Images[0][0]))
+		return self->Learn_NN(Images, Labels, BatchSize, nEpoch, step0);
+	else
+	if (IsNumber(Labels[0]))
+		return self->Learn_IN(Images, Labels, -1, BatchSize, nEpoch, step0);
+	else
+	if (typeof(Labels[0]) == "Vector")
+		return self->Learn_IV(Images, Labels, BatchSize, nEpoch, step0);
+	else
+	if (typeof(Labels[0]) == "FMathImage")
+		return self->Learn_II(Images, Labels, BatchSize, nEpoch, step0);
+	else
+		rollback;
+|>;
+//================================================
+//
+//================================================
+new NN::Learn_IN(refer object Vector, refer object Vector, int, int, int, number) = <|
+param Images, Labels, DepthIndex, BatchSize, nEpoch, step0;
+	new min = 64536;
+	new max = 0;
+	for (new i = Labels->Len() - 1; i >= 0; --i)
+	{
+		if (min > Labels[i])
+			min = Labels[i];
+		if (max < Labels[i])
+			max = Labels[i];
+	}
+	new nClasses = max - min + 1;
+	new nBatch = Images->Len() / BatchSize; 
+	new ImageSet = instance Vector(nBatch);
+	new LabelSet = instance Vector(nBatch);
+	new Index = instance Vector(Images->Len());
+	new loss = instance Vector(nEpoch);
+	for (new e = 0; e < nEpoch; ++e)
+	{
+		Index->Set(0);
+		for (new b = 0; b < nBatch; ++b)
+		{
+			ImageSet[b] = instance Vector(BatchSize);
+			LabelSet[b] = instance Vector(BatchSize, nClasses);
+			for (new i = 0; i < BatchSize; ++i)
+			{
+				new k;
+				do {
+					k = int(Rand(Images->Len()));
+				}
+				while (Index[k] != 0);
+				Index[k] = 1;
+				
+				ImageSet[b][i] = << Images[k] >>;
+				LabelSet[b][i]->Set(0.0);
+				LabelSet[b][i][Labels[k] - min] = 1.0;
+			}
+		}
+		loss[e] = self->_Learn(ImageSet, LabelSet, DepthIndex, step0);
+		trace Printf("epoch = %d, l = %g\r\n", e, loss[e]);
+	}
+	return loss;
+|>;
+//================================================
+//
+//================================================
+new NN::Learn_II(refer object Vector, refer object Vector, int, int, int, number) = <|
+param Images, Labels, DepthIndex, BatchSize, nEpoch, step0;
+	new nBatch = Images->Len() / BatchSize; 
+	new ImageSet = instance Vector(nBatch);
+	new LabelSet = instance Vector(nBatch);
+	new Index = instance Vector(Images->Len());
+	new loss = instance Vector(nEpoch);
+	for (new e = 0; e < nEpoch; ++e)
+	{
+		Index->Set(0);
+		for (new b = 0; b < nBatch; ++b)
+		{
+			ImageSet[b] = instance Vector(BatchSize);
+			LabelSet[b] = instance Vector(BatchSize);
+			for (new i = 0; i < BatchSize; ++i)
+			{
+				new k;
+				do {
+					k = int(Rand(Images->Len()));
+				}
+				while (Index[k] != 0);
+				Index[k] = 1;
+				
+				ImageSet[b][i] = << Images[k] >>;
+				LabelSet[b][i] = << Labels[k] >>;
+			}
+		}
+		loss[e] = self->_Learn(ImageSet, LabelSet, DepthIndex, step0);
+		trace Printf("epoch = %d, l = %g\r\n", e, loss[e]);
+	}
+	return loss;
+|>;
+//================================================
+//
+//================================================
+new NN::Learn(refer object Vector, int, int, int, number) = <|
+param ImageNames, DepthIndex, BatchSize, nEpoch, step0;
+	.VerboseCount = 0;
+	.MaxAcc = 0.0;
+	.MaxLossValue = -1e37;
+	new nBatch = ImageNames->Len() / BatchSize; 
+	new ImageSet = instance Vector(nBatch);
+	new Index = instance Vector(ImageNames->Len());
+	new loss = instance Vector(nEpoch);
+	for (new e = 0; e < nEpoch; ++e)
+	{
+		Index->Set(0);
+		for (new b = 0; b < nBatch; ++b)
+		{
+			ImageSet[b] = instance Vector(BatchSize);
+			for (new i = 0; i < BatchSize; ++i)
+			{
+				new k;
+				do {
+					k = int(Rand(ImageNames->Len()));
+				}
+				while (Index[k] != 0);
+				Index[k] = 1;
+				
+				ImageSet[b][i] = ImageNames[k];
+			}
+		}
+		loss[e] = self->_Learn(ImageSet, DepthIndex, step0);
+		trace Printf("epoch = %d, l = %g\r\n", e, loss[e]);
+	}
+	return loss;
+|>;
+//================================================
+//
+//================================================
+new NN::_Learn(refer object Vector, refer object Vector, int, number) = <|
+param ImageSet, LabelSet, DepthIndex, step0;
+	new _step0 = step0;
+	new Accuracy = 1.0e-5;
+	new loss = 0.0;
+	new st = Clock();
+	new MeanRepCount = 1.0;
+	for (new b = 0; b < ImageSet->Len(); ++b)
+	{
+		++.VerboseCount;
+		new _MeanRepCount = 0.0;
+		new _loss = self->_Learn_Direction(ImageSet[b], LabelSet[b], << >>, DepthIndex, step0, _MeanRepCount, Accuracy);
+		MeanRepCount = MeanRepCount * 0.9 + _MeanRepCount * 0.1;
+		if (MeanRepCount <= 1.05)
+			step0 = Min(1.2 * step0, _step0);
+		else
+		if (MeanRepCount >= 4 && step0 > 1.0e-5)
+			step0 /= 1.2;
+
+		if (.VerboseStep == EMPTY)
+			.VerboseStep = 10;
+		if (.Verbose == TRUE && .VerboseCount % .VerboseStep == 0)
+		{
+			trace Printf("b = %d, t = %g, %s\r\n", b, Clock() - st, instance Time()->Print());
+			if (.ValidationSet != EMPTY && .X != EMPTY)
+			{
+				new md = self->Test(.ValidationSet[0], .ValidationSet[1], ImageSet[b]->Len(), 10);
+				trace Printf("Accuracy = %g +- %g\r\n", md[0], Sqrt(md[1]));
+				.X ,= .VerboseCount + 1.0;
+				.Y ,= md[0];
+				.Disp ,= md[1];
+				if (.MaxAcc < md[0] || .MaxLossValue < self->GetLossValue())
+				{
+					.MaxAcc = md[0];
+					.MaxLossValue = self->GetLossValue();
+					self->Save();
+				}
+			}
+			else
+				trace Printf("b = %d, l = %g, t = %g, %s\r\n", b, _loss, Clock() - st, instance Time()->Print());
+			st = Clock();
+		}
+		loss += _loss;
+	}
+	MeanRepCount = float(MeanRepCount) / ImageSet->Len();
+	return loss / ImageSet->Len();
+|>;
+//================================================
+//
+//================================================
+new NN::_Learn(refer object Vector, int, number) = <|
+param BatchNameSet, DepthIndex, step0;
+	new _step0 = step0;
+	new Accuracy = 1.0e-5;
+	new loss = 0.0;
+	new st = Clock();
+	new MeanRepCount = 1.0;
+	for (new b = 0; b < BatchNameSet->Len(); ++b)
+	{
+		++.VerboseCount;
+		new _MeanRepCount = 0.0;
+		new set = instance SplitMask()->Split_ex(BatchNameSet[b]);
+		new _loss = self->_Learn_Direction(set[0], set[1], set[2], DepthIndex, step0, _MeanRepCount, Accuracy);
+		MeanRepCount = MeanRepCount * 0.9 + _MeanRepCount * 0.1;
+		if (MeanRepCount <= 1.05)
+			step0 = Min(1.2 * step0, _step0);
+		else
+		if (MeanRepCount >= 4 && step0 > 1.0e-5)
+			step0 /= 1.2;
+
+		if (.VerboseStep == EMPTY)
+			.VerboseStep = 10;
+		if (.Verbose == TRUE && .VerboseCount % .VerboseStep == 0)
+		{
+			trace Printf("b = %d, t = %g, %s\r\n", b, Clock() - st, instance Time()->Print());
+			if (.ValidationSet != EMPTY && .X != EMPTY)
+			{
+				new md = self->Test(.ValidationSet, BatchNameSet[b]->Len(), 10);
+				trace Printf("Accuracy = %g +- %g\r\n", md[0], Sqrt(md[1]));
+				.X ,= .VerboseCount + 1.0;
+				.Y ,= md[0];
+				.Disp ,= md[1];
+				if (.MaxAcc < md[0] || .MaxLossValue < self->GetLossValue())
+				{
+					.MaxAcc = md[0];
+					.MaxLossValue = self->GetLossValue();
+					self->Save();
+				}
+			}
+			else
+				trace Printf("b = %d, l = %g, t = %g, %s\r\n", b, _loss, Clock() - st, instance Time()->Print());
+			st = Clock();
+		}
+		loss += _loss;
+	}
+	MeanRepCount = float(MeanRepCount) / BatchNameSet->Len();
+	return loss / BatchNameSet->Len();
+|>;
+//================================================
+//
+//================================================
+new NN::_Learn_Direction_ex(refer object Vector, refer object Vector, refer object Vector, int, number, refer number, number) = <|
+param ImageSet, LabelSet, Weight, DepthIndex, step0, MeanRepCount, Accuracy;
+	new _step0 = step0;
+	new RepCount = 0;
+	self->ResetGrad();
+	self->StartBatch();
+	new st = Clock();
+	for (new j = 0; j < ImageSet->Len(); ++j)
+	{
+		self->InitDropout();
+		if (Weight->Len() > j && Weight[j] != EMPTY)
+			self->PushSampleFB(ImageSet[j], LabelSet[j], Weight[j], DepthIndex);
+		else
+			self->PushSampleFB(ImageSet[j], LabelSet[j], DepthIndex);
+	}
+	self->ResetDropout();
+	self->FinishBatch();
+	self->UpdateGrad(DepthIndex);
+	if (.TraceTimer == TRUE)
+		trace "FB = ", Clock() - st, CR;
+	if (.TraceTimer == TRUE)
+		ShowImages();
+
+	st = Clock();
+	self->StartBatch();
+	for (j = 0; j < ImageSet->Len(); ++j)
+		if (Weight->Len() > j && Weight[j] != EMPTY)
+			self->PushSampleF(ImageSet[j], LabelSet[j], Weight[j]);
+		else
+			self->PushSampleF(ImageSet[j], LabelSet[j]);
+	if (.TraceTimer == TRUE)
+		trace "F = ", Clock() - st, CR;
+	new y0 = self->FinishBatch();
+
+	new y1 = y0;
+	do {
+		self->UpdateW(step0, DepthIndex);
+		self->StartBatch();
+		st = Clock();
+		for (new j = 0; j < ImageSet->Len(); ++j)
+			if (Weight->Len() > j && Weight[j] != EMPTY)
+				self->PushSampleF(ImageSet[j], LabelSet[j], Weight[j]);
+			else
+				self->PushSampleF(ImageSet[j], LabelSet[j]);
+		if (.TraceTimer == TRUE)
+			trace "F = ", Clock() - st, CR;
+		y1 = self->FinishBatch();
+		++MeanRepCount;
+		if (y1 > y0)
+		{
+			self->SaveW();
+			if (.TraceTimer == TRUE)
+				trace "LossValue = ", y1, CR;
+			return y1;
+		}
+		else
+		if (++RepCount == 4)
+		{
+			self->ResetGradHistory();
+			self->UpdateGrad(DepthIndex);
+			step0 = _step0;
+		}
+		else
+			step0 /= 2.0;
+		self->RollbackW();
+	}
+	while (step0 / 2 > 1.0e-8);
+	if (.TraceTimer == TRUE)
+		trace "_LossValue = ", y0, CR;
+	return y0;
+|>;
+//================================================
+//
+//================================================
+new NN::_Learn_Direction(refer object Vector, refer object Vector, refer object Vector, int, number, refer number, number) = <|
+param ImageSet, LabelSet, Weight, DepthIndex, step0, MeanRepCount, Accuracy;
+	new _step0 = step0;
+	new RepCount = 0;
+	self->ResetGrad();
+	self->StartBatch();
+	new st = Clock();
+	for (new j = 0; j < ImageSet->Len(); ++j)
+	{
+		self->InitDropout();
+		if (Weight->Len() > j && Weight[j] != EMPTY)
+			self->PushSampleFB(ImageSet[j], LabelSet[j], Weight[j], DepthIndex);
+		else
+			self->PushSampleFB(ImageSet[j], LabelSet[j], DepthIndex);
+	}
+	self->ResetDropout();
+	self->FinishBatch();
+	self->UpdateGrad(DepthIndex);
+	if (.TraceTimer == TRUE)
+		trace "FB = ", Clock() - st, CR;
+	if (.TraceTimer == TRUE)
+		ShowImages();
+
+	st = Clock();
+	self->StartBatch();
+	for (j = 0; j < ImageSet->Len(); ++j)
+		if (Weight->Len() > j && Weight[j] != EMPTY)
+			self->PushSampleF(ImageSet[j], LabelSet[j], Weight[j]);
+		else
+			self->PushSampleF(ImageSet[j], LabelSet[j]);
+	if (.TraceTimer == TRUE)
+		trace "F = ", Clock() - st, CR;
+	new y0 = self->FinishBatch();
+
+	new y_set = << << 0.0, y0 >> >>;
+	new y1 = y0;
+	do {
+		self->UpdateW(step0, DepthIndex);
+		self->StartBatch();
+		st = Clock();
+		for (new j = 0; j < ImageSet->Len(); ++j)
+			if (Weight->Len() > j && Weight[j] != EMPTY)
+				self->PushSampleF(ImageSet[j], LabelSet[j], Weight[j]);
+			else
+				self->PushSampleF(ImageSet[j], LabelSet[j]);
+		if (.TraceTimer == TRUE)
+			trace "F = ", Clock() - st, CR;
+		y1 = self->FinishBatch();
+		y_set ,= << step0, y1 >>;
+		++MeanRepCount;
+		if (y_set->Len() == 3)
+		{
+			y_set->QSort();
+			new x1 = y_set[1][0];
+			new x2 = y_set[2][0];
+			new x12 = x1 * x1;
+			new x22 = x2 * x2;
+			new dy1 = y_set[1][1] - y0;
+			new dy2 = y_set[2][1] - y0;
+			new a = dy1 * x2 - dy2 * x1;
+			new b = dy2 * x12 - dy1 * x22;
+			new det = x12 * x2 - x22 * x1;
+			if (a / det < 0.0)
+			{
+				new _step = -b / 2.0 / a;
+				if (_step < 0.1 && _step > 0.0)
+				{
+					self->RollbackW();
+					self->UpdateW(_step, DepthIndex);
+					self->StartBatch();
+					st = Clock();
+					for (new j = 0; j < ImageSet->Len(); ++j)
+						if (Weight->Len() > j && Weight[j] != EMPTY)
+							self->PushSampleF(ImageSet[j], LabelSet[j], Weight[j]);
+						else
+							self->PushSampleF(ImageSet[j], LabelSet[j]);
+					if (.TraceTimer == TRUE)
+						trace "F = ", Clock() - st, CR;
+					new _y1 = self->FinishBatch();
+					y_set ,= << _step, _y1 >>;
+					for (new k = 0; k < y_set->Len(); ++k)
+						if (_y1 < y_set[k][1])
+							break;
+					if (k < y_set->Len())
+					{
+						new _k = 0;
+						_y1 = y0;
+						for (k = 1; k < y_set->Len(); ++k)
+						{
+							if (_y1 < y_set[k][1])
+							{
+								_y1 = y_set[k][1];
+								_k = k;
+							}
+						}
+						if (_y1 > y0)
+						{
+							self->RollbackW();
+							self->UpdateW(y_set[_k][0], DepthIndex);
+							y1 = _y1;
+						}
+					}
+					else
+					{
+						trace Printf("sq_a step = %g(%g) vs %g(%g)\r\n", _step, _y1, step0, y1);
+						y1 = _y1;
+					}
+				}
+			}
+			else
+				step0 *= 1.5; 
+		}
+		else
+		if (y_set->Len() > 2)
+		{			
+			new _y1 = y0;
+			new _k = 0;
+			for (new k = 1; k < y_set->Len(); ++k)
+			{
+				if (_y1 < y_set[k][1])
+				{
+					_y1 = y_set[k][1];
+					_k = k;
+				}
+			}
+			if (_y1 > y0)
+			{
+				self->RollbackW();
+				self->UpdateW(y_set[_k][0], DepthIndex);
+				y1 = _y1;
+			}
+		}
+		if (y1 > y0)
+		{
+			if (y_set->Len() >= 3)
+			{
+				self->SaveW();
+				if (.TraceTimer == TRUE)
+					trace "LossValue = ", y1, CR;
+				return y1;
+			}
+			else
+				step0 *= 1.5;
+		}
+		else
+		if (++RepCount == 4)
+		{
+			self->ResetGradHistory();
+			self->UpdateGrad(DepthIndex);
+			y_set = << << 0.0, y0 >> >>;
+			step0 = _step0;
+		}
+		else
+			step0 /= 2.0;
+		self->RollbackW();
+	}
+	while (step0 / 2 > 1.0e-8);
+	if (.TraceTimer == TRUE)
+		trace "_LossValue = ", y0, CR;
+	return y0;
+|>;
+//================================================
+//
+//================================================
+new NN::Test(refer object Vector, refer object Vector, int, int) = <|
+param Images, Labels, TestSize, Rep;
+	if (GetDim(Images[0]) > 0 &&  IsNumber(Images[0][0]))
+		return self->Test_NN(Images, Labels, TestSize, Rep);
+	else
+	if (IsNumber(Labels[0]))
+		return self->Test_IN(Images, Labels, TestSize, Rep);
+	else
+	if (typeof(Labels[0]) == "Vector")
+		return self->Test_IV(Images, Labels, TestSize, Rep);
+	else
+	if (typeof(Labels[0]) == "FMathImage")
+		return self->Test_II(Images, Labels, TestSize, Rep);
+	else
+		rollback;
+|>;
+//================================================
+//
+//================================================
+new NN::Test(pointer object Vector, pointer object Vector, int, int) = <|
+param Images, Labels, TestSize, Rep;
+	if (typeof(Images[0]) == "FMathImage" && IsNumber(Labels[0]))
+		return self->Test_IN(*Images, *Labels, TestSize, Rep);
+	else
+	if (typeof(Images[0]) == "FMathImage" && typeof(Labels[0]) == "FMathImage")
+		return self->Test_II(*Images, *Labels, TestSize, Rep);
+	else
+		rollback;
+|>;
+//================================================
+//
+//================================================
+new NN::Test_IN(refer object Vector, refer object Vector, int, int) = <|
+param Images, Labels, TestSize, Rep;
+	new ImageSet = instance Vector(TestSize);
+	new LabelSet = instance Vector(TestSize);
+	new IndexSet = instance Vector(TestSize);
+	new Index = instance Vector(Images->Len());
+	new ErrorSet = << >>;
+	new s = 0.0;
+	new s2 = 0.0;
+	for (new b = 0; b < Rep; ++b)
+	{
+		Index->Set(0);
+		for (new i = 0; i < TestSize; ++i)
+		{
+			new k;
+			do {
+				k = int(Rand(Images->Len()));
+			}
+			while (Index[k] != 0);
+			Index[k] = 1; 
+			ImageSet[i] = << Images[k] >>;
+			LabelSet[i] = Labels[k];
+			IndexSet[i] = k;
+		}
+		new count = 0;
+		for (new j = 0; j < ImageSet->Len(); ++j)
+		{
+			self->MapImage(ImageSet[j]);
+			new res = self->GetResult();
+			if (res->FindMax() == LabelSet[j])
+				++count;
+			else
+			{
+				if (.ShowError == TRUE && ErrorSet->Len() < 200)
+				{
+					ErrorSet ,= MNIST_Test.Images[IndexSet[j]];
+					trace Printf("Error: %d -> %d\r\n", LabelSet[j], res->FindMax());
+				}
+			}
+		}
+		new v = float(count) / TestSize;
+		s += v;
+		s2 += v * v;
+	}
+	new mean = s / Rep;
+	new disp = s2 / Rep - mean * mean;
+	return << mean, disp, ErrorSet >>;
+|>;
+//================================================
+//
+//================================================
+new NN::Test_II(refer object Vector, refer object Vector, int, int) = <|
+param Images, Labels, TestSize, Rep;
+	new ImageSet = instance Vector(TestSize);
+	new LabelSet = instance Vector(TestSize);
+	new IndexSet = instance Vector(TestSize);
+	new Index = instance Vector(Images->Len());
+	new s = 0.0;
+	new s2 = 0.0;
+	for (new b = 0; b < Rep; ++b)
+	{
+		Index->Set(0);
+		for (new i = 0; i < TestSize; ++i)
+		{
+			new k;
+			do {
+				k = int(Rand(Images->Len()));
+			}
+			while (Index[k] != 0);
+			Index[k] = 1; 
+			ImageSet[i] = << Images[k] >>;
+			LabelSet[i] = Labels[k];
+			IndexSet[i] = k;
+		}
+		new mean = 0.0;
+		new disp = 0.0;
+		new count = 0;
+		for (new j = 0; j < ImageSet->Len(); ++j)
+		{
+			NN->MapImage(ImageSet[j]);
+			new res = self->GetMapImage();
+			new md = self->CompareMasksFMath(Images[1][0], res);
+			new tp = md[1] > 0 ? float(md[0]) / float(md[1]) : 1.0;
+			new tn = md[3] > 0 ? float(md[2]) / float(md[3]) : 1.0;
+			s_tp += tp;
+			s_tn += tn;
+			++count;
+		}
+		new mean_tp = s_tp / count;
+		new mean_tn = s_tn / count;
+		Mean_TP += mean_tp;
+		Mean_TP2 += mean_tp * mean_tp;
+		Mean_TN += mean_tn;
+		Mean_TN2 += mean_tn * mean_tn;
+	}
+	Mean_TP /= Rep;
+	Mean_TN /= Rep;
+	new disp_TP = Mean_TP2 / Rep - Mean_TP * Mean_TP;
+	new disp_TN = Mean_TN2 / Rep - Mean_TN * Mean_TN;
+	return << Mean_TP, disp_TP, Mean_TN, disp_TN >>;
+|>;
+//================================================
+//
+//================================================
+new NN::Test(refer object Vector, int, int) = <|
+param ImageNames, TestSize, Rep;
+	new ImageSet = instance Vector(TestSize);
+	new IndexSet = instance Vector(TestSize);
+	new Index = instance Vector(ImageNames->Len());
+	new Mean_TP = 0.0;
+	new Mean_TP2 = 0.0;
+	new Mean_TN = 0.0;
+	new Mean_TN2 = 0.0;
+	for (new b = 0; b < Rep; ++b)
+	{
+		Index->Set(0);
+		for (new i = 0; i < TestSize; ++i)
+		{
+			new k;
+			do {
+				k = int(Rand(ImageNames->Len()));
+			}
+			while (Index[k] != 0);
+			Index[k] = 1; 
+			ImageSet[i] = ImageNames[k];
+			IndexSet[i] = k;
+		}
+		new s_tp = 0.0;
+		new s_tn = 0.0;
+		new count = 0;
+		for (new j = 0; j < ImageSet->Len(); ++j)
+		{
+			new Images = instance SplitMask()->Split_ex(<< ImageSet[j] >> );
+			NN->MapImage(Images[0][0]);
+			new res = self->GetMapImage();
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//			new md = self->CompareMasksFMath(Images[1][0], res);
+			new md = self->CompareMasksFMath(Images[1][0]->Left(2), res->Left(2));
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			new tp = md[1] > 0 ? float(md[0]) / float(md[1]) : 1.0;
+			new tn = md[3] > 0 ? float(md[2]) / float(md[3]) : 1.0;
+			s_tp += tp;
+			s_tn += tn;
+			++count;
+		}
+		new mean_tp = s_tp / count;
+		new mean_tn = s_tn / count;
+		Mean_TP += mean_tp;
+		Mean_TP2 += mean_tp * mean_tp;
+		Mean_TN += mean_tn;
+		Mean_TN2 += mean_tn * mean_tn;
+	}
+	Mean_TP /= Rep;
+	Mean_TN /= Rep;
+	new disp_TP = Mean_TP2 / Rep - Mean_TP * Mean_TP;
+	new disp_TN = Mean_TN2 / Rep - Mean_TN * Mean_TN;
+	return << Mean_TP, disp_TP, Mean_TN, disp_TN >>;
+|>;
+//================================================
+//
+//================================================
+new NN::Save(void) = <|
+	new temp;
+	temp <- .ValidationSet;
+	new ocl_temp;
+	ocl_temp <- .Ocl;
+	onerror {
+		.Ocl <- ocl_temp;
+		.ValidationSet <- temp;
+		rollback;
+	}
+	new f = instance File(Printf("NN-%v-%g-%g.nn", .Name, .MaxAcc, .MaxLossValue));
+	f->Open("wb");
+	f->Putv3(self, FALSE);
+	f->Close();
+	.ValidationSet <- temp;
+	.Ocl <- ocl_temp;
+|>;
+//================================================
+//
+//================================================
+new NN::Print(void) = <|
+	new str = Printf("NN: %v\r\n", .Name);
+	trace str;
+	for (new i = 0; i < self->GetNumbLayers(); ++i)
+	{
+		new txt = Printf("%d: %v , %v\r\n", i, self->GetLayerType(i), self->GetLayerDim(i));
+		new drp = self->GetDropout(i);
+		if (drp > 0.0)
+			txt @= Printf("    Dropout %g\r\n", drp);
+		new rf = self->GetRegFunc(i);
+		if (rf != EMPTY && rf[0] > 0.0)
+			txt @= Printf("    RegFunc %g, %s\r\n", rf[0], rf[1]);
+		trace txt;
+		str @= txt;
+	}
+	return str;
+|>;
+//================================================
+//
+//================================================
+new NN::_GetW(int) = {|
+param index;
+	new buff = self->GetW(index);
+	new w = instance Vector(buff->Len() / 4);
+	for (new i = 0; i < w->Len(); ++i)
+	{
+		new v;
+		buff->StringToFloat(i * 4, v);
+		w[i] = v;
+	}
+	return w;
+|};
+//================================================
+//
+//================================================
+new NN::_GetB(int) = {|
+param index;
+	new buff = self->GetB(index);
+	new b = instance Vector(buff->Len() / 4);
+	for (new i = 0; i < b->Len(); ++i)
+	{
+		new v;
+		buff->StringToFloat(i * 4, v);
+		b[i] = v;
+	}
+	return b;
+|};
+//====================================================
+//
+//====================================================
+new NN::InitGPU(void) = <|
+	.Ocl = instance OCLProxy();
+	.Ocl.OCL_Handlers->Remove("NN");
+	.Ocl->LoadProgram("NN");
+	self->_InitOCL();
+|>;

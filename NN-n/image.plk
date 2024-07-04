@@ -1,0 +1,102 @@
+class ImageWnd : GWnd {
+		Bmp;
+	};
+event WND_UPDATE, ImageWnd::OnUpdate;
+//==============================================
+//
+//==============================================
+new ImageWnd::ImageWnd(void) = <|
+	self->GWnd("IMAGE_DLG");
+	self->Open();
+	self->AllowEvent(WND_UPDATE);
+	self->SetPos(Rand(100), Rand(100));
+	self->Show();
+|>;
+
+new ImageWnd::~ImageWnd(void) = <|
+|>;
+
+//================================================
+//
+//================================================
+new ImageWnd::SetImage(refer object MathImage) = <|
+param Image;
+
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = Image->GetMaximum();
+	new Params = instance Vector(1);
+	new img = Image->Stretch(4);
+	Params = << << img, 255, 255, 255, LUT >> >>;
+	.Bmp = instance MBmp(Get3BytesBits(Params), img->Width(), img->Height());
+	self->Invalidate(TRUE);
+|>;
+//================================================
+//
+//================================================
+new ImageWnd::SetImages(refer object Vector) = <|
+param ImageSet;
+
+/*
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = ImageSet[0]->GetMaximum();
+	for (new i = 1; i < ImageSet->Len(); ++i)
+	{
+		if (LUT.Max < ImageSet[i]->GetMaximum())
+			LUT.Max = ImageSet[i]->GetMaximum();
+	}
+	new n = int(Sqrt(float(ImageSet->Len())) + 1.0);
+	new W = ImageSet[0]->Width();
+	new H = ImageSet[0]->Height();
+	new Image = instance MathImage(n * W, n * H);
+	for (i = 0; i < ImageSet->Len(); ++i)
+	{
+		new y = i / n;
+		new x = i % n;
+		Image->Set(ImageSet[i], x * W, (n - 1 - y) * H);
+	}
+*/	
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = 255;
+	new n, m;
+	if (ImageSet->Len() >= 3)
+	{
+		n = int(Sqrt(float(ImageSet->Len())));
+		if (n * n < ImageSet->Len())
+			n += 1;
+		m = ImageSet->Len() / n + (ImageSet->Len() % n > 0 ? 1 : 0);
+	}
+	else
+	{
+		n = 1;
+		m = ImageSet->Len();
+	}
+	new W = ImageSet[0]->Width();
+	new H = ImageSet[0]->Height();
+	new Image = instance MathImage(n * W, m * H);
+	for (new i = 0; i < ImageSet->Len(); ++i)
+	{
+		new y = i / n;
+		new x = i % n;
+		Image->Set(ImageSet[i], x * W, (m - 1 - y) * H);
+	}
+	new Params = instance Vector(1);
+	Params = << << Image, 255, 255, 255, LUT >> >>;
+	.Bmp = instance MBmp(Get3BytesBits(Params), Image->Width(), Image->Height());
+	self->Invalidate(TRUE);
+|>;
+//=============================================
+//
+//=============================================
+new ImageWnd::OnUpdate(void) = <|
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	if (.Bmp != EMPTY)
+		mdc->Show(.Bmp, 0, 0);
+	mdc->CloseDC();
+|>;
