@@ -1,0 +1,143 @@
+
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnReport(refer ...) = <|
+	new RepDlg = instance AE_ReportWnd(*&(.AllRecord[.IndexAll][.DBOBJ]), << &.Date[.IndexDate][.DBOBJ] >>, self);
+	RepDlg->Open();
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::OnLoadReport(...) = <|
+	if (.IndexAll != EMPTY && .IndexAll> -1)
+	{
+		if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+			.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+		new n = .AllRecord[.IndexAll][.OBJ]->GetFileList(<<"srpj">>, FALSE);
+		if (n == EMPTY || n->Len() == 0) return;
+		new dlg = instance ReportListDlg(self, n);
+		if (dlg->Open() == IDOK)
+		{
+			new RepDlg = instance AE_ReportWnd(*&(.AllRecord[.IndexAll][.DBOBJ]), self,  .Dir @ dlg.Result->GetWinPath());
+			RepDlg->Open();
+		}
+	}
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnToTherapyControl(refer ...) = <|
+
+	new DBPatient = &(.AllRecord[.IndexAll][.DBOBJ]);
+	new t_index;
+	new allergen;
+	if (.TherapyIndex != EMPTY)
+	{
+		t_index = .TherapyIndex;
+		allergen = DBPatient.Therapy[t_index].Allergen;
+	}
+	else
+	{
+		allergen = .Date[.IndexDate][.DBOBJ].Allergen;
+		t_index = DBPatient.Therapy->Find(allergen, 0, <|param key, elem; return key == elem.Allergen; |>);
+	}
+	if (t_index >= 0)
+	{
+		new DateSet = << >>;
+		for (new i = 0; i < DBPatient.Date->Len(); ++i)
+			if (DBPatient.Date[i].Allergen == allergen)
+				DateSet ,= &DBPatient.Date[i];
+		if (DateSet->Len() > 1)
+		{
+			new RepDlg = instance AE_ReportWnd(DBPatient.Therapy[t_index].StartDate, *DBPatient, DateSet, self);
+			RepDlg->Open();
+		}
+		else
+			MessageBox(W1_ERROR, W1_NO_THERAPY_DATA, MB_OK | MB_ICONSTOP, self);
+	}
+	else
+		MessageBox(W1_ERROR, W1_NO_THERAPY_DATA, MB_OK | MB_ICONSTOP, self);
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetSelect(refer object TreeDir) = <|
+param dir;
+	new currentList = .ListSubRecord->GetListRecords();
+	
+	
+	currentList->QSort({|param key, elem; return key->GetPath() <> elem->GetPath(); |});
+	for (new i = 0; i < currentList->Len(); ++i)
+	{
+		new ph = currentList[i]->GetPath();
+		new n1 = ph->Find('/');
+		n1 = ph->Find('/', n1 + 1);
+		new n = ph->Find('_', n1);
+		if (n != -1)
+			ph->PutByte(n, '/');
+		new file = dir->AddFile(ph);
+		if (file != EMPTY)
+		file.result <- currentList[i];
+	}
+
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetSelect2(refer object TreeDir) = <|
+param dir;
+	new currentList;
+	new ls = <<>>;
+	for (new j = 0, dl = .SubRecords->Len(); j < dl; ++j)
+	{
+		if (.SubRecords[j][.SUB_OBJ]->IsSelected(.SubRecords[j][2]))
+		{
+			ls @= .SubRecords[j][.SUB_OBJ]->GetFileList(<<".jpg", ".tif">>);
+		}
+	}
+	if (ls->Len() > 0)
+		currentList = ls;
+	else
+		currentList = .ListSubRecord->GetListRecords();
+	currentList->QSort({|param key, elem; return key->GetPath() <> elem->GetPath(); |});
+	for (new i = 0; i < currentList->Len(); ++i)
+	{
+		new ph = currentList[i]->GetPath();
+		new n1 = ph->Find('/');
+		n1 = ph->Find('/', n1 + 1);
+		new n = ph->Find('_', n1);
+		if (n != -1)
+			ph->PutByte(n, '/');
+		new file = dir->AddFile(ph);
+		if (file != EMPTY)
+			file.result <- currentList[i];
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetSelect2List(void) = <|
+	new ls = << >>;
+	for (new j = 0, dl = .SubRecords->Len(); j < dl; ++j)
+	{
+		if (.SubRecords[j][.SUB_OBJ]->IsSelected(.SubRecords[j][2]))
+			ls ,= &.SubRecords[j][.SUB_DBOBJ];
+	}
+	return ls;
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::DrawText(refer object BaseString, refer object ComObj, refer object MDC, int, int, number, number, number,number) = <|
+param data, cls, mdc, i, j, d, size_mm, w2, h2;
+	cls->pItem(i, j, data);
+	new rc = mdc->GetStringRect(data);
+	//rc.right += data->Len();
+	new w1 = (rc.right * d/size_mm)/w2 + 0.6;
+	new exCell = cls->gItem(i, j);
+	exCell->pRowHeight((d * rc->Height()/size_mm)/h2);
+
+	if (w1 > cls->gItem(i, j)->gColumnWidth())
+		exCell->pColumnWidth(w1);
+|>;

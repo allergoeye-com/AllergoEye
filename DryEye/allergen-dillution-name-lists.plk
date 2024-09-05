@@ -1,0 +1,446 @@
+#define RESOURCE_DELIM ";"
+//=========================================================
+//
+//=========================================================
+global GetMedicationList = <|
+	new list = Odml2Exec("select distinct(m.Medication) from DBTherapy as m order by m.Medication", << >>);
+	return list;
+|>;
+/*global GetPIRStringFromID = <|
+param lang, _str;
+	new str = instance String(_str);
+	new n = PIR().MapList->Find(<<"", lang>>, 0, <|param key, item; return key[0] == item.LibName && key[1] == item.Locale;|>);
+	if (n != -1)
+	{
+		new k =  PIR().MapList[n]->Find(str,0,  <|param key, item; return key == item[0]; |> );
+		if (k != -1)
+			return PIR().MapList[n][k][1];		
+	}
+	
+|>;
+
+global GetPIRVectorStringsFromIDs = <|
+param lang, v;
+	new vstr;
+	new n = PIR().MapList->Find(<<"", lang>>, 0, <|param key, item; return key[0] == item.LibName && key[1] == item.Locale;|>);
+	if (n != -1)
+	{
+		vstr = instance Vector(v->Len());
+		for (new i = 0, l = v->Len(); i < l; ++i)
+		{
+			new str =  instance String(v[i]);
+			new k =  PIR().MapList[n]->Find(str,0,  <|param key, item; return key == item[0]; |> );
+			if (k != -1)
+				vstr[i] = PIR().MapList[n][k][1];
+			else
+				return EMPTY;
+				
+		}
+	}
+	return vstr;
+|>;
+
+*/
+//=========================================================
+//
+//=========================================================
+global GetTableTitle = <|
+	/*new list;
+	switch (CurLocale.Code)
+	{
+	case "ger" :
+		list = << "Juckreiz",	"Reizung",	"Tränen",	"Rötung", "Total LSS" >>;
+		break;
+	case "eng" :
+		list = << "itching", "irritation", "tears", "redness", "Total LSS" >>;
+		break;
+	case "esp" :
+		list = << "picazón", "irritación", "lágrimas", "enrojecimiento", "LSS total" >>;
+		break;
+	case "fra" :
+		list = << "démangeaisons", "irritation", "larmes", "rougeur", "LSS total" >>;
+		break;
+	default:
+		list = << "itching", "irritation", "tears", "redness", "Total LSS" >>;
+		break;
+	}
+	for (new i = list->Len() - 1; i >= 0; --i)
+		list[i] = instance WString(list[i]);
+	return list;
+	*/
+	return  << W1_ITCHING, W1_IRRITATION, W1_TEARS, W1_REDNESS, WS1_TOTAL_LSS >>;
+
+|>;
+//=========================================================
+//
+//=========================================================
+global _GetDilitionList = <|
+param LocalCode;
+new list;
+	new str = GetPIRStringFromID(LocalCode, "WS_Dilition");
+	if (str != EMPTY)
+		list = str->Tokenize(RESOURCE_DELIM);	
+	if (list == EMPTY)
+	{
+		switch (LocalCode)
+		{
+		case "ger" :
+			list = << "Eingangsuntersuchung", "Kontrolllösung", "1-1 000", "1-100", "1-10", "Stammlösung" >>;
+			break;
+		case "eng" :
+			list = << "start test", "control solution", "1-1000", "1-100", "1-10", "stock solution"  >>;
+			break;
+		case "esp" :
+			list = << "iniciar prueba", "prueba de control", "1:1000", "1:100", "1:10", "solución de reserva"  >>;
+			break;
+		case "fra" :
+			list = << "démarrer le test", "solution de contrôle", "1:1000", "1:100", "1:10", "solution mère"  >>;
+			break;
+		default:
+			list = << "start test", "control solution", "1-1000", "1-100", "1-10", "stock solution"  >>;
+			break;
+		}
+		for (new i = list->Len() - 1; i >= 0; --i)
+			list[i] = instance WString(list[i]);
+	}
+	return list;
+|>;
+//=========================================================
+//
+//=========================================================
+global _GetAllergenList = <|
+param LocalCode;
+	new list;
+	new str = GetPIRStringFromID(LocalCode, "WS_Allergen");
+	if (str != EMPTY)
+	list = str->Tokenize(RESOURCE_DELIM);	
+	if (list == EMPTY)
+	{
+		switch (LocalCode)
+		{
+		case "ger" :
+			list = << "Milbe Farinae", "Milbe Pteronyssinus", "Birke", "Erle", "Hasel", "Esche", "Gras", "Beifuß", "Ambrosia",	"Altenaria Altenata", "Penicillium Notatum", "Katze" >>;
+			break;
+		case "eng" :
+			list = << "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ragweed", "altenaria altenata", "penicillium notatum", "cat"  >>;
+			break;
+		case "esp" :
+			list = << "farinas de ácaros", "ácaro pteronyssinus", "abedul", "aliso", "color avellana", "Fresno", "césped", "artemisa", "ambrosía", "alternaria alternata", "penicillium notatum", "gato" >>;
+			break;
+		case "fra" :
+			list = << "farine d'acariens", "acariens pteronyssinus", "bouleau", "aulne", "noisette", "frêne", "herbe", "armoise", "ambroisie", "alternataria alternata", "pénicillium notatum", "chat" >>;
+			break;
+		default:
+			list = << "mite farinae", "mite pteronyssinus", "birch", "alder", "hazel", "ash tree", "grass", "mugwort", "ragweed", "altenaria altenata", "penicillium notatum", "cat"  >>;
+			break;
+		}
+		for (new i = list->Len() - 1; i >= 0; --i)
+			list[i] = instance WString(list[i]);
+	}
+	return list;
+|>;
+//=========================================================
+//
+//=========================================================
+global _GetSideList = <|
+param code;
+new list;
+	new str = GetPIRStringFromID(code, "WS_Side");
+	if (str != EMPTY)
+		list = str->Tokenize(RESOURCE_DELIM);	
+
+	if (list == EMPTY)
+	{
+		switch (code)
+		{
+		case "ger" :
+			list = << "Links", "Rechts", "Beidseits" >>;
+			break;
+		case "eng" :
+			list = << "left", "right", "both sides" >>;
+			break;
+		case "esp" :
+			list = << "izquierdo", "derecho", "ambos lados">>;
+			break;
+		case "fra" :
+			list = << "gauche", "droit", "des deux côtés">>;
+			break;
+		default:
+			list = << "left", "right", "both sides" >>;
+			break;
+		}
+		for (new i = list->Len() - 1; i >= 0; --i)
+			list[i] = instance WString(list[i]);
+	}
+	return list;
+|>;
+global _GetRoiList = <|
+param code;
+	return GetPIRVectorStringsFromIDs(code, <<"W1_SCLERA", "W1_IRIS"/*, "W1_CORNER"*/>>);
+|>;
+global GetRoiList = <|
+	return _GetRoiList(CurLocale.Code);
+|>;
+global RoiNameToEng = <|
+param Name;
+	new index = _GetRoiList(CurLocale.Code)->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	return index != -1 ? _GetRoiList("eng")[index]->ToLower() : Name;
+|>;
+global RoiNameToLocal = <|
+param Name;
+	new index = _GetRoiList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	return index != -1 ? _GetRoiList(CurLocale.Code)[index] : Name;
+|>;
+
+//=========================================================
+//
+//=========================================================
+global _GetIncubationList = <|
+param code;
+	new list;
+	new str = GetPIRStringFromID(code, "WS_Time");
+	if (str != EMPTY)
+		list = str->Tokenize(RESOURCE_DELIM);	
+
+	if (list == EMPTY)
+	{
+	switch (code)
+	{
+	case "ger" :
+		list = << "00Min", "05Min", "10Min", "15Min" >>;
+		break;
+	case "eng" :
+		list = << "00min", "05min", "10min", "15min" >>;
+		break;
+	case "esp" :
+		list = << "00min", "05min", "10min", "15min" >>;
+		break;
+	case "fra" :
+		list = << "00min", "05min", "10min", "15min" >>;
+		break;
+	default:
+		list = << "00min", "05min", "10min", "15min" >>;
+		break;
+	}
+	for (new i = list->Len() - 1; i >= 0; --i)
+		list[i] = instance WString(list[i]);
+	}
+	return list;
+|>;
+
+//=========================================================
+//
+//=========================================================
+global GetAllergenList = <|
+	return _GetAllergenList(CurLocale.Code);
+|>;
+//=========================================================
+//
+//=========================================================
+global GetDilitionList = <|
+	return _GetDilitionList(CurLocale.Code);
+|>;
+//=========================================================
+//
+//=========================================================
+global GetSideList = <|
+	return _GetSideList(CurLocale.Code);
+|>;
+//=========================================================
+//
+//=========================================================
+global GetIncubationList = <|
+
+	return _GetIncubationList(CurLocale.Code);
+|>;
+
+//=========================================================
+//
+//=========================================================
+global GetAllergenEng = <|
+param Name;
+	Name = CheckForDepricatedNames(Name);
+	new index = _GetAllergenList(CurLocale.Code)->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index < 0)
+	{
+		index = _GetAllergenList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+		if (index == -1)
+			index = _GetAllergenList("ger")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+		if (index == -1)
+			return Name;
+	}
+	return _GetAllergenList("eng")[index];
+|>;
+//=========================================================
+//
+//=========================================================
+global GetAllergenLocal = <|
+param Name;
+	Name = CheckForDepricatedNames(Name);
+	new index = _GetAllergenList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index >= 0)
+		return GetAllergenList()[index];
+	else
+		index = _GetAllergenList("ger")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index >= 0)
+		return GetAllergenList()[index];
+	return Name;
+|>;
+//=========================================================
+//
+//=========================================================
+global GetDilitionEng = <|
+param Name;
+	Name = CheckForDepricatedNames(Name);
+	new index = _GetDilitionList(CurLocale.Code)->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index < 0)
+	{
+		index = _GetDilitionList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+		if (index == -1)
+			index = _GetDilitionList("ger")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+		if (index == -1)
+			return Name;
+	}
+	return _GetDilitionList("eng")[index];
+|>;
+//=========================================================
+//
+//=========================================================
+global GetDilutionLocal = <|
+param Name;
+	Name = CheckForDepricatedNames(Name);
+	new index = _GetDilitionList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index >= 0)
+		return GetDilitionList()[index];
+	else
+		index = _GetDilitionList("ger")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index >= 0)
+		return GetDilitionList()[index];
+	return Name;
+|>;
+//=========================================================
+//
+//=========================================================
+global CheckForDepricatedNames = <|
+param Name;
+	onerror {
+		return Name;
+	};
+	switch (Name->ToLower())
+	{
+	case "entrance examination":
+		return instance WString("start test");
+	case "both":
+		return instance WString("both sides");
+	case "control test":
+		return instance WString("control solution");
+	case "ash" :
+		return instance WString("ash tree");
+	case "kontrolllosung" :
+		return instance WString("Kontrolllösung");
+	case "stocklosung" :
+		return instance WString("Stammlösung");
+	case "stocklösung" :
+		return instance WString("Stammlösung");
+	default :
+		return Name;
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+global GetSideEng = <|
+param Name;
+	Name = CheckForDepricatedNames(Name);
+	new index = _GetSideList(CurLocale.Code)->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index < 0)
+	{
+		index = _GetSideList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+		if (index == -1)
+			return Name;
+	}
+	return _GetSideList("eng")[index];
+|>;
+//=========================================================
+//
+//=========================================================
+global GetSideLocal = <|
+param Name;
+	Name = CheckForDepricatedNames(Name);
+	new index = _GetSideList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index >= 0)
+		return GetSideList()[index];
+	else
+		index = _GetSideList("ger")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index >= 0)
+		return GetSideList()[index];
+	return Name;
+|>;
+//=========================================================
+//
+//=========================================================
+global GetIncubationEng = <|
+param Name;
+	new index = _GetIncubationList(CurLocale.Code)->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+	if (index < 0)
+	{
+		index = _GetIncubationList("eng")->Find(Name->ToLower(), 0, {|param key, elem; return key == elem->ToLower();|});
+		if (index == -1)
+			return Name;
+	}
+	return _GetIncubationList("eng")[index];
+|>;
+//=========================================================
+//
+//=========================================================
+global GetIncubationLocal = <|
+param Name;
+	new index = _GetSideList("eng")->Find(Name, 0, {|param key, elem; return key == elem;|});
+	if (index >= 0)
+		return GetSideList()[index];
+	return Name;
+|>;
+//=========================================================
+//
+//=========================================================
+global GetAllergenIndex = <|
+param str;
+	new _str = GetAllergenEng(CheckForDepricatedNames(str));
+	new index = _GetAllergenList("eng")->Find(_str);
+	if (index == -1)
+		index = 0;
+	return index;
+|>;
+//=========================================================
+//
+//=========================================================
+global GetDilitionIndex = <|
+param str;
+	new _str = GetDilitionEng(CheckForDepricatedNames(str));
+	new index = _GetDilitionList("eng")()->Find(_str);
+	if (index == -1)
+		index = 0;
+	return index;
+|>;
+//=========================================================
+//
+//=========================================================
+global GetSideIndex = <|
+param str;
+	new _str = GetSideEng(CheckForDepricatedNames(str));
+	new index = _GetSideList("eng")->Find(_str);
+	if (index == -1)
+		index = 0;
+	return index;
+|>;
+//=========================================================
+//
+//=========================================================
+global GetTimeIndex = <|
+param str;
+	new _str = GetIncubationEng(CheckForDepricatedNames(str));
+	new index = _GetIncubationList("eng")->Find(_str);
+	if (index == -1)
+		index = 0;
+	return index;
+|>;

@@ -1,0 +1,248 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent">
+
+    <lib.camera.CCameraView
+        android:clickable="false"
+        android:id="@+id/drawPtreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <lib.camera.ViewRect
+        android:id="@+id/drawView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/transparent"
+        android:clickable="false" />
+
+    <lib.common.button.CMenuButton
+        android:id="@+id/idFoto"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentRight="true"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="20dp"
+
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="#00000000"
+        android:scaleType="fitCenter"
+        app:color_up="@color/light_grey"
+        app:srcCompat="@drawable/camera"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <ImageView
+        android:clickable="false"
+        android:id="@+id/cameraState"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentRight="true"
+        android:layout_centerInParent="true"
+        android:layout_marginEnd="28dp"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/led2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="@+id/idFoto"
+        app:layout_constraintTop_toTopOf="parent"
+
+        />
+
+    <LinearLayout
+        android:id="@+id/zoomLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_weight="1"
+        android:layout_marginEnd="3dp"
+        android:orientation="horizontal"
+        android:padding="20dp">
+
+        <lib.common.button.CSpinButton
+            android:id="@+id/zoomMinus"
+            android:layout_width="@dimen/generic_button_height"
+            android:layout_height="@dimen/generic_button_height"
+            android:layout_gravity="center_vertical"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:padding="4dp"
+            android:src="@drawable/minus"
+            app:color_up="@color/theme_dlg_text_color"
+            tools:ignore="SpeakableTextPresentCheck,DuplicateClickableBoundsCheck" />
+
+        <TextView
+            android:id="@+id/zoomText"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/generic_button_height"
+            android:ems="4"
+            android:gravity="center|center_horizontal"
+            android:singleLine="true"
+            android:text="1.0"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textColor="@color/theme_dlg_text_color" />
+
+
+        <lib.common.button.CSpinButton
+            android:id="@+id/zoomPlus"
+            android:layout_width="@dimen/generic_button_height"
+            android:layout_height="@dimen/generic_button_height"
+            android:layout_gravity="center_vertical"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+
+            android:scaleType="fitCenter"
+            android:padding="4dp"
+
+            android:src="@drawable/plus"
+            app:color_up="@color/theme_dlg_text_color"
+            tools:ignore="SpeakableTextPresentCheck" />
+    </LinearLayout>
+
+    <lib.common.button.CMenuButton
+        android:id="@+id/cameraSetting"
+        android:layout_width="@dimen/generic_button_height"
+        android:layout_height="@dimen/generic_button_height"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        app:long_click="true"
+        app:color_up="@color/theme_bar_btn_color"
+        android:layout_alignParentStart="true"
+
+        app:srcCompat="@drawable/settings"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <com.dryeye.app.timer.TimerButton
+        android:id="@+id/idTimer"
+        android:layout_width="@dimen/generic_button_height"
+        android:layout_height="@dimen/generic_button_height"
+        android:layout_alignParentEnd="true"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:padding="4dp"
+        android:scaleType="fitEnd"
+
+        app:color_up="@color/theme_bar_btn_color"
+        app:colors_png="false"
+        app:srcCompat="@drawable/timer"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <lib.common.layout.CPanelDialog
+        android:id="@+id/cameraPanel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/cameraSetting"
+        android:fitsSystemWindows="true"
+        android:visibility="visible"
+        app:drag_orient="Top"
+        app:size_hand="0dp">
+        <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/dlg_bg"
+        android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/idParentGridLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/futer"
+
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginTop="-3dp"
+                android:orientation="vertical">
+
+                <HorizontalScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fadeScrollbars="false"
+                    android:theme="@style/AppThemeSeek">
+
+                    <lib.common.layout.CScrollView
+                        android:id="@+id/scrollMenu"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fadeScrollbars="false"
+                        android:theme="@style/AppThemeSeek"
+                        tools:ignore="SpeakableTextPresentCheck">
+
+
+                        <lib.common.grid.Grid
+                            android:id="@+id/idGridMenu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="4dp">
+
+                        </lib.common.grid.Grid>
+                    </lib.common.layout.CScrollView>
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/futer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentBottom="true"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:visibility="visible">
+
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <lib.common.button.CMenuButton
+                        android:id="@+id/advanced_cancel"
+                        style="@style/Widget.AppCompat.ImageButton"
+                        android:layout_width="@dimen/generic_button_height"
+                        android:layout_height="@dimen/generic_button_height"
+                        android:adjustViewBounds="true"
+                        android:background="@android:color/transparent"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/cancel_onscreen"
+
+                        app:color_up="@color/white"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+
+                    <Space
+                        android:layout_width="30dp"
+                        android:layout_height="48dp" />
+
+                    <lib.common.button.CMenuButton
+
+                        android:id="@+id/advanced_ok"
+                        style="@style/Widget.AppCompat.ImageButton"
+                        android:layout_width="@dimen/generic_button_height"
+                        android:layout_height="@dimen/generic_button_height"
+                        android:adjustViewBounds="true"
+                        android:background="@android:color/transparent"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ok"
+
+                        app:color_up="@color/white"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+                </LinearLayout>
+            </LinearLayout>
+        </RelativeLayout>
+    </lib.common.layout.CPanelDialog>
+
+
+
+</RelativeLayout>

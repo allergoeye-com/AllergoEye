@@ -1,0 +1,76 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/dlg_bg_up"
+    android:padding="2dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:padding="2dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewHoops"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            android:fadeScrollbars="false"
+            android:scrollbarSize="5dp"
+            android:scrollbars="horizontal"
+            android:visibility="visible"
+            app:layout_anchorGravity="top"
+            tools:listitem="@layout/selected_view_item" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingRight="20dp"
+        android:paddingLeft="20dp"
+
+        android:visibility="visible">
+
+
+        <lib.common.button.CMenuButton
+            android:id="@+id/idcancel"
+            style="@style/Widget.AppCompat.ImageButton"
+            android:layout_width="@dimen/generic_button_height"
+            android:layout_height="@dimen/generic_button_height"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/cancel_onscreen"
+            app:color_up="@color/theme_dlg_color_cancel" />
+
+
+        <Space
+            android:layout_width="20dp"
+            android:layout_height="match_parent" />
+
+        <lib.common.button.CMenuButton
+
+            android:id="@+id/idok"
+            style="@style/Widget.AppCompat.ImageButton"
+            android:layout_width="@dimen/generic_button_height"
+            android:layout_height="@dimen/generic_button_height"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ok"
+
+            app:color_up="@color/theme_dlg_color_ok" />
+
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,50 @@
+class ReportListDlg : ModalForm , FormTriggers {
+	AllRecord;
+	IndexAll;
+	Data;
+	Result;
+};
+
+
+//=========================================================
+//
+//=========================================================
+new ReportListDlg::ReportListDlg(refer object GWnd, refer object Vector) = <|
+param parent, v;
+	.IndexAll = 0;
+	.AllRecord = <<>>;
+	for (new i = 0; i < v->Len(); ++i)
+	{
+		new name = v[i].name->Tokenize("_");
+		.AllRecord @= <<>>;
+		.AllRecord @= << << name[0],name[1], name[2], v[i] >> >>;
+	}
+
+	self->ModalForm( "DLG_SELECT_REPORT", parent );
+|>;
+new ReportListDlg::OnSelectAll(refer ...) = <|
+|>;
+//=========================================================
+//
+//=========================================================
+new ReportListDlg::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	self->UpdateForm();
+|>;
+//===================================================================
+//
+//===================================================================
+new ReportListDlg::Cleanup( void ) =
+<|
+	
+|>;
+//===================================================================
+//
+//===================================================================
+new ReportListDlg::OnOk(refer ...) = <|
+	self->UpdateForm();
+	.Result = .AllRecord[.IndexAll][3];
+	self->ModalForm::Close(IDOK);
+|>;

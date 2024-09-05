@@ -1,0 +1,396 @@
+class Transform2D {
+	form;
+	invert;
+	disp;
+	rDisp;
+	rDes;
+};
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Transform2D(void) = <|
+	.form = instance Matrix(3, 3);
+	.invert = instance Matrix(3, 3);
+	.invert->SetDiagonal(0, 1);
+	.form->SetDiagonal(0, 1);
+	
+|>;
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Init(number, refer object POINT) = <|
+param Scale, d;
+
+	.form->Set(0.0);
+	.form->SetDiagonal(0, 1.0);
+	.form[0][0] = Scale;
+	.form[1][1] = Scale;
+	.form[0][2] = d.x;
+	.form[1][2] = d.y;
+	self->InitInvert();
+|>;
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Init(refer object RECT, refer object RECT) = <|
+param rDisp, rDes;
+
+	.rDisp = rDisp;
+	.rDes = rDes;
+	.form->Set(0.0);
+	.form->SetDiagonal(0, 1.0);
+	new Scale;
+	if (double(rDes->Height()) == 0.0)
+		Scale = 1.0;
+	else
+	{
+		new ScaleX = Abs(double(rDisp->Width())/double(rDes->Width()));
+		new ScaleY = Abs(double(rDisp->Height())/double(rDes->Height()));
+		Scale = ScaleY > ScaleX ? ScaleX : ScaleY;
+	}
+	.form[0][0] = Scale;
+	.form[1][1] = Scale;
+	
+	new dx = (rDes.left + rDes.right)/2.0 * Scale;
+	new dy = (rDes.bottom + rDes.top)/2.0 * Scale;
+	.form[0][2] = double(rDisp.left + rDisp.right)/2.0 - dx;
+	.form[1][2] = double(rDisp.top + rDisp.bottom)/2.0 - dy;
+	self->InitInvert();
+|>;
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Init(number, number, number) = {|
+param off_x, off_y, scale;
+	.form[0][2] = off_x;
+	.form[1][2] = off_y;
+	.form[0][0] = scale;
+	.form[1][1] = scale;
+	self->InitInvert();
+|};
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Reset(void) = {|
+	self->Init(.rDisp, .rDes);
+	self->InitInvert();
+|};
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Offset(number, number) = {|
+param x, y;
+	.form[0][2] += x;
+	.form[1][2] += y;
+	self->InitInvert();
+|};
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Scale(number, refer object POINT) = {|
+param fScale, center;
+	new offset = instance Matrix(3, 3);;
+	new shift = instance Matrix(3, 3);
+	new scale  = instance Matrix(3, 3);
+	new rotate = instance Matrix(3, 3);
+	self->Decompose(.form, shift, scale, rotate, offset);
+	new tmp = instance  Transform2D();
+	scale[0][0] *= fScale;
+	scale[1][1] *= fScale;
+	tmp.form = rotate;
+	tmp.form *= scale;
+	new cm = center;
+	self->Dp2Lp(cm);
+	tmp->Lp2Dp(cm);
+	.form = tmp.form;
+	.form[0][2] = center.x - cm.x;
+	.form[1][2] = center.y - cm.y;
+	self->InitInvert();
+|};
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Rotate(number, refer object POINT) = {|
+param angle_degree, center;
+	new offset = instance Matrix(3, 3);
+	new shift = instance Matrix(3, 3);
+	new scale  = instance Matrix(3, 3);
+	new rotate = instance Matrix(3, 3);
+	self->Decompose (.form, shift, scale, rotate, offset);
+	new r = instance Matrix(3, 3);
+	r->SetDiagonal(0, 1.0);
+	new angle = angle_degree * PI/180.0;
+	r[1][1] = r[0][0] = Cos(angle);
+	r[0][1] = -Sin(angle);
+	r[1][0] = -r[0][1];
+	rotate *= r;
+	new tmp = instance  Transform2D();
+	tmp.form = rotate;
+	tmp.form *= scale;
+	new cm = center;
+	self->Dp2Lp(cm);
+	tmp->Lp2Dp(cm);
+	.form = tmp.form;
+	.form[0][2] = center.x - cm.x;
+	.form[1][2] = center.y - cm.y;
+	self->InitInvert();
+|};
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object POINT) = {|
+param v;
+	new res = v;
+	self->Lp2Dp(v, res);
+	v = res;
+	return res;
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::ToInt(number) = {|
+param n;
+	return n > 0.0 ? int(n + 0.5) : int(n - 0.5);
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object POINT, refer object POINT) = {|
+param v, res;
+	new _x = v.x;
+	new _y = v.y;
+	res.x = .form[0][0] * _x + .form[0][1] * _y + .form[0][2];
+	res.y = .form[1][0] * _x + .form[1][1] * _y + .form[1][2];
+|};
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object RECT) = {|
+param v;
+	new res = v;
+	self->Lp2Dp(v, res);
+	v = res;
+	
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object RECT, refer object RECT) = {|
+param v, res;
+	new _x = v.left; 
+	res.left = .form[0][0] * _x + .form[0][1] * v.top + .form[0][2];
+	res.top = .form[1][0] * _x + .form[1][1] * v.top + .form[1][2];
+	_x = v.right; 
+	res.right = .form[0][0] * _x + .form[0][1] * v.bottom + .form[0][2];
+	res.bottom = .form[1][0] * _x + .form[1][1] * v.bottom + .form[1][2];
+
+|};
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new  Transform2D::Lp2Dp(refer object Vector) = {|
+param v;
+	self->Lp2Dp(v, v);
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new  Transform2D::Lp2Dp(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _y, _x;
+	for (new i = 0, l = v->Len(); i < l; ++i)  
+	{
+		_x = v[i].x;
+		_y = v[i].y;
+		res[i].x = .form[0][0] * _x + .form[0][1] * _y + .form[0][2];
+		res[i].y = .form[1][0] * _x + .form[1][1] * _y + .form[1][2];
+	
+	}
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new  Transform2D::Lp2DpPOINT(refer object Vector, refer object Vector) = {|
+param v, res;
+	new tmp = instance POINT();
+	for (new i = 0, l = v->Len(); i < l; ++i)  
+	{
+		tmp = v[i];
+		res[i].x = int(.form[0][0] * tmp.x + .form[0][1] * tmp.y + .form[0][2] + 0.5);
+		res[i].y = int(.form[1][0] * tmp.x + .form[1][1] * tmp.y + .form[1][2] + 0.5);
+	
+	}
+|};
+
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new  Transform2D::Lp2DpV(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _x, _y;
+	for (new i = 0, l = v->Len(); i < l; ++i)  
+	{
+		_x = v[i][0]; 
+		_y = v[i][1]; 
+		res[i][0] = int(.form[0][0] * _x + .form[0][1] * _y + .form[0][2] + 0.5);
+		res[i][1] = int(.form[1][0] * _x - .form[1][1] * _y + .form[1][2] + 0.5);
+	}
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new  Transform2D::Lp2DpVC(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _x, _y;
+	new r = instance RECT(v[0][0], v[0][1], v[0][0], v[0][1]);
+	for (new i = 0, l = v->Len(); i < l; ++i)  
+	{
+		_x = v[i][0]; 
+		_y = v[i][1]; 
+		res[i][0] = int(.form[0][0] * _x + .form[0][1] * _y + .form[0][2] + 0.5);
+		res[i][1] = int(.form[1][0] * _x - .form[1][1] * _y + .form[1][2] + 0.5);
+		r.left = Min(res[i][0], r.left);
+		r.top = Min(res[i][1], r.top);
+		r.right = Max(res[i][0], r.right);
+		r.bottom = Max(res[i][1], r.bottom);
+
+	}
+	return (r & .disp) != EMPTY;
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object Vector) = {|
+param v;
+	new res = v;
+	self->Dp2Lp(v, res);
+	v = res;
+	return res;
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _x, _y;
+	for (new i = 0, l = v->Len(); i < l; ++i)  
+	{
+   		_x = v[i].x;
+		_y = v[i].y;
+		_x += .invert[0][2];
+		_y += .invert[1][2];
+		res[i].x = .invert[0][0] * _x + .invert[0][1] * _y ;
+		res[i].y = .invert[1][1] * _y + .invert[1][0] * _x;
+	
+	}
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object POINT) = {|
+param v;
+	new res = v;
+	self->Dp2Lp(v, res);
+	v = res;
+	return res;
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object POINT, refer object POINT) = {|
+param v, res;
+	new _x = v.x;
+	new _y = v.y;
+	_x += .invert[0][2];
+	_y += .invert[1][2];
+	res.x = .invert[0][0] * _x + .invert[0][1] * _y ;
+	res.y = .invert[1][1] * _y + .invert[1][0] * _x;
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object RECT) = {|
+param v;
+	new res = v;
+	self->Dp2Lp(v, res);
+	v = res;
+|};
+//---------------------------------------------------
+//
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object RECT, refer object RECT) = {|
+param v, res;
+	new _x = v.left;
+	new _y = v.top;
+	_x += .invert[0][2];
+	_y += .invert[1][2];
+	res.left = .invert[0][0] * _x + .invert[0][1] * _y ;
+	res.top = .invert[1][1] * _y + .invert[1][0] * _x;
+	_x = v.right;
+	_y = v.bottom;
+	_x += .invert[0][2];
+	_y += .invert[1][2];
+	res.right = .invert[0][0] * _x + .invert[0][1] * _y ;
+	res.bottom = .invert[1][1] * _y + .invert[1][0] * _x;
+|};
+
+
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::Decompose (refer object Matrix, refer object Matrix, refer object Matrix, refer object Matrix, refer object Matrix) = {|
+param m, shift, scale, rotate, offset;
+	shift->Set(0.0);
+	shift->SetDiagonal(0, 1.0);
+	scale->Set(0.0);
+	scale->SetDiagonal(0, 1.0);
+	rotate->Set(0.0);
+	rotate->SetDiagonal(0, 1.0);
+	offset->Set(0.0);
+	offset->SetDiagonal(0, 1.0);
+
+	offset[0][2] = m[0][2];
+	offset[1][2] = m[1][2];
+	new R = Sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1]);
+
+	shift[1][0] = R != 0.0 ? (m[0][0] * m[1][0] + m[0][1] * m[1][1])/(R*R) : 0;
+	scale[0][0] = R;
+	scale[1][1] = R != 0.0 ? (m[0][0] * m[1][1] - m[0][1] * m[1][0])/R : 0;
+	rotate[0][0] = R != 0.0 ? m[0][0]/R : 0;
+	rotate[1][0] = R != 0.0 ? -m[0][1]/R : 0;
+	rotate[0][1] = -rotate[1][0];
+	rotate[1][1] = rotate[0][0];
+|};
+//------------------------------------------------
+//
+//------------------------------------------------
+new Transform2D::InitInvert(void) = {| 
+
+	new offset = instance Matrix(3, 3);;
+	new shift = instance Matrix(3, 3);
+	new scale  = instance Matrix(3, 3);
+	new rotate = instance Matrix(3, 3);
+
+	self->Decompose (.form, shift, scale, rotate, offset);
+	if (scale[0][0] != 0.0)
+		scale[0][0] = 1.0/scale[0][0];
+
+	if (scale[1][1] != 0.0)
+		scale[1][1] = 1.0/scale[1][1];
+	
+	rotate[0][1] = -rotate[0][1];
+	rotate[1][0] = -rotate[1][0];
+	
+	offset[0][2] = -offset[0][2];
+	offset[1][2] = -offset[1][2];
+	.invert = offset;
+	.invert *= scale;
+	.invert *= rotate;
+
+|};

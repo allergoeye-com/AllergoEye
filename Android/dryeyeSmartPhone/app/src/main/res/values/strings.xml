@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name" translatable="false">DryEye</string>
+    <string name="dummy_button" translatable="false"> </string>
+    <string name="save" translatable="false">Save</string>
+    <string name="search" translatable="false">Search</string>
+    <string name="search_in" translatable="false">Search:</string>
+    <string name="default_image" translatable="false">Image</string>
+    <string name="select_color" translatable="false">Select Color</string>
+    <string name="card_info">Patient info</string>
+    <string name="load_card" translatable="false">Patients</string>
+    <string name="card_cync">Synchronize</string>
+    <string name="roi">ROI</string>
+    <string name="exit">Exit</string>
+    <string name="card_first_name">First name</string>
+    <string name="card_last_name">Last name</string>
+    <string name="card_birthdate">Birthdate</string>
+    <string name="return_to_home" translatable="false">Return To Home</string>
+    <string name="save_return" translatable="false">Save &amp; Return</string>
+    <string name="return_without_save" translatable="false">Return without Save</string>
+    <string name="delete" translatable="false">Delete</string>
+    <string name="timer" translatable="false">Timer</string>
+    <string name="view_card" translatable="false">Patient</string>
+    <string name="view_photo" translatable="false">Photo</string>
+    <string name="hostname">Name of the phone</string>
+    <string name="select_lang">Choose language</string>
+    <string name="str_de">Deutsch</string>
+    <string name="str_en">English</string>
+    <string name="set_timer">Set timer</string>
+    <string name="minute">minutes</string>
+    <string name="stop_timer">Stop timer ?</string>
+    <string name="ok">OK</string>
+    <string name="cancel">CANCEL</string>
+    <string name="yes">YES</string>
+    <string name="no">NO</string>
+    <string name="set_date">Set birthdate</string>
+    <string name="new_test">Create test</string>
+    <string name="photo_over">Another Photo</string>
+    <string name="view_done">Done</string>
+    <string name="ids_delete_image">Delete current image ?</string>
+    <string name="del_sel">Delete current selection ?</string>
+    <string name="rename_test">Rename test</string>
+    <string name="choise_photo">Choose photo:</string>
+    <string name="select_date">Select date</string>
+    <string name="today">TODAY</string>
+    <string name="select_test">Select test</string>
+    <string name="select_new_test">NEW TEST</string>
+    <string name="new_card">New patient</string>
+    <string name="card_list">Patient list</string>
+    <string name="host_comment">This will be shown in the device overview on the PC.</string>
+    <string name="sync_poc">images processed</string>
+    <string name="str_es">Spanish</string>
+    <string name="str_fr">French</string>
+    <string name="prick">Prick</string>
+    <string name="str_pl" translatable="false">Polish</string>
+    <string name="test_choise">drye eye/start test;control solution/both sides;right;left/00min;05min;10min;15min</string>
+</resources>

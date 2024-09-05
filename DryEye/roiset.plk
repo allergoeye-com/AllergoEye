@@ -1,0 +1,455 @@
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+class ROISet {
+	Points;
+	BS;
+	View;
+	Selected;
+	fModefied;
+	spline;
+	pointMove;
+	iCorner;
+	tmp;
+};
+
+//=============================================
+//
+//=============================================
+new ROISet::ROISet(void) = <|
+	.Points = <<>>;
+	.View = TRUE;
+	.Selected = FALSE;
+	.fModefied = FALSE;
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::ROISet(refer object Vector) = <|
+param p;
+	.View = TRUE;
+	.Selected = FALSE;
+	.fModefied = TRUE;
+	.Points = p;
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::ToBezier(void) = <|
+	.tmp = .Points;
+
+	if (.Points->Len() < 60)
+		return;
+	self->ToBezier(15);
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::ToBezier(int) = <|
+param N;
+
+	new n = .Points->Len()/N;
+	
+	new pt = <<>>;
+	new ap = instance AproxLine();
+	ap->Exec (.Points, pt, int(.Points->Len()/n));
+	.Points <- pt;
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::GetControlPoints(refer object Vector) = <|
+param p;
+	.BS = instance BetaContour(p);
+	if (p->Len() > 20)
+	{
+		.BS->GetContour();
+		.BS->RebuildEx(Max(.BS.Contour->Len() / 30, 20));
+	}
+	.Points = .BS->GetControlPoints();
+	.Points->SetLen(.Points->Len() - 1);
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::Edit(boolean) = <|
+param f;
+	self->Edit(f, self);
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::OnModefied(void) = <| |>;
+
+//=============================================
+//
+//=============================================
+new ROISet::Edit(boolean, refer any) = <|
+param f, ref;
+	if (!f)
+	{
+		if (.spline != EMPTY)
+		{
+			new c = instance GWaitCursor(); 
+		
+			if (.Points != .spline.CornerPoints)
+			{
+				.fModefied = TRUE;
+				.Points = .spline.CornerPoints;
+			}
+			else
+			.Points = .tmp;	
+			if (.fModefied)
+				if (ref != EMPTY)
+					ref->OnModefied();
+
+			.spline = EMPTY;
+			c = EMPTY;
+		}
+	}
+	else
+	if (.spline == EMPTY)
+	{
+		.tmp = .Points;
+
+		new c = instance GWaitCursor();
+		if (!.fModefied)
+		self->GetControlPoints(.Points);
+		.spline = instance CSpline(.Points);
+		c = EMPTY;
+	}
+|>;
+
+//=============================================
+//
+//=============================================
+new ROISet::IsEdit(void) = <| return .spline != EMPTY; |>;
+
+//=============================================
+//
+//=============================================
+new ROISet::OnDraw(refer object MDC, refer object Transform2D, refer any) = <| 
+param mdc, trans, Parent;
+
+		
+	mdc->SetFgColor(CLR_YELLOW);
+	if (.spline != EMPTY)
+	{
+		.spline->OnDraw(mdc, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight());
+		return;
+	}
+	if (!.View) return;
+	if (.Points->Len() == 0)
+		return;
+	mdc->SetFgColor(.Selected ? CLR_LIGHTRED : CLR_YELLOW);
+	new pt1 =  .Points;
+	
+	
+	trans->Lp2DpPOINT(pt1, pt1);
+	if (pt1->Len() > 2)
+	{
+		pt1 @= pt1[0];
+		new curve = instance BetaCurve(pt1);
+		pt1 = curve->GetContour();
+		pt1 @= pt1[0];
+	}
+	mdc->PolyLine(pt1);
+
+
+
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::OnLButtonDown(int, int, refer object Transform2D, refer any) = <|
+param x, y, trans, Parent;
+	if (.spline != EMPTY)
+	{
+		.spline->OnLButtonDown(x, y, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight());
+		return;
+	}
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::Delete(void) = <|
+if (.spline == EMPTY) return;
+	new result = <<.spline.CornerPoints[.iCorner], .iCorner >>; 
+	.spline.CornerPoints->Remove(.iCorner);
+	.fModefied = TRUE;
+	.spline.curve = instance BetaCurve(.spline.CornerPoints);
+	return result;
+
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::Delete(int) = <|
+param iCorner;
+
+	if (.spline == EMPTY) return;
+	.spline.CornerPoints->Remove(iCorner);
+	.fModefied = TRUE;
+	.spline.curve = instance BetaCurve(.spline.CornerPoints);
+
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::Move(int, refer object POINT) = <|
+param iCorner, lpt;
+
+	if (.spline == EMPTY) return;
+	.spline.CornerPoints[iCorner] = lpt;
+	.spline.curve = instance BetaCurve(.spline.CornerPoints);
+	.fModefied = TRUE;
+|>;
+
+//=============================================
+//
+//=============================================
+new ROISet::Insert(void) = <|
+	if (.spline == EMPTY || .iCorner == EMPTY) return;
+	new result = <<.pointMove, .iCorner + 1 >>; 
+	.spline.CornerPoints->Insert(.pointMove, .iCorner + 1);
+	.fModefied = TRUE;
+	.spline.curve = instance BetaCurve(.spline.CornerPoints);
+	return result;
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::Insert(refer object POINT, int) = <|
+param pointMove, iCorner;
+	if (.spline == EMPTY || .iCorner == EMPTY) return;
+	.spline.CornerPoints->Insert(pointMove, iCorner);
+	.fModefied = TRUE;
+	.spline.curve = instance BetaCurve(.spline.CornerPoints);
+|>;
+
+
+//=============================================
+//
+//=============================================
+new ROISet::OnSelectCorner(int, int, refer object GWnd) = <|
+param x, y, Parent;
+if (.spline == EMPTY) return;
+	.pointMove = EMPTY;
+	.iCorner = EMPTY;
+
+	if (.Points->Len() > 0)
+	{	
+		new pt = .spline.CornerPoints;
+		Parent.trans->Lp2Dp(pt, pt);
+		new cur, d, dist = 100.0;
+		for (new i = 0, len = pt->Len(); i < len; ++i)
+		{
+			
+			if ((d = ((pt[i].x - x)**2 + (pt[i].y - y)**2)) < dist)
+			{
+				dist = d;
+				cur = i;
+			}
+		}
+		if (cur != EMPTY)
+		{
+			.iCorner = cur;
+			return TRUE;
+		}
+	}
+	return FALSE;
+|>;
+
+//=============================================
+//
+//=============================================
+new ROISet::OnSelectCurve(int, int, refer object GWnd) = <|
+param x, y, Parent;
+	new lpt = instance POINT(x, y);
+	.pointMove = EMPTY;
+	.iCorner = EMPTY;
+	
+	new pt1 = .spline.CornerPoints;
+
+	Parent.trans->Lp2Dp(pt1, pt1);
+	new curve = instance BetaContour(pt1);
+	curve->MakeSplineFromControl(pt1);
+	new pt = curve->GetContour();
+
+	new K, k = 0;
+	new dist = 100.0;
+	new cur;
+	new res = pt1[0];
+	new p = pt1[0];
+	for (new i = 0, l = pt->Len() - 1; i < l; ++i)
+	{
+		new d, p = self->Distance(pt[i], pt[i + 1], lpt);
+		if ((d = (p.x**2 + p.y**2)) < dist)
+		{
+			dist = d;
+			.pointMove = instance POINT(lpt.x + p.x, lpt.y + p.y);
+		}
+	}
+	if (.pointMove != EMPTY)
+	{
+		dist = 1000.0;
+	
+		for (new i = 0, len = pt1->Len() - 1; i < len; ++i)
+		{
+			
+			new d = self->PerpDistance(pt1[i], pt1[i + 1], .pointMove);
+			if (d != EMPTY && Abs(d) < dist)
+			{
+				dist = Abs(d);
+				cur = i;
+			}
+		}
+		if (cur != EMPTY)
+		{
+			Parent.trans->Dp2Lp(.pointMove, .pointMove);
+			.iCorner = cur;
+			return TRUE;
+		}
+		
+	}
+	return FALSE;
+	
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::PerpDistance(refer object POINT, refer object POINT, object POINT, refer object POINT) = <|
+param org, dest, pt, res;
+	new n = instance POINT(float(org.y - dest.y), float(dest.x - org.x));
+	new dist = float(org.x * dest.y) - float(dest.x * org.y);
+	new d = n->Module(); 
+	if (d > 1.0e-6)
+	{
+		dist /= d;
+		n /= d;
+
+		d = -dist - (pt * n);
+		
+		res = pt + (n * d);
+		return pt.x * n.x + pt.y * n.y + dist;
+	}
+	res = org;
+	return 0.0;
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::PerpDistance(refer object POINT, refer object POINT, refer object POINT) = <|
+param org, dest, pt;
+	new n = instance POINT(float(org.y - dest.y), float(dest.x - org.x));
+	new dist = float(org.x * dest.y) - float(dest.x * org.y);
+	new d = n->Module(); 
+	if (d > 1.0e-6)
+	{
+		dist /= d;
+		n /= d;
+		d = -dist - (pt * n);
+		new v = pt + (n * d);
+	new a = dest - org;
+	new b = v - org;
+ 
+		if (a.x * b.x < -1.0e-3 || b.y * a.y < -1.0e-3)
+		return EMPTY;
+		new sa = a.x * a.x + a.y * a.y;
+		new sb = b.x * b.x + b.y * b.y ;
+		if (Abs(sa - sb) < 1.0e-3 || sa > sb)
+			return pt.x * n.x + pt.y * n.y + dist;
+	return EMPTY;
+	}
+	
+	return 0.0;
+|>;
+
+//=============================================
+//
+//=============================================
+new ROISet::Distance(refer object POINT, refer object POINT, object POINT) = <|
+param org, dest, pt;
+	new dx_l = dest.x - org.x;
+	new dy_l = dest.y - org.y;
+	new _PRECISION_ = 1.0e-6;
+	new dx, dy;
+	if (Abs(dx_l) < _PRECISION_ && Abs(dy_l) < _PRECISION_)
+	{
+		dx = pt.x - org.x;
+		dy = pt.y - org.y;
+	}
+	else
+	{
+		new dx_t = pt.x - org.x;
+		new dy_t = pt.y - org.y;
+		if (Abs(dx_t) < _PRECISION_ && Abs(dy_t) < _PRECISION_)
+		{
+			dx = 0.0;
+			dy = 0.0;
+		}
+		else
+		{
+			new cosa = (dx_t * dx_l + dy_t * dy_l) / (dx_l * dx_l + dy_l * dy_l);
+			dx = -dx_t + dx_l * cosa;
+			dy = -dy_t + dy_l * cosa;
+		}
+	}
+	new x_x = pt.x + dx;
+	new y_x = pt.y + dy;
+	new dx_x = x_x - org.x;
+	new dy_x = y_x - org.y;
+	if (dx_x * dx_l + dy_x * dy_l < -_PRECISION_)
+	{
+		dx = org.x - pt.x;
+		dy = org.y - pt.y;
+	}
+	else
+	{
+		dx_x = x_x - dest.x;
+		dy_x = y_x - dest.y;
+		if (-dx_x * dx_l - dy_x * dy_l < -_PRECISION_)
+		{
+			dx = dest.x - pt.x;
+			dy = dest.y - pt.y;
+		}
+	}
+	return instance POINT(dy, dy);
+|>;
+
+//=============================================
+//
+//=============================================
+new ROISet::OnLButtonUp(int, int, refer object Transform2D, refer any) = <|
+param x, y, trans, Parent;
+	new result;
+	if (.spline != EMPTY)
+	{
+		.spline->OnLButtonUp(x, y, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight());
+		if (!.fModefied && .spline.vMoved->Len() > 0)
+			.fModefied = .spline.vMoved[0] != .spline.vMoved[1];
+			if (.spline.vMoved->Len() > 0 && .spline.vMoved[0] != .spline.vMoved[1])
+				result = .spline.vMoved;
+		.spline.vMoved = <<>>;
+		
+	}
+	return result;
+
+
+|>;
+//=============================================
+//
+//=============================================
+new ROISet::OnMouseMove(int, int, refer object Transform2D, refer any) = <|
+param x, y, trans, Parent;
+	if (.spline != EMPTY)
+	{
+		.spline->OnMouseMove(x, y, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight());
+		return;
+	}
+	
+|>;
+
+

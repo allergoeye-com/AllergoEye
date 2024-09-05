@@ -1,0 +1,37 @@
+class DlgCopyDir : ModalForm , FormTriggers {
+	result;	
+};
+
+
+//=========================================================
+//
+//=========================================================
+new DlgCopyDir::DlgCopyDir(refer object GWnd ) = <|
+param parent;
+	.result = <<>>;
+	self->ModalForm( "DLG_RENAME_TEST", parent );
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new DlgCopyDir::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	self->UpdateForm();
+|>;
+
+
+//===================================================================
+//
+//===================================================================
+new DlgCopyDir::Cleanup( void ) =
+<|
+|>;
+new DlgCopyDir::OnOk(refer ...) = <|
+	self->UpdateForm();
+	.result = self->GetItems(<<ID_MERGE, ID_DEL>>);
+	self->ModalForm::Close(IDOK);
+|>;

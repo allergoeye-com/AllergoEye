@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_info">Información del paciente</string>
+    <string name="card_cync">Sincronizar</string>
+    <string name="roi">ROI</string>
+    <string name="exit">Salida</string>
+    <string name="card_first_name">Primer nombre</string>
+    <string name="card_last_name">Apellido</string>
+    <string name="card_birthdate">Fecha de nacimiento</string>
+    <string name="hostname">Nombre del teléfono</string>
+    <string name="select_lang">Elige lengua</string>
+    <string name="str_de">Deutsch</string>
+    <string name="str_en">English</string>
+    <string name="set_timer">Establecer temporizador</string>
+    <string name="minute">minutos</string>
+    <string name="stop_timer">¿Detener el temporizador?</string>
+    <string name="ok">OK</string>
+    <string name="cancel">CANCELAR</string>
+    <string name="yes">SÍ</string>
+    <string name="no">NO</string>
+    <string name="set_date">Establecer fecha de nacimiento</string>
+    <string name="new_test">Crear prueba</string>
+    <string name="test_choise">drye eye/iniciar prueba;prueba de contro/ambos lados;derecho;izquierdo/0 min;5 min;10 min;15 min</string>
+    <string name="photo_over">Otra foto</string>
+    <string name="view_done">Hecho</string>
+    <string name="ids_delete_image">¿Eliminar la imagen actual?</string>
+    <string name="del_sel">¿Eliminar la selección actual?</string>
+    <string name="rename_test">Renombrar prueba</string>
+    <string name="choise_photo">Escoge una foto:</string>
+    <string name="select_date">Seleccione fecha</string>
+    <string name="today">HOY</string>
+    <string name="select_test">Seleccionar prueba</string>
+    <string name="select_new_test">PRUEBA NUEVA</string>
+    <string name="new_card">Nuevo paciente</string>
+    <string name="card_list">Lista de pacientes</string>
+    <string name="host_comment">Esto se mostrará en la vista general del dispositivo en la PC.</string>
+    <string name="sync_poc">imágenes procesadas</string>
+    <string name="str_es">Spanish</string>
+    <string name="str_fr">French</string>
+    <string name="prick">Prick</string>
+</resources>

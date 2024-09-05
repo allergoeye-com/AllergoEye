@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/idHeader"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/theme_dlg_background"
+    android:orientation="vertical">
+
+
+    <TextView
+        android:id="@+id/idWaitText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:text="Synchronisation..."
+        android:textAlignment="center"
+        android:textColor="@color/theme_spot_color"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        />
+
+
+    <TextView
+        android:id="@+id/idNameText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:ems="15"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:singleLine="true"
+        android:textAlignment="center"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/theme_spot_color" />
+
+    <lib.common.layout.ProgressLayout
+        android:id="@+id/waitBar"
+        style="@android:style/Widget.Holo.ProgressBar.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:ems="10"
+            android:singleLine="true"
+
+            android:textAlignment="center"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/theme_spot_color" />
+
+    </lib.common.layout.ProgressLayout>
+    <TextView
+        android:id="@+id/idNameText1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:singleLine="true"
+        android:textAlignment="center"
+        android:ems="14"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/theme_spot_color" />
+
+    <TextView
+        android:id="@+id/textWaitCalc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        android:gravity="center"
+
+        android:textAlignment="center"
+        android:textColor="@color/theme_spot_color"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+
+        />
+    <lib.common.button.CTextButton
+        android:id="@+id/idCancelWait"
+        android:background="@drawable/buttn_selector"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/cancel" />
+
+</LinearLayout>

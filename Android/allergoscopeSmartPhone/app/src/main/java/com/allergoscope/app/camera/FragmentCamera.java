@@ -92,7 +92,8 @@ public class FragmentCamera extends Fragment implements IResultFragmentDlg {
     private MediaSession mMediaSession = null;
     CSpinButton[] repeat;
     HashMap<Object, CCamera.MapModeKey> modes;
-
+    Integer numFoto = null;
+    ArrayList<Bitmap> res_arr = null;
     public FragmentCamera()
     {
         super();
@@ -102,6 +103,8 @@ public class FragmentCamera extends Fragment implements IResultFragmentDlg {
         super();
         onexit = _onexit;
         fAnimate = _fAnimate;
+        numFoto = 0;
+        res_arr = new ArrayList<Bitmap>();
     }
 
     public FragmentCamera(ActionCallback _onexit)
@@ -165,6 +168,17 @@ public class FragmentCamera extends Fragment implements IResultFragmentDlg {
             bt = self.findViewById(R.id.advanced_cancel);
             bt.SetCallback(this, "OnCancelMenu");
             bt = self.findViewById(R.id.cameraSetting);
+            //CMenuButton bt;
+            if (numFoto == null)
+            {
+                bt = self.findViewById(R.id.fotoDraw);
+                bt.setVisibility(View.GONE);
+                bt = self.findViewById(R.id.fotoNum);
+                bt.setVisibility(View.GONE);
+            }
+
+
+
        /*     mMediaSession = new MediaSessionCompat(getContext().getApplicationContext(), MEDIA_SESSION_TAG);
             mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
          //   Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null, getContext(), ShutterButtonReceiver.class);
@@ -476,26 +490,60 @@ public class FragmentCamera extends Fragment implements IResultFragmentDlg {
         }
         if (CCamera.self != null)
         {
-            try
+            if (numFoto == null || numFoto == 2)
             {
-                CCamera.self.close();
-            } catch (IOException e)
-            {
-                e.printStackTrace();
+                try
+                {
+                    CCamera.self.close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
             }
         }
             final Activity ac = getActivity();
         final Bitmap s = bmp;
+        if (numFoto == null || numFoto == 2)
+        {
+            if (onexit != null)
+                runnable = new ActionCallback() {
 
-        if (onexit != null)
-            runnable = new ActionCallback() {
+                    @Override
+                    public void run() {
+                        if (res_arr != null)
+                        {
+                            res_arr.add(s);
+                            onexit.run(res_arr);
+                        }
+                        else
+                        onexit.run(s);
+                    }
+                };
 
-                @Override
-                public void run() {
-                    onexit.run(s);
-                }
-            };
-        ((OrientActivity)getActivity()).DialogHide();
+            ((OrientActivity)getActivity()).DialogHide();
+        }
+        else
+        {
+            res_arr.add(bmp);
+            ++numFoto;
+            CMenuButton bt1, bt2;
+            bt1 = self.findViewById(R.id.fotoDraw);
+            bt2 = self.findViewById(R.id.fotoNum);
+            switch(numFoto)
+            {
+                case 1:
+                    bt1.setImageResource(R.drawable.foto_left);
+                    bt2.setImageResource(R.drawable.foto_2);
+                    break;
+                case 2:
+                    bt1.setImageResource(R.drawable.foto_right);
+                    bt2.setImageResource(R.drawable.foto_3);
+                    break;
+
+
+            }
+            CCamera.self.IdleFocus();
+        }
 
     }
 

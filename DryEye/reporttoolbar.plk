@@ -1,0 +1,74 @@
+class ReportToolBar : Form {
+		EyeVis;
+		Parent;
+	};
+
+//===================================================
+//
+//===================================================
+new ReportToolBar::ReportToolBar(refer object GWnd) = <|
+param Parent;
+	.EyeVis = TRUE;
+	.Parent = &Parent;
+	self->Form("REPORT_MENU", Parent);
+	self->Open();
+	self->Bind(self);
+	self->AdjustSize();
+	self->Show();
+|>;
+//===================================================
+//
+//===================================================
+new ReportToolBar::Setup(void) = <|
+	self->Form::Setup();
+|>;
+//===================================================
+//
+//===================================================
+new ReportToolBar::AdjustSize(void) = <|
+	onerror {
+		return;
+	}
+	new size = .Parent->GetClientSize();
+
+	new tb_size = self->GetSize();
+	self->SetPos(0, 0);
+	self->SetSize(size[0], tb_size[1]);
+|>;
+
+//===================================================
+//
+//===================================================
+new ReportToolBar::OnExit(refer ...) = <|
+	self->GetParent()->ModalForm::Close(IDOK);
+|>;
+
+//===================================================
+//
+//===================================================
+new ReportToolBar::OnSave(refer ...) = <|
+//	self->EnableItem(ID_SAVE_SRLZ, FALSE);
+	self->GetParent()->OnSave();
+|>;
+//===================================================
+//
+//===================================================
+new ReportToolBar::OnPrint(refer ...) = <|
+	self->GetParent()->OnPrint();
+	
+|>;
+//===================================================
+//
+//===================================================
+new ReportToolBar::OnViewImg(refer ...) = <|
+	.EyeVis = self->GetItem(ID_VIEW_IMAGES);
+	self->GetParent()->OnViewImg(.EyeVis);
+	self->EnableItem(ID_SAVE_SRLZ, TRUE);
+|>;
+//===================================================
+//
+//===================================================
+new ReportToolBar::DisableViewImage(void) = <|
+	self->SetItemPos(ID_VIEW_IMAGES,-100, -100);
+	self->SetItemPos(ID_TEXT_VIEW_IMG,-100, -100); 
+|>;

@@ -1,0 +1,23 @@
+class MainWnd : Form {
+	Presentation;
+};
+
+global AllergoEyeIni = instance IniFile(JustDirName(ExeName) @ "dryeye.ini");
+
+new MainWnd::MainWnd(void) = <|
+	.Presentation = AllergoEyeIni->ReadBool("REPORT", "HNO", FALSE);
+	self->Form("HNO_SWITCH_WND");
+	self->Bind(self);
+	self->Open();
+	self->Show();
+|>;
+
+new MainWnd::OnClose(refer ...) = <|
+	end;
+|>;
+
+new MainWnd::OnOK(refer ...) = <|
+	AllergoEyeIni->WriteBool("REPORT", "HNO", .Presentation);
+|>;
+
+global main = instance MainWnd();

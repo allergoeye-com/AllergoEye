@@ -1,0 +1,14 @@
+new res = Pluk->CreateJob("653D92FE-6C3E-4010-BB12-9783DDC0A602");
+if (res == 0)
+{
+	Pluk->ShowJob("653D92FE-6C3E-4010-BB12-9783DDC0A602");
+	end;
+}
+global GetRoiNames = <|
+	return <<"Plane1", "Plane2">>;
+|>;
+
+global AllergoEyeIni = instance IniFile(JustDirName(ExeName) @ "allergoEyeMask.ini");
+
+global manwnd = instance MainWnd();
+manwnd->Open();

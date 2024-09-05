@@ -1,0 +1,570 @@
+form "DLG_EDIT_CONTOUR_MENU"
+{
+	, , ID_NEW_RECORD;
+		trigger OnNew;
+	, , ID_EDIT;
+		trigger OnEdit;
+	, , ID_SELECT;
+		trigger OnSelect;
+	, , IS_SMART;
+		trigger OnExportToExcel;
+	, , ID_EXIT;
+		trigger OnExit;
+	, boolean, IDCLOSE;
+		trigger OnExit;
+	, , ID_OPTIONS;
+		trigger OnOptions;
+	, , ID_DELETE;
+		trigger OnDelete;
+	, , ID_DELETE_IMAGE;
+		trigger OnDeleteImage;
+	, , ID_BUILD;
+		trigger OnBuild;
+	, , ID_NEW_ROI;
+		trigger OnNewROI;
+	expr{.Result}, wstring, ID_RESULT;
+	, , ID_UNDO;
+		trigger OnUndo;
+	, , ID_REDO;
+		trigger OnRedo;
+	expr{W11_EDIT_CONTOUR}, wstring, TXT_EDIT;
+	expr{W11_DELETE_CONTOUR}, wstring, TXT_DELETE;
+	expr{W11_CALCULATE_AND_SAVE}, wstring, TXT_BUILD;
+	expr{W11_DELETE_IMAGE}, wstring, TXT_DELETE_IMAGE;
+	expr{W11_NEW_CONTOUR}, wstring, TXT_NEW;
+	expr{W11_HELP_LINE_1}, wstring, ID_TXT1;
+	expr{W11_HELP_LINE_2}, wstring, ID_TXT2;
+	expr{W11_HELP_LINE_4}, wstring, ID_TXT3;
+	expr{W11_HELP_LINE_5}, wstring, ID_TXT4;
+	expr{W11_HELP_LINE_3}, wstring, ID_TXT5;
+	expr{W11_UNDO}, wstring, TXT_UNDO;
+	expr{W11_REDO}, wstring, TXT_REDO;
+}
+
+form "DLG_EDIT_CONTOURS_WND"
+{
+	, boolean, IDCLOSE;
+		trigger OnClose;
+	closeon: IDCLOSE;
+}
+
+
+form "DLG_SETTING"
+{
+	expr{.Dir}, string, ID_TXT_DIR;
+	, , ID_FILE_DLG;
+		trigger OnChangeDataDir;
+	, , ID_FILE_DLG_1;
+		trigger OnChangeGDTDir;
+	expr{<<"English", "Deutsch", "Spanish", "French", "Polish">>}, vector, ID_LANGUAGE: items;
+	expr{.Lang}, string, ID_LANGUAGE: sel;
+	expr{.GDTDir}, string, ID_GDT_DIR;
+	, , ID_REBUILD_DATABASE;
+		trigger OnRebuildDatabase;
+	, , ID_CLEAR_DATABASE;
+		trigger OnClearDatabase;
+	expr{.CityName}, string, ID_CITY_NAME;
+	closeon: IDCANCEL, IDOK;
+}
+
+form "DLG_NEW_CARD"
+{
+	expr{.Date}, string, ID_DATE;
+		trigger MyValidateRegExpr;
+	expr{.Name}, string, ID_NAME;
+	expr{.Familie}, string, ID_SURNAME;
+	, , IDOK;
+		trigger OnOk;
+	expr{.ID}, string, ID_ID;
+	closeon: IDCANCEL;
+}
+
+form "DLG_LIST_SMART"
+{
+	expr{.List}, vector, ID_LIST_PHONE: items;
+	table
+	{
+		expr{self[0]}, string, 0;
+		expr{self[1]}, string, 1;
+	}
+	expr{.Index}, int, ID_LIST_PHONE: indexsel;
+	, , IDOK;
+		trigger OnOk;
+	closeon: IDCANCEL;
+}
+
+form "DLG_LIST_CARD"
+{
+	, , IDOK;
+		trigger OnOk;
+	closeon: IDCANCEL, IDCLOSE;
+}
+
+form "ROI_WND"
+{
+	expr{.Data}, vector, ID_ROI_LIST: items;
+	table
+	{
+		expr{self[0]}, string, 0;
+			items expr{ << "sclera", "iris", "corner" >>};
+		, string, 1;
+			image expr{self[1] == TRUE ? 0 : 1};
+	}
+	expr{.Index}, int, ID_ROI_LIST: indexsel;
+		trigger OnSelect;
+	, , ID_EDIT_ROI;
+		trigger OnEdit;
+	, , ID_DELETE_ROI;
+		trigger OnDelete;
+	closeon: IDCLOSE;
+}
+
+form "ROI_TOOL"
+{
+	expr{.Data}, vector, ID_ROI_LIST: items;
+	table
+	{
+		expr{self[0]}, string, 0;
+			items expr{GetRoiList()};
+			trigger OnEditContourName;
+		, string, 1;
+			image expr{self[2] == TRUE ? 0 : 1};
+	}
+	expr{.Index}, int, ID_ROI_LIST: indexsel;
+		trigger OnSelectROI;
+	, , ID_DELETE_ROI;
+		trigger OnDelete;
+	, , ID_NEW_ROI;
+		trigger OnNew;
+	expr{.ListJpg}, vector, ID_LIST_JPG: items;
+	table
+	{
+		expr{PrinfDateFromImageName(self[0])}, string, 0;
+		, string, 1;
+			image expr{self[1] == TRUE ? 1 : 0};
+	}
+	expr{.IndexJpg}, int, ID_LIST_JPG: indexsel;
+		trigger OnSelectJPG;
+	, , ID_EDIT_ROI;
+		trigger OnEdit;
+}
+
+form "MAIN_MENU"
+{
+	, , ID_NEW_RECORD;
+		trigger OnNew;
+	, , ID_SELECT;
+		trigger OnSelect;
+	, , ID_EXIT;
+		trigger OnExit;
+	, , ID_OPTIONS;
+		trigger OnOptions;
+	, , ID_TOEXCEL;
+		trigger OnExportToExcel;
+}
+
+form "ID_SELECT_RECORD"
+{
+	expr{.SubRecords}, vector, ID_TREE: items;
+	table
+	{
+		, string, 0;
+			image expr{self[0] == TRUE ? 0 : 1};
+		expr{self[1].name}, string, 1;
+	}
+	expr{.Index}, int, ID_TREE: indexsel;
+		trigger OnSelect;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+form "DLG_CARD_TOOLS"
+{
+	expr{.SubRecords[.IndexSubRecords][0]->PrintMeanScore()}, wstring, ID_MEAN_SCORE;
+	expr{.Date[.IndexDate][0]->PrintScore()}, string, ID_TOTAL_SCORE;
+	expr{self->PrintOpScoreTable()}, vector, ID_HEADERS_TXT: items;
+	table
+	{
+		expr{self[0]}, wstring, 0;
+		expr{self[1]}, wstring, 1;
+		expr{self[2]}, wstring, 2;
+		expr{self[3]}, wstring, 3;
+	}
+	expr{.AllRecord}, vector, ID_LIST_ALL: items;
+	table
+	{
+		expr{self[0].PatientIDStr}, wstring, 0;
+		expr{self[0].LastName}, wstring, 1;
+		expr{self[0].FirstName}, wstring, 2;
+		expr{self[0].DateOfBirth->Date::Print()}, wstring, 3;
+	}
+	lines
+	{
+		fgcolor expr{main.netDir.proxy->GetColor1(self)};
+	}
+		trigger OnClickAll;
+	expr{.IndexAll}, int, ID_LIST_ALL: indexsel;
+		trigger OnSelectAll;
+	expr{.Date}, vector, ID_DATE: items;
+	table
+	{
+		, string, 0;
+			image expr{self[1]->IsSelected(self[2]) == TRUE ? 0 : 1};
+		expr{self[0].Date->Date::Print()}, string, 1;
+			fgcolor expr{main.netDir.proxy->GetColor2(self[0])};
+		expr{GetAllergenLocal(self[0].Allergen)}, wstring, 2;
+			fgcolor expr{main.netDir.proxy->GetColor2(self[0])};
+	}
+		trigger OnClickDate;
+	expr{.IndexDate}, int, ID_DATE: indexsel;
+		trigger OnSelectDate;
+	expr{.SubRecords}, vector, ID_TREE: items;
+	table
+	{
+		, string, 0;
+			image expr{self[1]->IsSelected(self[2]) == TRUE ? 0 : 1};
+		expr{GetAllergenLocal(self[0].Allergen)}, string, 1;
+			fgcolor expr{main.netDir.proxy->GetColor3(self[0])};
+		expr{GetDilutionLocal(self[0].Dil)}, string, 2;
+			fgcolor expr{main.netDir.proxy->GetColor3(self[0])};
+		expr{GetSideLocal(self[0].Side)}, string, 3;
+			fgcolor expr{main.netDir.proxy->GetColor3(self[0])};
+		expr{GetIncubationLocal(self[0].Incubation)}, string, 4;
+			fgcolor expr{main.netDir.proxy->GetColor3(self[0])};
+	}
+		trigger OnClickSubRecord;
+	expr{.IndexSubRecords}, int, ID_TREE: indexsel;
+		trigger OnSelectSubRecord;
+	expr{.textSearch}, string, TXT_SEARCH;
+	, , ID_ADD;
+		trigger OnAdd;
+	, , ID_REMOVE;
+		trigger OnRemove;
+	, , ID_SYNC;
+		trigger OnSync;
+	expr{.SelectRecords[.Index]}, vector, ID_LIST_SELECT: items;
+	table
+	{
+		expr{self[0][0].LastName @ " " @ self[0][0].FirstName}, wstring, 0;
+			fgcolor expr{self[0][0].oID == "" ? CLR_LIGHTRED : CLR_BLACK};
+		expr{self[2]}, wstring, 1;
+			fgcolor expr{self[0][self[0]->Len() - 1] == EMPTY ? CLR_LIGHTRED : CLR_BLACK};
+	}
+		trigger OnClickSelected;
+	expr{.IndexSelect[.Index]}, int, ID_LIST_SELECT: indexsel;
+		trigger OnSelectRecords;
+	, , ID_EXCEL;
+		trigger OnToTherapyControl;
+	expr{.List}, vector, ID_SMART: items;
+	table
+	{
+		expr{self[0]}, wstring, 0;
+	}
+	expr{.Index}, int, ID_SMART: indexsel;
+		trigger OnSelectList;
+	, , BTN_EDIT;
+		trigger OnEdit;
+	, , BTN_SERACH;
+		trigger OnSearch;
+	, , ID_BUILD;
+		trigger OnCalculate;
+	, , ID_NEW_TEST;
+		trigger OnAddNewTest;
+	, , ID_NEWPATIENT;
+		trigger OnAddPatient;
+	, , ID_CLEAR_SELECT;
+		trigger OnClearSort;
+	expr{.iColumn = 1}, , ID_LIST_ALL: columnclick;
+		column 1;
+		trigger OnColumn;
+	expr{.iColumn = 2}, , ID_LIST_ALL: columnclick;
+		column 2;
+		trigger OnColumn;
+	expr{.iColumn = 3}, , ID_LIST_ALL: columnclick;
+		column 3;
+		trigger OnColumn;
+	expr{.iColumn = 0}, , ID_LIST_ALL: columnclick;
+		column 0;
+		trigger OnColumn;
+	, , ID_REPORT;
+		trigger OnReport;
+	, , ID_LOAD_REPORT;
+		trigger OnLoadReport;
+	expr{GetAllergenList()}, vector, ID_TEST_ALERGEN: items;
+	expr{GetDilitionList()}, vector, ID_TEST_DIL: items;
+	expr{GetMedicationList()}, vector, ID_MED_LIST: items;
+	expr{.DateFrom}, timedate<date<dmy>>, ID_SDATE_FROM;
+		trigger OnDateFrom;
+	expr{.DateTo}, timedate<date<dmy>>, ID_SDATE_TO;
+		trigger OnDateTo;
+	expr{.eEdit[0]}, wstring, ID_PATIENT_ID;
+	expr{.eEdit[1]}, wstring, ID_PATIENT_LASTNAME;
+	expr{.EditFrom}, string, ID_TXT_FROM;
+	expr{.EditTo}, string, ID_TXT_TO;
+	, , ID_EDIT_OPSCORE;
+		trigger OnEditOpScore;
+	expr{Printf("# Pat: %d", .AllRecord->Len())}, string, ID_NUM_PATIENTS;
+	expr{.NoOpRecord}, boolean, ID_NOSCORE;
+	expr{.FailedContours}, boolean, ID_FAILED_CONTOURS;
+	expr{.AllRecord[.IndexAll][0].Therapy}, vector, ID_THERAPY: items;
+	table
+	{
+		expr{.StartDate->Date::Print()}, string, 0;
+		expr{GetAllergenLocal(.Allergen)}, wstring, 1;
+		expr{.Medication}, wstring, 2;
+	}
+		trigger OnMenuTherapy;
+	expr{.TherapyIndex}, int, ID_THERAPY: indexsel;
+		trigger OnSelectTherapy;
+	expr{.IsTreated}, boolean, ID_TREATED;
+	, , ID_CAP;
+		trigger OnAddCAP;
+	, , ID_TREE: columnclick;
+		column 0;
+		trigger OnColumnTest;
+	expr{.AllRecord[.IndexAll][0].CAP}, vector, ID_CAP_TXT: items;
+	table
+	{
+		expr{GetAllergenLocal(.Allergen)}, string, 0;
+		expr{.CAP}, notempty int, 1;
+	}
+		trigger OnMenuCAP;
+	expr{.CAPIndex}, int, ID_CAP_TXT: indexsel;
+	, , ID_HELP;
+		trigger OnHelp;
+	, boolean, ID_FILTER_LIST;
+		trigger OnSetFilterList;
+	closeon: IDCLOSE, ID_EXIT;
+}
+
+form "DLG_NEW_TEST"
+{
+	, , IDOK;
+		trigger OnOk;
+	expr{.newtest}, string, ID_TEST;
+	expr{.IndexAlerg}, int, ID_TEST_ALERGEN: indexsel;
+	expr{.IndexDil}, int, ID_DIL: indexsel;
+	expr{.IndexSide}, int, ID_SIDE: indexsel;
+	expr{GetAllergenList()}, vector, ID_TEST_ALERGEN: items;
+	expr{GetDilitionList()}, vector, ID_DIL: items;
+	expr{GetSideList()}, vector, ID_SIDE: items;
+	expr{GetIncubationList()}, vector, ID_TIME: items;
+	expr{.IndexTime}, int, ID_TIME: indexsel;
+	closeon: IDCANCEL, IDOK;
+}
+form "DLG_RENAME_TEST"
+{
+	expr{.Text}, string, ID_TEXT;
+	, , IDOK;
+		trigger OnOk;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+
+form "DLG_EXPORT"
+{
+	expr{.AllRecord}, vector, ID_LIST_ALL: items;
+	table
+	{
+		expr{self[3]}, wstring, 0;
+		expr{self[0]}, wstring, 1;
+		expr{self[1]}, wstring, 2;
+		expr{self[2]}, wstring, 3;
+	}
+		trigger OnClickAll;
+	expr{.IndexAll}, vector<int>, ID_LIST_ALL: indexsel;
+		trigger OnSelectAll;
+	expr{.iColumn = 0}, , ID_LIST_ALL: columnclick;
+		column 0;
+		trigger OnColumn;
+	expr{.iColumn = 1}, , ID_LIST_ALL: columnclick;
+		column 1;
+		trigger OnColumn;
+	expr{.iColumn = 2}, , ID_LIST_ALL: columnclick;
+		column 2;
+		trigger OnColumn;
+	expr{.iColumn = 3}, , ID_LIST_ALL: columnclick;
+		column 3;
+		trigger OnColumn;
+	expr{.SubRecords}, vector, ID_TREE: items;
+	table
+	{
+		, wstring, 0;
+			image expr{self[0] == TRUE ? 0 : 1};
+		expr{self[1].name}, wstring, 1;
+	}
+		trigger OnClickSubRecord;
+	expr{.IndexSubRecords}, int, ID_TREE: indexsel;
+		trigger OnSelectSubRecord;
+	expr{.Date}, vector, ID_DATE: items;
+	table
+	{
+		, wstring, 0;
+			image expr{self[0] == TRUE ? 0 : 1};
+		expr{PrinfDateFromTestName(self[1].name)}, wstring, 1;
+	}
+	expr{.IndexDate}, int, ID_DATE: indexsel;
+		trigger OnSelectDate;
+	expr{.eEdit[0]}, wstring, ID_SEARCH_ID;
+	expr{GetDilitionList()}, vector, ID_DIL: items;
+	expr{DlgNewTest::IndexDil}, int, ID_DIL: indexsel;
+	, , BTN_SERACH_DATE;
+		trigger OnSearchDate;
+	, , BTN_SERACH_TEST;
+		trigger OnSearchTest;
+	expr{.eEdit[1]}, wstring, ID_SEARCH_FAM;
+	, , ID_CLEAR_SELECT;
+		trigger OnClearQuery;
+	expr{.eEdit[4]}, wstring, ID_SEARCH_DATE;
+	expr{.eEdit[5]}, wstring, ID_SEARCH_TEST;
+	expr{.sDate}, timedate<date>, ID_SDATE;
+	expr{.CurIndexAll}, int, ID_LIST_ALL: indexcaret;
+	expr{.LastFamNam}, wstring, IDS_FAM;
+	, , BTN_CLEAR_SELECT;
+		trigger OnClearSelect;
+	, , ID_CLEAR_DATE;
+		trigger OnClearDate;
+	, , ID_CLEAR_TEST;
+		trigger OnClearTest;
+	, , ID_EXCEL;
+		trigger OnToExcel;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+form "REPORT_WND"
+{
+	closeon: IDCLOSE;
+}
+
+form "REPORT_MENU"
+{
+	, , ID_SAVE_SRLZ;
+		trigger OnSave;
+	, , CMD_REPPRINT;
+		trigger OnPrint;
+	expr{.EyeVis}, boolean, ID_VIEW_IMAGES;
+		trigger OnViewImg;
+	, , ID_EXIT;
+		trigger OnExit;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+form "DLG_SELECT_REPORT"
+{
+	expr{.AllRecord}, vector, ID_LIST_REPORTS: items;
+	table
+	{
+		expr{self[0]}, string, 0;
+		expr{PrinfDateFromTestName(self[1])}, string, 1;
+		expr{PrinfTimeFromTestName(self[2])}, string, 2;
+	}
+		trigger OnClickAll;
+	expr{.IndexAll}, int, ID_LIST_REPORTS: indexsel;
+		trigger OnSelectAll;
+	, , IDOK;
+		trigger OnOk;
+	closeon: IDCANCEL, IDOK;
+}
+
+form "DLG_OP_SCORE"
+{
+	expr{<<" ", "0", " ", "1", " ", "2", " ", "3">>}, vector, ID_SCORE_VALUE_TXT: items;
+	table
+	{
+		expr{self}, string, 0;
+	}
+	expr{<<GetTableTitle()>>}, vector, ID_HEADERS_TXT: items;
+	table
+	{
+		expr{self[0]}, string, 0;
+		expr{self[1]}, string, 1;
+		expr{self[2]}, string, 2;
+		expr{self[3]}, string, 3;
+	}
+	expr{.Score[0]}, int, ID_ITCHING_0;
+	expr{.Score[1]}, int, ID_IRRITATION_0;
+	expr{.Score[2]}, int, ID_TEARS_0;
+	expr{.Score[3]}, int, ID_REDNESS_0;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+form "DLG_ADD_THERAPY"
+{
+	expr{.Therapy.StartDate}, string, ID_START_DATE;
+		trigger MyValidateRegExpr;
+	expr{.Therapy.Medication}, string, ID_MEDICATION;
+	expr{GetAllergenList()}, vector, ID_ALLERGEN: items;
+	expr{.Therapy.Allergen}, string, ID_ALLERGEN: sel;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+form "DLG_EXPORT2"
+{
+	expr{.AllRecord}, vector, ID_LIST_ALL: items;
+	table
+	{
+		expr{self[0].PatientIDStr}, wstring, 0;
+		expr{self[0].LastName}, wstring, 1;
+		expr{self[0].FirstName}, wstring, 2;
+		expr{self[0].DateOfBirth->Date::Print()}, wstring, 3;
+	}
+	expr{.IndexAll}, vector<int>, ID_LIST_ALL: indexsel;
+		trigger OnSelectAll;
+	expr{.iColumn = 0}, , ID_LIST_ALL: columnclick;
+		column 0;
+		trigger OnColumn;
+	expr{.iColumn = 1}, , ID_LIST_ALL: columnclick;
+		column 1;
+		trigger OnColumn;
+	expr{.iColumn = 2}, , ID_LIST_ALL: columnclick;
+		column 2;
+		trigger OnColumn;
+	expr{.iColumn = 3}, , ID_LIST_ALL: columnclick;
+		column 3;
+		trigger OnColumn;
+	expr{.SubRecords}, vector, ID_TREE: items;
+	table
+	{
+		, string, 0;
+			image expr{self[1]->IsSelected(self[2]) == TRUE ? 0 : 1};
+		expr{GetAllergenLocal(self[0].Allergen)}, wstring, 1;
+		expr{GetDilutionLocal(self[0].Dil)}, wstring, 2;
+		expr{GetSideLocal(self[0].Side)}, wstring, 3;
+		expr{GetIncubationLocal(self[0].Incubation)}, wstring, 4;
+	}
+		trigger OnClickSubRecord;
+	expr{.IndexSubRecords}, int, ID_TREE: indexsel;
+		trigger OnSelectSubRecord;
+	, , ID_TREE: columnclick;
+		column 0;
+		trigger OnColumnTest;
+	expr{.Date}, vector, ID_DATE: items;
+	table
+	{
+		, string, 0;
+			image expr{self[1]->IsSelected(self[2]) == TRUE ? 0 : 1};
+		expr{self[0].Date->Date::Print()}, string, 1;
+		expr{GetAllergenLocal(self[0].Allergen)}, wstring, 2;
+	}
+		trigger OnClickDate;
+	expr{.IndexDate}, int, ID_DATE: indexsel;
+		trigger OnSelectDate;
+	expr{.CurIndexAll}, int, ID_LIST_ALL: indexcaret;
+	expr{.eEdit[0]}, wstring, ID_PATIENT_ID;
+	expr{.eEdit[1]}, wstring, ID_PATIENT_LASTNAME;
+	expr{.EditFrom}, wstring, ID_TXT_FROM;
+	expr{.EditTo}, wstring, ID_TXT_TO;
+	, , BTN_SERACH;
+		trigger OnSearch;
+	expr{GetAllergenList()}, vector, ID_TEST_ALERGEN: items;
+	, , ID_CLEAR_SELECT;
+		trigger OnClearSort;
+	expr{.DateFrom}, timedate<date<dmy>>, ID_SDATE_FROM;
+		trigger OnDateFrom;
+	expr{.DateTo}, timedate<date<dmy>>, ID_SDATE_TO;
+		trigger OnDateTo;
+	, , ID_EXCEL;
+		trigger OnToExcel;
+	, , BTN_CLEAR_SELECT;
+		trigger OnSelectClearSelect;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}

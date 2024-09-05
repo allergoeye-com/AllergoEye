@@ -1,0 +1,673 @@
+@startuml
+class com.dryeye.app.wifi.SyncMsgBox {
+}
+class lib.colorpicker.ColorPicker {
+}
+abstract class lib.common.AActivity {
+}
+class lib.common.CComboBox {
+}
+class lib.common.CComboBox.ComboBoxAdapter {
+}
+class lib.OrientActivity {
+}
+class lib.common.CThreadLoooper {
+}
+class com.dryeye.app.roi.FragmentROI {
+}
+class com.dryeye.app.roi.FragmentROI.MResult {
+}
+class com.dryeye.app.roi.FragmentROI.SelectedList {
+}
+class com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder {
+}
+class com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder.COnClick {
+}
+class com.dryeye.app.App {
+}
+class com.dryeye.app.card.CurrentPath {
+}
+abstract class lib.explorer.common.TaskDir {
+}
+class lib.explorer.common.TaskDir.CompletionService {
+}
+class com.dryeye.app.wifi.MDNSServerClient {
+}
+class lib.colorpicker.CSliderLum {
+}
+class lib.utils.StringUtils {
+}
+class com.dryeye.app.wifi.DlgSelectHost {
+}
+class com.dryeye.app.wifi.DlgSelectHost.AddapterListScan {
+}
+class com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.AdapterListWiFiHolder {
+}
+class com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.Comp {
+}
+interface com.dryeye.app.wifi.INetwork {
+}
+class com.dryeye.app.card.CDateDlg {
+}
+class lib.common.layout.ProgressLayout {
+}
+class lib.common.layout.ProgressLayout.CAnimatorListenerAdapter {
+}
+class lib.common.layout.ProgressLayout.AnimatedView {
+}
+class lib.utils.GlobalRef {
+}
+class com.dryeye.app.card.DlgNewTest {
+}
+class com.dryeye.app.card.DlgNewTest.CSetText {
+}
+class lib.camera.CameraCalculatePreview {
+}
+class lib.camera.CameraCalculatePreview.CompareSizesByArea {
+}
+class lib.common.EditableSpinner {
+}
+class lib.common.EditableSpinner.OnCloseKeyboard {
+}
+class lib.common.EditableSpinner.ListAdapter {
+}
+class com.dryeye.app.MainActivity {
+}
+class lib.explorer.common.DirEntry {
+}
+class lib.explorer.common.DirEntry.Entry {
+}
+class lib.common.CheckRecycleImageView {
+}
+class com.dryeye.app.card.CTreeDir {
+}
+class com.dryeye.app.card.CTreeDir.ListBoxAdapter {
+}
+class lib.common.CF_Size {
+}
+class lib.utils.ASound {
+}
+class lib.common.button.CMenuButton {
+}
+class lib.common.button.CMenuButton.Call {
+}
+class com.dryeye.app.wifi.MDnsInfo {
+}
+class lib.common.button.CMenuTogleButton {
+}
+class com.dryeye.app.DialogCameraInfo {
+}
+class com.dryeye.app.card.FragmentCard {
+}
+class com.dryeye.app.card.FragmentCard.CheckVisibility {
+}
+class com.dryeye.app.card.CExpandableListView {
+}
+class lib.utils.FileUtils {
+}
+class com.dryeye.app.card.DlgDeleteMerge {
+}
+class lib.common.CEdit {
+}
+class lib.common.CEdit.EditTextInputConnection {
+}
+class lib.common.CEdit.CTextChanger {
+}
+class lib.common.button.CTextButton {
+}
+class lib.common.button.CTextButton.ClickListener {
+}
+class lib.common.CWnd {
+}
+class com.dryeye.app.timer.CAlarm {
+}
+class lib.common.OnClickCalback {
+}
+interface lib.explorer.common.IQuerySelectedPage {
+}
+class lib.explorer.common.IQuerySelectedPage.WaitState {
+}
+class lib.common.layout.LayoutButton {
+}
+class lib.common.layout.LayoutButton.COnClickButton {
+}
+abstract class lib.explorer.common.ILoadingListener {
+}
+class lib.common.CListBox {
+}
+class lib.common.CListBox.ListBoxAdapter {
+}
+class com.dryeye.app.card.FragmentExploreCards {
+}
+class lib.camera.CCameraView {
+}
+class lib.common.ScaleListener {
+}
+class lib.common.ScaleListener.SCALE {
+}
+class lib.common.CKeyboardView {
+}
+class lib.common.CKeyboardView.CTouchListener {
+}
+class lib.common.CKeyboardView.CClickListener {
+}
+class lib.common.CKeyboardView.CFocusChangeListener {
+}
+class lib.common.CKeyboardView.CKeyboardListner {
+}
+class lib.explorer.ExplorerActivity {
+}
+class lib.common.EventIdle {
+}
+class lib.common.EventIdle.ExitIdleException {
+}
+class lib.common.EventIdle.WaitThread {
+}
+class lib.common.EventIdle.ExitHandle {
+}
+class lib.common.CTimer {
+}
+class lib.common.CTimer.CTimerTask {
+}
+class lib.common.CFragment {
+}
+class lib.common.layout.AnimatedLayout {
+}
+class lib.common.layout.AnimatedLayout.AnimatedListener {
+}
+class lib.utils.TListLong {
+}
+class lib.utils.TListLong.TListLongEntry {
+}
+class lib.camera.CSaveFotoListner {
+}
+interface lib.common.ISelectedElement {
+}
+class com.dryeye.app.wifi.DlgLocalHostName {
+}
+class com.dryeye.app.MenuActivity {
+}
+class com.dryeye.app.MenuActivity.COnClickButton {
+}
+class com.dryeye.app.card.FraggmentCardImages {
+}
+class lib.utils.AGlobals {
+}
+class lib.utils.AGlobals.CasheFromExplore {
+}
+class lib.utils.AGlobals.CActivityCallback {
+}
+class lib.camera.CFotoCallback {
+}
+interface lib.common.IControlOnClick {
+}
+class lib.camera.ViewRect {
+}
+class lib.common.CDialog {
+}
+class lib.common.CDialog.CShowListener {
+}
+class lib.common.CDialog.COnClick {
+}
+class lib.common.CObject {
+}
+class lib.common.CriticalCounter {
+}
+class lib.colorpicker.ModalColorDialog {
+}
+class lib.colorpicker.ModalColorDialog.CLongClickListener {
+}
+interface lib.common.INotify {
+}
+interface lib.common.IAdapter {
+}
+interface lib.common.IActionCalbackClient {
+}
+class lib.explorer.FileLocal {
+}
+class lib.common.grid.CCell {
+}
+class lib.camera.CStateCamera {
+}
+class lib.explorer.AdapterExplorerView {
+}
+class lib.explorer.AdapterExplorerView.RViewHolder {
+}
+class lib.explorer.AdapterExplorerView.LoadThumbImage {
+}
+interface lib.common.IResultFragmentDlg {
+}
+class com.dryeye.app.ParentFromMainAndViewActivity {
+}
+class com.dryeye.app.card.CExpandableListAdapter {
+}
+class com.dryeye.app.card.CExpandableListAdapter.Sel {
+}
+class lib.common.grid.Grid {
+}
+class lib.print.PrintAndPreview {
+}
+class lib.camera.CPreviewCallback {
+}
+class lib.common.MessageBox {
+}
+class com.dryeye.app.camera.FragmentCamera {
+}
+class com.dryeye.app.wifi.WiFiUtils {
+}
+class com.dryeye.app.wifi.WiFiUtils.ThreadCheckNetwork {
+}
+class com.dryeye.app.wifi.WiFiUtils.ThreadCheckMonitor {
+}
+class com.dryeye.app.wifi.WiFiUtils.ThreadScan {
+}
+class com.dryeye.app.wifi.WiFiUtils.CMonitor {
+}
+class com.dryeye.app.wifi.WiFiUtils.CScan {
+}
+class com.dryeye.app.wifi.WiFiUtils.CNetwork {
+}
+class lib.common.CSemaphore {
+}
+class lib.common.layout.LinearLayoutBorder {
+}
+class lib.explorer.DirLocal {
+}
+class lib.camera.CCamera {
+}
+class lib.camera.CCamera.MapModeKey {
+}
+class lib.colorpicker.CtrlWnd {
+}
+class com.dryeye.app.wifi.SyncThread {
+}
+class com.dryeye.app.wifi.SyncThread.Profile {
+}
+class com.dryeye.app.timer.TimerButton {
+}
+class lib.colorpicker.ColorPlane {
+}
+class com.dryeye.app.ViewActivity {
+}
+class com.dryeye.app.wifi.DlgOptions {
+}
+class lib.common.button.CSpinButton {
+}
+class com.dryeye.app.wifi.FragmentDownloadFile {
+}
+class com.dryeye.app.wifi.FragmentDownloadFile.DownloadThread {
+}
+class lib.common.CHandler {
+}
+class lib.common.layout.HandLayout {
+}
+class com.dryeye.app.timer.TimerDlg {
+}
+class lib.common.ImageSlider {
+}
+class lib.common.ImageSlider.COnChangeSlide {
+}
+class lib.common.ImageSlider.SlideAdapter {
+}
+class lib.common.ImageSlider.LoadThumbImage {
+}
+abstract class lib.common.CStdThread {
+}
+class lib.ExitProgramActivity {
+}
+class com.dryeye.app.roi.SelectedBlockIcon {
+}
+class lib.common.layout.CScrollView {
+}
+class lib.common.grid.Cell {
+}
+class lib.explorer.cashe.ImagesCache {
+}
+class lib.explorer.cashe.ImagesCache.MemCache {
+}
+class lib.explorer.cashe.ImagesCache.MemCache.Entry {
+}
+class lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle {
+}
+class lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.ImageTask {
+}
+class lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.CompletionService {
+}
+class com.dryeye.app.DlgExit {
+}
+class lib.common.CDrawableThread {
+}
+class lib.utils.CDateTime {
+}
+class com.dryeye.app.card.ListBoxDlg {
+}
+class com.dryeye.app.card.CException {
+}
+class lib.common.grid.GridRow {
+}
+class com.dryeye.app.wifi.FragmentSyncFile {
+}
+class com.dryeye.app.wifi.FragmentSyncFile.SendThread {
+}
+class lib.explorer.TaskReadDir {
+}
+class lib.explorer.TaskReadDir.ImageTask {
+}
+class lib.common.layout.HandLayoutButton {
+}
+class lib.common.OnLongClickCalback {
+}
+class lib.camera.CCameraState {
+}
+class com.dryeye.app.wifi.FragmentSyncAll {
+}
+class com.dryeye.app.wifi.FragmentSyncAll.SendThread {
+}
+class lib.common.CThread {
+}
+class lib.common.layout.CPanelDialog {
+}
+class lib.common.ActionCallback {
+}
+class lib.utils.TreeDir {
+}
+class lib.utils.TreeDir.FileNode {
+}
+class lib.utils.TreeDir.DirNodeVisible {
+}
+class lib.utils.TreeDir.DirNode {
+}
+class lib.utils.TreeDir.Tree {
+}
+class lib.utils.TreeDir.Tree.Node {
+}
+class lib.utils.BitmapUtils {
+}
+class lib.common.layout.LinearLayoutShadow {
+}
+class lib.common.CSlider {
+}
+class lib.common.CSlider.OnProgressChange {
+}
+class lib.common.CriticalSection {
+}
+class com.dryeye.app.CView {
+}
+class com.dryeye.app.CView.CurPoint {
+}
+
+
+lib.common.MessageBox <|-- com.dryeye.app.wifi.SyncMsgBox
+lib.common.layout.LinearLayoutBorder <|-- lib.colorpicker.ColorPicker
+lib.common.OnEditorActionListener <|.. lib.common.AActivity
+com.dryeye.app.ParentFromMainAndViewActivity <|-- lib.common.AActivity
+lib.common.AppCompatSpinner <|-- lib.common.CComboBox
+lib.common.CComboBox +.. lib.common.CComboBox.ComboBoxAdapter
+lib.common.OnItemSelectedListener <|.. lib.common.CComboBox.ComboBoxAdapter
+lib.common.BaseAdapter <|-- lib.common.CComboBox.ComboBoxAdapter
+androidx.appcompat.app.AppCompatActivity <|-- lib.OrientActivity
+lib.common.Runnable <|.. lib.common.CThreadLoooper
+java.io.Closeable <|.. lib.common.CThreadLoooper
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.roi.FragmentROI
+androidx.fragment.app.Fragment <|-- com.dryeye.app.roi.FragmentROI
+com.dryeye.app.roi.FragmentROI +.. com.dryeye.app.roi.FragmentROI.MResult
+com.dryeye.app.roi.ActionCallback <|-- com.dryeye.app.roi.FragmentROI.MResult
+com.dryeye.app.roi.FragmentROI +.. com.dryeye.app.roi.FragmentROI.SelectedList
+com.dryeye.app.roi.Adapter <|-- com.dryeye.app.roi.FragmentROI.SelectedList
+com.dryeye.app.roi.FragmentROI.SelectedList +.. com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder
+com.dryeye.app.roi.ViewHolder <|-- com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder
+com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder +.. com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder.COnClick
+com.dryeye.app.roi.OnClickListener <|.. com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder.COnClick
+android.app.Application <|-- com.dryeye.app.App
+java.io.Closeable <|.. lib.explorer.common.TaskDir
+lib.explorer.common.TaskDir +.. lib.explorer.common.TaskDir.CompletionService
+lib.explorer.common.ExecutorCompletionService <|-- lib.explorer.common.TaskDir.CompletionService
+java.io.Closeable <|.. com.dryeye.app.wifi.MDNSServerClient
+com.dryeye.app.wifi.Thread <|-- com.dryeye.app.wifi.MDNSServerClient
+lib.colorpicker.CtrlWnd <|-- lib.colorpicker.CSliderLum
+lib.common.CDialog <|-- com.dryeye.app.wifi.DlgSelectHost
+com.dryeye.app.wifi.DlgSelectHost +.. com.dryeye.app.wifi.DlgSelectHost.AddapterListScan
+com.dryeye.app.wifi.Adapter <|-- com.dryeye.app.wifi.DlgSelectHost.AddapterListScan
+com.dryeye.app.wifi.DlgSelectHost.AddapterListScan +.. com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.AdapterListWiFiHolder
+com.dryeye.app.wifi.ViewHolder <|-- com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.AdapterListWiFiHolder
+com.dryeye.app.wifi.DlgSelectHost.AddapterListScan +.. com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.Comp
+lib.common.CDialog <|-- com.dryeye.app.card.CDateDlg
+android.widget.FrameLayout <|-- lib.common.layout.ProgressLayout
+lib.common.layout.ProgressLayout +.. lib.common.layout.ProgressLayout.CAnimatorListenerAdapter
+lib.common.layout.AnimatorListenerAdapter <|-- lib.common.layout.ProgressLayout.CAnimatorListenerAdapter
+lib.common.layout.ProgressLayout +.. lib.common.layout.ProgressLayout.AnimatedView
+lib.common.layout.View <|-- lib.common.layout.ProgressLayout.AnimatedView
+lib.common.CDialog <|-- com.dryeye.app.card.DlgNewTest
+com.dryeye.app.card.DlgNewTest +.. com.dryeye.app.card.DlgNewTest.CSetText
+com.dryeye.app.card.Runnable <|.. com.dryeye.app.card.DlgNewTest.CSetText
+lib.camera.CameraCalculatePreview +.. lib.camera.CameraCalculatePreview.CompareSizesByArea
+lib.camera.Comparator <|.. lib.camera.CameraCalculatePreview.CompareSizesByArea
+lib.common.IActionCalbackClient <|.. lib.common.EditableSpinner
+lib.common.AppCompatSpinner <|-- lib.common.EditableSpinner
+lib.common.EditableSpinner +.. lib.common.EditableSpinner.OnCloseKeyboard
+lib.common.OnEditorActionListener <|.. lib.common.EditableSpinner.OnCloseKeyboard
+lib.common.EditableSpinner +.. lib.common.EditableSpinner.ListAdapter
+lib.common.OnItemSelectedListener <|.. lib.common.EditableSpinner.ListAdapter
+lib.common.BaseAdapter <|-- lib.common.EditableSpinner.ListAdapter
+lib.common.AActivity <|-- com.dryeye.app.MainActivity
+lib.explorer.common.DirEntry +.. lib.explorer.common.DirEntry.Entry
+lib.common.AppCompatImageView <|-- lib.common.CheckRecycleImageView
+android.widget.ListView <|-- com.dryeye.app.card.CTreeDir
+com.dryeye.app.card.CTreeDir +.. com.dryeye.app.card.CTreeDir.ListBoxAdapter
+com.dryeye.app.card.OnItemClickListener <|.. com.dryeye.app.card.CTreeDir.ListBoxAdapter
+com.dryeye.app.card.ArrayAdapter <|-- com.dryeye.app.card.CTreeDir.ListBoxAdapter
+lib.common.IActionCalbackClient <|.. lib.common.button.CMenuButton
+lib.common.button.OnTouchListener <|.. lib.common.button.CMenuButton
+androidx.appcompat.widget.AppCompatImageButton <|-- lib.common.button.CMenuButton
+lib.common.button.CMenuButton +.. lib.common.button.CMenuButton.Call
+lib.common.button.OnClickListener <|.. lib.common.button.CMenuButton.Call
+lib.common.button.ActionCallback <|-- lib.common.button.CMenuButton.Call
+lib.common.button.CMenuButton <|-- lib.common.button.CMenuTogleButton
+lib.common.CDialog <|-- com.dryeye.app.DialogCameraInfo
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.card.FragmentCard
+androidx.fragment.app.Fragment <|-- com.dryeye.app.card.FragmentCard
+com.dryeye.app.card.FragmentCard +.. com.dryeye.app.card.FragmentCard.CheckVisibility
+com.dryeye.app.card.OnGlobalLayoutListener <|.. com.dryeye.app.card.FragmentCard.CheckVisibility
+android.widget.ExpandableListView <|-- com.dryeye.app.card.CExpandableListView
+lib.common.CDialog <|-- com.dryeye.app.card.DlgDeleteMerge
+lib.common.IActionCalbackClient <|.. lib.common.CEdit
+lib.common.IControlOnClick <|.. lib.common.CEdit
+androidx.appcompat.widget.AppCompatEditText <|-- lib.common.CEdit
+lib.common.CEdit +.. lib.common.CEdit.EditTextInputConnection
+lib.common.InputConnectionWrapper <|-- lib.common.CEdit.EditTextInputConnection
+lib.common.CEdit +.. lib.common.CEdit.CTextChanger
+lib.common.TextWatcher <|.. lib.common.CEdit.CTextChanger
+lib.common.ActionCallback <|-- lib.common.CEdit.CTextChanger
+lib.common.button.AppCompatButton <|-- lib.common.button.CTextButton
+lib.common.button.CTextButton +.. lib.common.button.CTextButton.ClickListener
+lib.common.button.OnClickListener <|.. lib.common.button.CTextButton.ClickListener
+lib.common.Callback <|.. lib.common.CWnd
+java.io.Closeable <|.. lib.common.CWnd
+android.view.SurfaceView <|-- lib.common.CWnd
+lib.common.OnClickListener <|.. lib.common.OnClickCalback
+lib.common.ActionCallback <|-- lib.common.OnClickCalback
+lib.explorer.common.IQuerySelectedPage +.. lib.explorer.common.IQuerySelectedPage.WaitState
+lib.explorer.common.TimerTask <|-- lib.explorer.common.IQuerySelectedPage.WaitState
+lib.common.IActionCalbackClient <|.. lib.common.layout.LayoutButton
+android.widget.LinearLayout <|-- lib.common.layout.LayoutButton
+lib.common.layout.LayoutButton +.. lib.common.layout.LayoutButton.COnClickButton
+lib.common.layout.OnClickListener <|.. lib.common.layout.LayoutButton.COnClickButton
+android.widget.ListView <|-- lib.common.CListBox
+lib.common.CListBox +.. lib.common.CListBox.ListBoxAdapter
+lib.common.OnItemClickListener <|.. lib.common.CListBox.ListBoxAdapter
+lib.common.ArrayAdapter <|-- lib.common.CListBox.ListBoxAdapter
+com.dryeye.app.card.OnEditorActionListener <|.. com.dryeye.app.card.FragmentExploreCards
+lib.explorer.common.IQuerySelectedPage <|.. com.dryeye.app.card.FragmentExploreCards
+lib.common.ISelectedElement <|.. com.dryeye.app.card.FragmentExploreCards
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.card.FragmentExploreCards
+androidx.fragment.app.Fragment <|-- com.dryeye.app.card.FragmentExploreCards
+lib.camera.SurfaceTextureListener <|.. lib.camera.CCameraView
+lib.camera.OnTouchListener <|.. lib.camera.CCameraView
+android.view.TextureView <|-- lib.camera.CCameraView
+lib.common.SimpleOnScaleGestureListener <|-- lib.common.ScaleListener
+lib.common.ScaleListener +.. lib.common.ScaleListener.SCALE
+android.inputmethodservice.KeyboardView <|-- lib.common.CKeyboardView
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CTouchListener
+lib.common.OnTouchListener <|.. lib.common.CKeyboardView.CTouchListener
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CClickListener
+lib.common.OnClickListener <|.. lib.common.CKeyboardView.CClickListener
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CFocusChangeListener
+lib.common.OnFocusChangeListener <|.. lib.common.CKeyboardView.CFocusChangeListener
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CKeyboardListner
+lib.common.OnKeyboardActionListener <|.. lib.common.CKeyboardView.CKeyboardListner
+lib.explorer.common.IQuerySelectedPage <|.. lib.explorer.ExplorerActivity
+lib.OrientActivity <|-- lib.explorer.ExplorerActivity
+java.io.Closeable <|.. lib.common.EventIdle
+lib.common.EventIdle +.. lib.common.EventIdle.ExitIdleException
+lib.common.RuntimeException <|-- lib.common.EventIdle.ExitIdleException
+lib.common.EventIdle +.. lib.common.EventIdle.WaitThread
+lib.common.Thread <|-- lib.common.EventIdle.WaitThread
+lib.common.EventIdle +.. lib.common.EventIdle.ExitHandle
+lib.common.Runnable <|.. lib.common.EventIdle.ExitHandle
+lib.common.ActionCallback <|-- lib.common.CTimer
+lib.common.CTimer +.. lib.common.CTimer.CTimerTask
+lib.common.TimerTask <|-- lib.common.CTimer.CTimerTask
+androidx.fragment.app.Fragment <|-- lib.common.CFragment
+android.widget.FrameLayout <|-- lib.common.layout.AnimatedLayout
+lib.common.layout.AnimatedLayout +.. lib.common.layout.AnimatedLayout.AnimatedListener
+lib.common.layout.AnimatorListener <|.. lib.common.layout.AnimatedLayout.AnimatedListener
+lib.utils.TListLong +.. lib.utils.TListLong.TListLongEntry
+lib.camera.OnImageAvailableListener <|.. lib.camera.CSaveFotoListner
+lib.common.CDialog <|-- com.dryeye.app.wifi.DlgLocalHostName
+lib.common.AActivity <|-- com.dryeye.app.MenuActivity
+com.dryeye.app.MenuActivity +.. com.dryeye.app.MenuActivity.COnClickButton
+com.dryeye.app.OnClickListener <|.. com.dryeye.app.MenuActivity.COnClickButton
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.card.FraggmentCardImages
+androidx.fragment.app.Fragment <|-- com.dryeye.app.card.FraggmentCardImages
+lib.utils.AGlobals +.. lib.utils.AGlobals.CasheFromExplore
+lib.utils.AGlobals +.. lib.utils.AGlobals.CActivityCallback
+lib.utils.ActivityLifecycleCallbacks <|.. lib.utils.AGlobals.CActivityCallback
+lib.camera.CaptureCallback <|-- lib.camera.CFotoCallback
+android.view.View <|-- lib.camera.ViewRect
+android.app.AlertDialog <|-- lib.common.CDialog
+lib.common.CDialog +.. lib.common.CDialog.CShowListener
+lib.common.OnShowListener <|.. lib.common.CDialog.CShowListener
+lib.common.CDialog +.. lib.common.CDialog.COnClick
+lib.common.OnClickListener <|.. lib.common.CDialog.COnClick
+java.io.Closeable <|.. lib.common.CObject
+java.util.concurrent.Semaphore <|-- lib.common.CriticalCounter
+lib.common.CDialog <|-- lib.colorpicker.ModalColorDialog
+lib.colorpicker.ModalColorDialog +.. lib.colorpicker.ModalColorDialog.CLongClickListener
+lib.colorpicker.OnLongClickListener <|.. lib.colorpicker.ModalColorDialog.CLongClickListener
+lib.common.ISelectedElement <|-- lib.common.IAdapter
+lib.common.grid.Cell <|-- lib.common.grid.CCell
+lib.camera.StateCallback <|-- lib.camera.CStateCamera
+lib.explorer.Adapter <|-- lib.explorer.AdapterExplorerView
+lib.explorer.AdapterExplorerView +.. lib.explorer.AdapterExplorerView.RViewHolder
+lib.explorer.ViewHolder <|-- lib.explorer.AdapterExplorerView.RViewHolder
+lib.explorer.AdapterExplorerView +.. lib.explorer.AdapterExplorerView.LoadThumbImage
+lib.explorer.ILoadingListener <|-- lib.explorer.AdapterExplorerView.LoadThumbImage
+lib.OrientActivity <|-- com.dryeye.app.ParentFromMainAndViewActivity
+android.widget.BaseExpandableListAdapter <|-- com.dryeye.app.card.CExpandableListAdapter
+com.dryeye.app.card.CExpandableListAdapter +.. com.dryeye.app.card.CExpandableListAdapter.Sel
+lib.common.layout.LinearLayoutBorder <|-- lib.common.grid.Grid
+android.print.PrintDocumentAdapter <|-- lib.print.PrintAndPreview
+lib.camera.CaptureCallback <|-- lib.camera.CPreviewCallback
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.camera.FragmentCamera
+androidx.fragment.app.Fragment <|-- com.dryeye.app.camera.FragmentCamera
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.ThreadCheckNetwork
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.WiFiUtils.ThreadCheckNetwork
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.ThreadCheckMonitor
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.WiFiUtils.ThreadCheckMonitor
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.ThreadScan
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.WiFiUtils.ThreadScan
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.CMonitor
+com.dryeye.app.wifi.Closeable <|.. com.dryeye.app.wifi.WiFiUtils.CMonitor
+com.dryeye.app.wifi.BroadcastReceiver <|-- com.dryeye.app.wifi.WiFiUtils.CMonitor
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.CScan
+com.dryeye.app.wifi.Closeable <|.. com.dryeye.app.wifi.WiFiUtils.CScan
+com.dryeye.app.wifi.BroadcastReceiver <|-- com.dryeye.app.wifi.WiFiUtils.CScan
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.CNetwork
+com.dryeye.app.wifi.Closeable <|.. com.dryeye.app.wifi.WiFiUtils.CNetwork
+com.dryeye.app.wifi.NetworkCallback <|-- com.dryeye.app.wifi.WiFiUtils.CNetwork
+java.util.concurrent.Semaphore <|-- lib.common.CSemaphore
+android.widget.LinearLayout <|-- lib.common.layout.LinearLayoutBorder
+android.os.AsyncTask <|-- lib.explorer.DirLocal
+java.io.Closeable <|.. lib.camera.CCamera
+lib.camera.CCamera +.. lib.camera.CCamera.MapModeKey
+lib.colorpicker.OnTouchListener <|.. lib.colorpicker.CtrlWnd
+lib.colorpicker.AppCompatImageView <|-- lib.colorpicker.CtrlWnd
+com.dryeye.app.wifi.Runnable <|.. com.dryeye.app.wifi.SyncThread
+com.dryeye.app.wifi.SyncThread +.. com.dryeye.app.wifi.SyncThread.Profile
+lib.common.button.CMenuButton <|-- com.dryeye.app.timer.TimerButton
+lib.colorpicker.CtrlWnd <|-- lib.colorpicker.ColorPlane
+lib.common.AActivity <|-- com.dryeye.app.ViewActivity
+lib.common.CDialog <|-- com.dryeye.app.wifi.DlgOptions
+lib.common.IControlOnClick <|.. lib.common.button.CSpinButton
+lib.common.button.CMenuButton <|-- lib.common.button.CSpinButton
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.wifi.FragmentDownloadFile
+androidx.fragment.app.Fragment <|-- com.dryeye.app.wifi.FragmentDownloadFile
+com.dryeye.app.wifi.FragmentDownloadFile +.. com.dryeye.app.wifi.FragmentDownloadFile.DownloadThread
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.FragmentDownloadFile.DownloadThread
+android.os.Handler <|-- lib.common.CHandler
+lib.common.layout.AnimatedLayout <|-- lib.common.layout.HandLayout
+lib.common.CDialog <|-- com.dryeye.app.timer.TimerDlg
+lib.common.layout.LinearLayoutBorder <|-- lib.common.ImageSlider
+lib.common.ImageSlider +.. lib.common.ImageSlider.COnChangeSlide
+lib.common.OnPageChangeListener <|.. lib.common.ImageSlider.COnChangeSlide
+lib.common.ImageSlider +.. lib.common.ImageSlider.SlideAdapter
+lib.common.PagerAdapter <|-- lib.common.ImageSlider.SlideAdapter
+lib.common.ImageSlider +.. lib.common.ImageSlider.LoadThumbImage
+lib.common.ILoadingListener <|-- lib.common.ImageSlider.LoadThumbImage
+java.io.Closeable <|.. lib.common.CStdThread
+lib.common.Thread <|-- lib.common.CStdThread
+lib.OrientActivity <|-- lib.ExitProgramActivity
+lib.common.layout.OnLayoutChangeListener <|.. lib.common.layout.CScrollView
+android.widget.ScrollView <|-- lib.common.layout.CScrollView
+lib.common.grid.OnFocusChangeListener <|.. lib.common.grid.Cell
+java.io.Closeable <|.. lib.explorer.cashe.ImagesCache
+lib.explorer.cashe.ImagesCache +.. lib.explorer.cashe.ImagesCache.MemCache
+lib.explorer.cashe.ImagesCache.MemCache +.. lib.explorer.cashe.ImagesCache.MemCache.Entry
+lib.explorer.cashe.ImagesCache.MemCache +.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle
+lib.explorer.cashe.Closeable <|.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle
+lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle +.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.ImageTask
+lib.explorer.cashe.Callable <|.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.ImageTask
+lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle +.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.CompletionService
+lib.explorer.cashe.ExecutorCompletionService <|-- lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.CompletionService
+lib.common.CDialog <|-- com.dryeye.app.DlgExit
+lib.common.CObject <|-- lib.common.CDrawableThread
+lib.common.CDialog <|-- com.dryeye.app.card.ListBoxDlg
+com.dryeye.app.card.Exception <|-- com.dryeye.app.card.CException
+android.widget.RadioGroup <|-- lib.common.grid.GridRow
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.wifi.FragmentSyncFile
+androidx.fragment.app.Fragment <|-- com.dryeye.app.wifi.FragmentSyncFile
+com.dryeye.app.wifi.FragmentSyncFile +.. com.dryeye.app.wifi.FragmentSyncFile.SendThread
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.FragmentSyncFile.SendThread
+lib.explorer.common.TaskDir <|-- lib.explorer.TaskReadDir
+lib.explorer.TaskReadDir +.. lib.explorer.TaskReadDir.ImageTask
+lib.explorer.Callable <|.. lib.explorer.TaskReadDir.ImageTask
+lib.explorer.FileLocal <|-- lib.explorer.TaskReadDir.ImageTask
+lib.common.IControlOnClick <|.. lib.common.layout.HandLayoutButton
+lib.common.button.CMenuButton <|-- lib.common.layout.HandLayoutButton
+lib.common.OnLongClickListener <|.. lib.common.OnLongClickCalback
+lib.common.ActionCallback <|-- lib.common.OnLongClickCalback
+lib.camera.StateCallback <|-- lib.camera.CCameraState
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.wifi.FragmentSyncAll
+androidx.fragment.app.Fragment <|-- com.dryeye.app.wifi.FragmentSyncAll
+com.dryeye.app.wifi.FragmentSyncAll +.. com.dryeye.app.wifi.FragmentSyncAll.SendThread
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.FragmentSyncAll.SendThread
+lib.common.CObject <|-- lib.common.CThread
+lib.common.IActionCalbackClient <|.. lib.common.layout.CPanelDialog
+lib.common.layout.AnimatedLayout <|-- lib.common.layout.CPanelDialog
+lib.common.IActionCalbackClient <|.. lib.common.ActionCallback
+lib.common.Runnable <|.. lib.common.ActionCallback
+lib.utils.TreeDir +.. lib.utils.TreeDir.FileNode
+lib.utils.TreeDir +.. lib.utils.TreeDir.DirNodeVisible
+lib.utils.TreeDir +.. lib.utils.TreeDir.DirNode
+lib.utils.FileNode <|-- lib.utils.TreeDir.DirNode
+lib.utils.TreeDir +.. lib.utils.TreeDir.Tree
+lib.utils.TreeDir.Tree +.. lib.utils.TreeDir.Tree.Node
+android.widget.LinearLayout <|-- lib.common.layout.LinearLayoutShadow
+lib.common.AppCompatSeekBar <|-- lib.common.CSlider
+lib.common.CSlider +.. lib.common.CSlider.OnProgressChange
+lib.common.OnSeekBarChangeListener <|.. lib.common.CSlider.OnProgressChange
+lib.common.CSemaphore <|-- lib.common.CriticalSection
+com.dryeye.app.OnTouchListener <|.. com.dryeye.app.CView
+lib.common.CWnd <|-- com.dryeye.app.CView
+com.dryeye.app.CView +.. com.dryeye.app.CView.CurPoint
+@enduml

@@ -1,0 +1,216 @@
+#define ID_FRAME 101
+#define ID_NEW_RECORD 102
+#define ID_SELECT 103
+#define ID_EDIT 104
+#define IS_SMART 105
+#define ID_EXIT 106
+
+#define ID_OPTIONS 107
+#define ID_TOEXCEL 108
+#define ID_SMART 109
+
+#define ID_SURNAME 110
+#define ID_DATE 111
+#define ID_OK 112
+#define ID_CANCEL 113
+#define ID_TXT_DIR 114
+#define ID_FILE_DLG 115
+#define ID_LANGUAGE 116
+#define ID_FILE_DLG_1 117
+#define ID_GDT_DIR 118
+#define ID_REBUILD_DATABASE 119
+#define ID_CLEAR_DATABASE 120
+#define ID_CITY_NAME 121
+#define ID_BACKUP 122
+
+#define ID_LIST_PHONE 122
+#define ID_LIST 123
+#define ID_LST 124
+#define ID_TREE 125
+#define ID_FRAME_SET 126
+
+#define ID_SET 127
+#define ID_ROI_LIST 128
+#define ID_DELETE_ROI 129
+#define ID_NEW_ROI 130
+#define ID_LIST_JPG 131
+#define ID_EDIT_ROI 132
+
+#define ID_STATUS 133
+#define ID_DELETE_POINT_ROI 134
+#define ID_ADD_POINT_ROI 135
+#define ID_END_ROI 136
+#define ID_DELETE_POINT_NEW_ROI 137
+#define ID_END_NEW_ROI 138
+#define ID_CANCEL_NEW_ROI 139
+#define ID_RENAME_TEST 140
+#define ID_RENAME_CARD 141
+#define ID_DELETE_CARD 142
+#define ID_SET_CAP 143
+#define ID_RESPONCE 144
+#define ID_LIST_ALL 145
+#define ID_LIST_SELECT 146
+#define BTN_SERACH 147
+#define TXT_SEARCH 148
+#define ID_ADD 149
+#define ID_REMOVE 150
+#define ID_SYNC 151
+#define ID_CHEC_SYNC_ALL 152
+#define ID_EXCEL 153
+#define FRAME_PC 154
+#define ID_VIEW 155
+#define BTN_EDIT 156
+#define ID_FRAME_MOVE 157
+#define ID_FRAME_SMART 158
+#define ID_NAME 159
+#define ID_ID 160
+#define ID_DATE_DAY 161
+
+#define ID_ADD_THERAPY 162
+#define ID_DELETE_THERAPY 163
+#define ID_ADD_CAP 164
+#define ID_DELETE_CAP 165
+
+#define ID_DELETE 166
+#define ID_BUILD 167
+#define ID_NEW_TEST 168
+#define ID_REPORT 169
+#define ID_LOAD_REPORT 170
+
+#define ID_TXT1 171
+#define ID_TXT2 172
+#define ID_TXT3 173
+#define ID_TXT4 174
+#define TXT_NEW 175
+#define TXT_EXIT 176
+#define TXT_BUILD 177
+#define TXT_DELETE 178
+#define TXT_EDIT 179
+#define ID_FRAME_TXT 180
+#define ID_TXT5 181
+#define ID_RESULT 182
+#define TXT_UNDO 183
+#define TXT_REDO 184
+#define ID_UNDO 185
+#define ID_REDO 186
+#define ID_DELETE_IMAGE 187
+#define TXT_DELETE_IMAGE 188
+
+#define ID_TEST 189
+#define ID_TEST_ALERGEN 190
+#define ID_TEST_CONTROL 1911
+
+#define ID_DIL 191
+#define ID_SIDE 192
+#define ID_TIME 193
+#define ID_SIDE_CONTROL 194
+#define ID_SELECT_ALL 1912
+#define ID_CLEAR 1913
+#define ID_TIME2 1914
+#define ID_START_TEST 1915
+#define ID_SIDE_TEST 1916
+
+
+
+
+#define BTN_SERACH_DATE 194
+#define BTN_SERACH_TEST 195
+#define ID_SEARCH_ID 196
+#define ID_SEARCH_FAM 197
+#define ID_CLEAR_SELECT 198
+#define ID_SEARCH_DATE 199
+#define ID_SEARCH_TEST 200
+#define ID_SDATE 201
+#define IDS_FAM 202
+#define BTN_CLEAR_SELECT 203
+#define ID_CLEAR_DATE 204
+#define ID_CLEAR_TEST 205
+
+//#define IDS_NAM 205
+
+#define ID_TEXT 206
+#define ID_MERGE 207
+#define ID_DEL 208
+#define CMD_REPPRINT 209
+#define ID_SAVE_SRLZ 210
+#define ID_VIEW_IMAGES 211
+#define ID_TEXT_LOAD_REORT 212
+#define ID_SEPARATOR 213
+#define ID_SEPARATOR_1 214
+#define ID_SYNC_TXT 215
+#define ID_DATE_FROM 216
+#define ID_DATE_TO 217
+#define ID_TEST_DIL 218
+#define ID_MED_LIST 219
+#define ID_PATIENT_ID 220
+#define ID_PATIENT_LASTNAME 221
+#define ID_SDATE_FROM 222
+#define ID_SDATE_TO 223
+#define ID_TXT_FROM 224
+#define ID_TXT_TO 225
+#define ID_TRANSFER_TXT 226
+#define ID_MEAN_SCORE 227
+#define ID_FILTER_LIST 228
+#define ID_NEWPATIENT 229
+#define ID_GRAPH 230
+#define ID_TOTAL_SCORE 231
+#define ID_WB 232
+#define ID_EXCEL_TXT 233
+#define ID_REPORT_TXT 234
+#define ID_PHONE_TXT 235
+#define ID_EDIT_CONT_TXT 236
+#define ID_CALCULATE_TXT 237
+#define ID_ID_TXT 238
+#define ID_EDIT_OPSCORE 239
+
+#define ID_UPDATE_DB 240
+
+#define ID_TEXT_SAVE_REORT 241
+#define ID_TEXT_PRINT_REORT 242
+#define ID_TEXT_VIEW_IMG 243
+#define ID_EYEVIS 244
+#define ID_EYEINVIS 245
+
+#define ID_SAVE_REPORT 246
+#define ID_PRINT_REPORT 247
+
+#define ID_VIEW__BMP 248
+#define ID_VEW_IMAGES 249
+#define ID_LIST_REPORTS 250
+
+#define ID_DELETE_DATE 251
+#define ID_DELETE_TEST 252
+#define ID_HEADERS_TXT 253
+#define ID_NUM_PATIENTS 254
+#define ID_NOSCORE 255
+#define ID_FAILED_CONTOURS 256
+#define ID_THERAPY 257
+#define ID_TREATED 258
+#define ID_CAP_TXT 259
+#define ID_CAP 260
+#define ID_DBSEARCH_TXT 261
+#define ID_THERAPY_TXT 262
+#define ID_HELP 263
+#define ID_HELP_TXT 264
+
+#define ID_SCORE_VALUE_TXT 265
+#define ID_ITCHING_0 266
+#define ID_ITCHING_1 267
+#define ID_ITCHING_2 268
+#define ID_ITCHING_3 269
+#define ID_IRRITATION_0 270
+#define ID_IRRITATION_1 271
+#define ID_IRRITATION_2 272
+#define ID_IRRITATION_3 273
+#define ID_TEARS_0 274
+#define ID_TEARS_1 275
+#define ID_TEARS_2 276
+#define ID_TEARS_3 277
+#define ID_REDNESS_0 278
+#define ID_REDNESS_1 279
+#define ID_REDNESS_2 280
+#define ID_REDNESS_3 281
+#define ID_START_DATE 282
+#define ID_ALLERGEN 283
+#define ID_MEDICATION 284
+#define MESS_RELOAD 285

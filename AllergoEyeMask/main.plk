@@ -1,0 +1,33 @@
+new res = Pluk->CreateJob("653D92FE-6C3E-4010-BB12-9783DDC0A602");
+if (res == 0)
+{
+	Pluk->ShowJob("653D92FE-6C3E-4010-BB12-9783DDC0A602");
+	end;
+}
+global DefColor = <<
+CLR_LIGHTGREEN,
+CLR_LIGHTBLUE,
+CLR_YELLOW,
+CLR_LIGHTMAGENTA,
+CLR_LIGHTCYAN,
+CLR_LIGHTGRAY >>;
+global GetRoiNames = <|
+	return <<"Nodule", "Redeness", "Digit">>;
+|>;
+global LiistColor = <|
+return DefColor;
+|>;
+
+global AllergoEyeIni = instance IniFile(JustDirName(ExeName) @ "allergoEyeMask.ini");
+global ReadDefColor = <|
+	new n = GetRoiNames()->Len();
+	for (new i = 0; i < n; ++i)
+	{
+		
+		DefColor[i].clrf = AllergoEyeIni->ReadInt("COLOR", Print("C%d", i), DefColor[i].clrf);
+	}
+|>;
+
+ReadDefColor();
+global manwnd = instance MainWnd();
+manwnd->Open();

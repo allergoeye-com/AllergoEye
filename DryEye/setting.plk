@@ -1,0 +1,125 @@
+class SettingDlg : ModalForm , FormTriggers {
+	Dir;
+	GDTDir;
+	Lang;
+	OldLang;
+	CityName;
+	};
+
+
+//=========================================================
+//
+//=========================================================
+new SettingDlg::SettingDlg(refer object GWnd ) = <|
+param parent;
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	.GDTDir = AllergoEyeIni->ReadStr("DIR", "GDT");
+	.OldLang = .Lang = AllergoEyeIni->ReadStr("Locale", "Lang", "English");
+	.CityName = AllergoEyeIni->ReadStrW("PLACE", "TOWN", "Dresden");
+	if (.Dir->GetLastByte() != FD)
+		.Dir @= SFD;
+	self->ModalForm( "DLG_SETTING", parent );
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new SettingDlg::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+|>;
+//===================================================================
+//
+//===================================================================
+new SettingDlg::Cleanup( void ) =
+<|
+	AllergoEyeIni->WriteStrW("PLACE", "TOWN", .CityName);
+|>;
+//===================================================================
+//
+//===================================================================
+new SettingDlg::OnChangeDataDir(refer ...) = <|
+	onerror {
+		goto cont;
+	}
+	if (.Dir != EMPTY && .Dir != "")
+		instance Dir()->ChangeDir(.Dir);
+cont:
+	onerror {
+		rollback;
+	}
+	new dstDir = instance GDirDialog(self);
+	dstDir->SetCaption(W6_DATA_DIRECTORY);
+	dstDir = dstDir->Open();
+	.Dir = dstDir.DirName;
+	self->UpdateForm(".Dir");
+|>;
+//===================================================================
+//
+//===================================================================
+new SettingDlg::OnChangeGDTDir(refer ...) = <|
+	onerror {
+		goto cont;
+	}
+	if (.GDTDir != EMPTY && .GDTDir != "")
+		instance Dir()->ChangeDir(.GDTDir);
+cont:
+	onerror {
+		rollback;
+	}
+	new dstDir = instance GDirDialog(self);
+	dstDir->SetCaption(WS_GDT_PATH);
+	dstDir = dstDir->Open();
+	.GDTDir = dstDir.DirName;
+	self->UpdateForm(".GDTDir");
+|>;
+//===================================================================
+//
+//===================================================================
+new SettingDlg::OnRebuildDatabase(refer ...) = <|
+	onerror {
+		self->Show();
+		return;
+	}
+//	self->Hide();
+	AllergoEyeIni->WriteStr("DIR", "DATA", .Dir);
+	AllergoEyeIni->WriteStr("DIR", "GDT", .GDTDir);
+	AllergoEyeIni->WriteStr("Locale", "Lang", .Lang);
+	main->RebuildDB(self);
+//	self->Show();
+|>;
+//===================================================================
+//
+//===================================================================
+new SettingDlg::OnClearDatabase(refer ...) = <|
+	onerror {
+		self->Show();
+		return;
+	}
+//	self->Hide();
+	AllergoEyeIni->WriteStr("DIR", "DATA", .Dir);
+	AllergoEyeIni->WriteStr("DIR", "GDT", .GDTDir);
+	AllergoEyeIni->WriteStr("Locale", "Lang", .Lang);
+	main->CleardDB(self);
+//	self->Show();
+|>;
+//===================================================================
+//
+//===================================================================
+new SettingDlg::OnBackup(refer ...) = <|
+
+	if (.Dir != EMPTY && .Dir != "")
+	{
+		new dstDir = instance ShellDir(self);
+		//	dstDir->SetPath(.Dir);
+		dstDir->SetCaption(W1_COPY_DB);
+		if (dstDir->Open())
+		{
+			new sh = instance ShellCopy(self);
+			sh->Copy(.Dir,  dstDir->GetPath());
+			return;
+		}
+	}
+|>;

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_last_name">Nachname</string>
+    <string name="card_cync">Synchronisieren</string>
+    <string name="roi">ROI</string>
+    <string name="exit">Beenden</string>
+    <string name="card_first_name">Vorname</string>
+    <string name="card_birthdate">Geburtsdatum</string>
+    <string name="hostname">Name des Telefons</string>
+    <string name="select_lang">Sprache wählen</string>
+    <string name="str_de">Deutsch</string>
+    <string name="str_en">English</string>
+    <string name="set_timer">Timer stellen</string>
+    <string name="minute">Minuten</string>
+    <string name="stop_timer">Timer stoppen ?</string>
+    <string name="ok">OK</string>
+    <string name="cancel">ABBRECHEN</string>
+    <string name="yes">JA</string>
+    <string name="no">NEIN</string>
+    <string name="set_date">Geburtsdatum setzen</string>
+    <string name="new_test">Test erstellen</string>
+    <string name="card_info">Patienteninformation</string>
+    <string name="test_choise">"drye eye/Eingangsuntersuchung;Kontrolllösung/beidseits;Rechts;Links/00min;05min;10min;15min "</string>
+    <string name="photo_over">Weiteres Foto</string>
+    <string name="view_done">Fertig</string>
+    <string name="ids_delete_image">Aktuelles Bild löschen ?</string>
+    <string name="del_sel">Aktuelle Auswahl löschen?</string>
+    <string name="rename_test">Test umbenennen</string>
+    <string name="choise_photo">Foto auswählen:</string>
+    <string name="select_date">Datum auswählen</string>
+    <string name="today">HEUTE</string>
+    <string name="select_test">Test auswählen</string>
+    <string name="select_new_test">NEUER TEST</string>
+    <string name="new_card">Neuer Patient</string>
+    <string name="card_list">Patienten</string>
+    <string name="host_comment">This will be shown in the device overview on the PC.</string>
+    <string name="sync_poc">" Bildern verarbeitet"</string>
+    <string name="str_es">Spanish</string>
+    <string name="str_fr">French</string>
+    <string name="prick">Prick</string>
+</resources>

@@ -1,0 +1,285 @@
+class ToServer : TCPStream {
+	pending;
+	data;
+	index;
+	cmd;
+	typecmd;
+	prm;
+
+	result;
+	wnd;
+	fOpenSocket;
+};
+//=========================================================
+//
+//=========================================================
+new ToServer::ToServer(refer object String, refer object String, refer object SocketAddress, refer object String,  pointer any) =
+<|
+param typecmd, cmd, address, data, p;
+	.fOpenSocket = FALSE;
+	onerror {
+		.fOpenSocket = FALSE;
+		return;
+	};
+
+	.data = <<>>;
+	.index = 0;
+	self->TCPStream();
+	.typecmd = typecmd;
+	.prm = data;
+	.cmd = cmd;
+	.wnd = p;
+	.result = "";
+	self->AddFuncCall(typecmd, cmd, data);
+	.pending = TRUE;
+	.fOpenSocket = self->Connect( instance SocketAddress(address.Address, ServerPort));
+|>;
+
+//=========================================================
+//
+//=========================================================
+new ToServer::ToServer(refer object String, refer object String, refer object SocketAddress, refer object Vector,  pointer any) =
+<|
+param typecmd, cmd, address, data, p;
+	.fOpenSocket = FALSE;
+	onerror {
+		.fOpenSocket = FALSE;
+		return;
+	};
+	.data = <<>>;
+	.index = 0;
+	self->TCPStream();
+	.typecmd = typecmd;
+	.prm = data;
+	.cmd = cmd;
+	.wnd = p;
+	.result = "";
+	for (new i = 0, l = data->Len(); i < l; ++i)
+		self->AddFuncCall(typecmd, cmd, data[i][0], data[i][1]);
+	.pending = TRUE;
+	.fOpenSocket = self->Connect( instance SocketAddress(address.Address, ServerPort));
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::OnClose(void) = <|
+	new r = self->GetLastError();
+	if (r != 0 && .result != EMPTY)
+		self->OnAsyncCallError(r);
+ 
+	.wnd = EMPTY;
+	onerror {
+		.fOpenSocket = FALSE;
+		return;
+	};
+	.fOpenSocket = FALSE;
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::OnAsyncCallError(int)  = <|
+.result = EMPTY;
+	self->TCPStream::OnClose();
+	if (.wnd != EMPTY)
+		.wnd->OnResponce("ERROR");
+		
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::~ToServer(void) = <|
+	.result = EMPTY;
+	.wnd = EMPTY;
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::Shutdown(boolean) = <|
+param p;
+	.result = EMPTY;
+	.wnd = EMPTY;
+	self->TCPStream::Shutdown(p);
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::AddFuncCall(refer object String, refer object String,refer object String, refer object String) = <|
+param typecmd, cmd, clientName, data;
+	new FunCall = 21;
+	new Query = 8;
+	new Param = 4;
+	new lenBuff = data->Len() + 1;
+	new len = FunCall + Query + 2 * Param + clientName->Len() + lenBuff;
+	new str = "";
+	str->SetLen(len);
+	str->SetString(0);
+	new L = 0;
+	str->Replace(L, typecmd, typecmd->Len());
+	L+= 8;
+	str->Int32ToString(L, len);
+	L += 4;
+	str->Int32ToString(L, 3);
+	L += 4;
+	str->Int32ToString(L, Query);
+	L += 4;
+	str->Replace(L, cmd, cmd->Len());
+	L += Query;
+	str->Int32ToString(L, clientName->Len() + 1);
+	L += 4;
+	str->Replace(L, clientName, clientName->Len());
+	L += clientName->Len() + 1;
+	str->Int32ToString(L, data->Len() + 1);
+	L += 4;
+	str->Replace(L, data, data->Len());
+	.data @= <<str>>;
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::AddFuncCall(refer object String, refer object String, refer object String) = <|
+param typecmd, cmd, data;
+	new FunCall = 21;
+	new Query = 8;
+	new lenBuff = data->Len() + 1;
+	new Param = 4;
+	new len = FunCall + Query + Param + lenBuff;
+	new str = "";
+	str->SetLen(len);
+	str->SetString(0);
+	new L = 0;
+	str->Replace(L, typecmd, typecmd->Len());
+	L+= 8;
+	str->Int32ToString(L, len);
+	L += 4;
+	str->Int32ToString(L, 2);
+	L += 4;
+	str->Int32ToString(L, Query);
+	L += 4;
+	str->Replace(L, cmd, cmd->Len());
+	L += Query;
+	str->Int32ToString(L, lenBuff);
+	L += 4;
+	str->Replace(L, data, data->Len());
+	.data @= <<str>>;
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::WriteCmd(refer object String, refer object String, refer object String) =
+<|
+param typecmd, cmd, data;
+	.data = <<>>;
+	.index = 0;
+	.typecmd = typecmd;
+	.prm = data;
+	.cmd = cmd;
+	.result = "";
+	self->AddFuncCall(typecmd, cmd, data);
+	self->Write(.data[.index]);
+	++.index;
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::ReadResponce(refer object String, refer object Vector) = <|
+param res, data;
+	onerror {
+		return FALSE;
+	};
+	new len = 0; 
+	res->StringToInt32(8, len);
+	new num = 0;
+	res->StringToInt32(12, num);
+
+	new r = res->Left(8);
+	if (r->Find("ERROR") > -1) { res = "ERROR"; return FALSE; }
+	if (r->Find("OK") > -1) { res = "OK"; return TRUE; }
+    if (r->Find("READ") > -1 || r->Find("WRITE") > -1)
+    {
+		new L = 16;
+		data = instance Vector(num);
+		for (new i = 0; i < num; ++i)
+		{
+		len = 0;
+			res->StringToInt32(L, len);
+			L += 4;
+			new mid;
+			if (len > 0)
+			{
+				mid = res->Mid(L, len);
+				if (len > 4 && mid->Left(4) == "PLZ2")
+				{
+					mid = Pluk->Decompress(mid, FALSE);
+			
+				}
+			}
+			if (mid->Find("ERROR") > -1)
+				data[i] =  "ERROR";
+			else
+			if (mid->Find("OK") > -1)
+				data[i] =  "OK";
+			else
+				data[i] <- mid;
+				
+			L += len;
+		}
+    	return TRUE;    	
+		
+    }
+    return FALSE;    	
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new ToServer::IsConnect(void) = <|
+	return !.pending;
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::OnConnect(void) = <|
+	.pending = FALSE;
+	if (.index > 0)
+		return;
+	if (.data->Len() > 0)
+	{
+		self->Write(.data[.index]);
+		++.index;
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new ToServer::OnRead(void) = <|
+	.result @= self->Read();
+	new len = 0; 
+	if (.result->Len() > 21)
+	{
+		.result->StringToInt32(8, len);
+		if (len != 0 && len == .result->Len())
+		{
+			if (.index < .data->Len())
+			{
+				self->Write(.data[.index]);
+				++.index;
+				.result = "";
+				return;
+				
+			}
+			new res = <<>>;
+			if (self->ReadResponce(.result, res))
+			{
+				.result <- res;
+				if (.wnd != EMPTY)
+				.wnd->OnResponce(.result);
+			}
+			else
+			if (.wnd != EMPTY)
+				.wnd->OnResponce("ERROR");
+		}
+	}
+|>;
+

@@ -1,0 +1,326 @@
+class TrackerRoi {
+	rects;
+	left;
+	top;
+	right;
+	bottom;
+	start;
+	pos;
+	fEdit;
+};
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRoi::TrackerRoi(void) = <|
+	.rects = <<>>;
+	.start = FALSE;
+	.pos = instance POINT(0, 0);
+|>;
+new TrackerRoi::TrackerRoi(refer object Vector) = <|
+param pt;	
+	.rects = <<>>;
+	.start = FALSE;
+	if (pt->Len() < 4) return;
+	self->SetPos(pt[0].x, pt[0].y);
+	for (new i = 0; i < pt->Len(); ++i)
+	{
+		.left = Min(pt[i].x, .left);
+		.right = Max(pt[i].x, .right);
+		.top = Min(pt[i].y, .top);
+		.bottom = Max(pt[i].y, .bottom);
+	}
+|>;
+new TrackerRoi::GetPoints(void) = <|
+		new pt = instance Vector(5);
+		pt[0] = instance POINT(.left, .top);
+		pt[1] = instance POINT(.right, .top);
+		pt[2] = instance POINT(.right, .bottom);
+		pt[3] = instance POINT(.left, .bottom);
+		pt[4] = instance POINT(.left, .top);
+	return pt;
+|>;
+
+new TrackerRoi::TrackerRoi(copy) = <|
+param a;
+	.rects = <<>>;
+	.left = a.left;
+	.top = a.top;
+	.right = a.right;
+	.bottom = a.bottom;
+	.start = a.start;
+	.pos = a.pos;
+|>;
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRoi::SetPos(number, number) = <|
+param x, y;
+	.pos = instance POINT(x, y);
+	.left = x;
+	.top = y;
+	.right = x;
+	.bottom = y;
+|>;
+
+new TrackerRoi::Start(void) = <|
+	.start = TRUE;
+|>;
+new TrackerRoi::End(void) = <|
+	if (.rects == EMPTY)
+	.rects = <<>>;
+	
+	if (.start)
+	{
+		new tt = self;
+		.rects ,= tt;
+	}
+	.start = FALSE;
+
+|>;
+new TrackerRoi::Enter(void) = {|
+
+|};
+//---------------------------------------
+//
+//---------------------------------------
+new TrackerRoi::OnLButtonDown(int, int, refer object Transform2D, int, int) = {|
+param x, y, trans, W, H;
+	new i, l = 4;
+	new pt = instance Vector(4);
+	pt[0] = instance POINT(.left, .top);
+	pt[1] = instance POINT(.right, .top);
+	pt[2] = instance POINT(.right, .bottom);
+	pt[3] = instance POINT(.left, .bottom);
+	new tmp = pt;
+	trans->Lp2Dp(pt, pt);
+	new cur, d, dist = 100.0;
+	for (i = 0; i < l; ++i)
+	{
+		if ((d = ((pt[i].x - x)**2 + (pt[i].y - y)**2)) < dist)
+		{
+			dist = d;
+			cur = i;
+		}
+	}
+		if (cur != EMPTY)
+		{
+			.pos = tmp[(cur + 2)%4];
+			.start = TRUE;			
+			
+			
+			return TRUE;
+		}
+	
+	return FALSE;
+|};
+
+
+//---------------------------------------
+//
+//---------------------------------------
+new TrackerRoi::OnMouseMove(int, int, refer object Transform2D, int, int) = <|
+param x, y, trans, W, H;
+	new lpt = instance POINT(x, y);
+	trans->Dp2Lp(lpt, lpt);
+	if (lpt.y >= 0 && lpt.y < H && lpt.x >= 0 && lpt.x < W) 
+	{
+		self->RubberBand(lpt.x, lpt.y);
+		
+	}		
+	
+	
+|>;
+//---------------------------------------
+//
+//---------------------------------------
+new TrackerRoi::OnLButtonUp(int, int, refer object Transform2D, int, int) = <|
+param x, y, trans, W, H;
+.start = FALSE;
+|>;
+//---------------------------------------
+//
+//---------------------------------------
+new TrackerRoi::OnDraw(refer object MDC, refer object Transform2D, int, int) = <| 
+param mdc, trans, W, H;
+	mdc->SetFgColor(CLR_LIGHTRED);
+	mdc->SetBrush(CLR_LIGHTRED, BG_SOLID);
+		new pt = instance Vector(5);
+		pt[0] = instance POINT(.left, .top);
+		pt[1] = instance POINT(.right, .top);
+		pt[2] = instance POINT(.right, .bottom);
+		pt[3] = instance POINT(.left, .bottom);
+		pt[4] = instance POINT(.left, .top);
+		trans->Lp2Dp(pt, pt);
+		mdc->PolyLine(pt);
+			for (new i = 0; i < 4; ++i)
+				mdc->Bar(pt[i].x - 4, pt[i].y - 4, pt[i].x + 3, pt[i].y + 3);
+
+
+|>;
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRoi::OnDraw(refer object MDC, refer object Transform2D, refer object GWnd) = <|
+param mdc, trans, Parent;
+	if (.start)
+	{
+		new pt = instance Vector(5);
+		pt[0] = instance POINT(.left, .top);
+		pt[1] = instance POINT(.right, .top);
+		pt[2] = instance POINT(.right, .bottom);
+		pt[3] = instance POINT(.left, .bottom);
+		pt[4] = instance POINT(.left, .top);
+		trans->Lp2Dp(pt, pt);
+		mdc->PolyLine(pt);
+
+	}
+	if (.rects != EMPTY)
+	for (new i = 0; i < .rects->Len(); ++i)
+	{
+		.rects[i]->OnDraw(mdc, trans, Parent);
+	}
+|>;
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRoi::RubberBand(number, number) = <|      
+param  x, y;
+	if (!.start) return;
+	.left = Min(x, .pos.x);
+	.right = Max(x, .pos.x);
+	.top = Min(y, .pos.y);
+	.bottom = Max(y, .pos.y);
+
+|>;
+class TrackerRect:RECT {
+	pen;
+	visible;
+	pos;
+	start;
+
+};
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::TrackerRect(void) = <|
+	.pen = instance FGColor(CLR_LIGHTGREEN, 2, FG_SOLID);
+	.visible = FALSE;
+	.start = FALSE;
+	.pos = instance POINT(0, 0);
+	self->RECT(0, 0, 0, 0);
+|>;
+
+new TrackerRect::SetRect(int, int, int, int) = <|
+param l, t, r, b;
+	.left = l;
+	.top = t;
+	.right = r;
+	.bottom = b;
+
+|>;     
+
+new TrackerRect::Start(void) = <|
+	.start = TRUE;
+|>;
+new TrackerRect::End(void) = <|
+	.start = FALSE;
+|>;
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::SetPos(int, int) = <|
+param x, y;
+	.pos = instance POINT(x, y);
+	self->SetRect(x, y, x, y);
+|>;
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::Hide(refer object MDC) = <|
+param mdc;
+	if (!.visible)
+		return;
+	.visible = FALSE;
+	self->Draw(mdc);
+|>;
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::Show(refer object MDC) = <|
+param mdc;
+	if (.visible)
+		return;
+	.visible = TRUE;
+	self->Draw(mdc);
+|>;
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::Hide(refer object MDC, boolean) = <|
+param mdc, flg;
+	if (!.visible)
+		return;
+	.visible = FALSE;
+	if (flg)
+		self->Draw(mdc, TRUE);
+	else
+		self->Draw(mdc);
+|>;
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::Show(refer object MDC, boolean) = <|
+param mdc, flg;
+	if (.visible)
+		return;
+	.visible = TRUE;
+	if (flg)
+		self->Draw(mdc, TRUE);
+	else
+		self->Draw(mdc);
+	
+|>;
+
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::Draw(refer object MDC) = <|      
+param mdc;
+	mdc->OpenDC(TRUE);
+	self->Draw(mdc, TRUE);
+	mdc->CloseDC();
+|>;
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::Draw(refer object MDC, boolean) = <|      
+param mdc, f;
+	if (f)
+		mdc->ColorRasterOp(R2_XORPEN); 
+	mdc->SelectObject(.pen);
+    mdc->Rect(self);    
+    mdc->ColorRasterOp(R2_COPYPEN); 
+
+	if (f)
+		mdc->UnSelectObject(.pen);
+|>;
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+new TrackerRect::RubberBand(refer object MDC, int, int) = <|      
+param mdc, x, y;
+	if (!.start) return;
+	self->Hide(mdc);
+	.left = Min(x, .pos.x);
+	.right = Max(x, .pos.x);
+	.top = Min(y, .pos.y);
+	.bottom = Max(y, .pos.y);
+	self->Show(mdc);
+
+|>;

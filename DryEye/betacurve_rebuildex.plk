@@ -1,0 +1,52 @@
+//==============================================
+/**
+param REBUILD_LEN; ( REBUILD_LEN >= 5 )
+#rus 	ѕерестроить слайн дл€ получени€ линейной зависмоти длины кривой от параметра
+#rus 		— этой целью € ищу точку на сплайне, где рассто€ние от предыдущей точки
+#rus 	равно GetLength() / REBUILD_LEN. ( REBUILD_LEN - новое число контрольных точек )
+**/
+//==============================================
+new BetaCurve::RebuildEx(int) = {|
+param REBUILD_LEN;
+	if ( REBUILD_LEN < 5 )
+		REBUILD_LEN = 5;
+	self->GetContour();
+	new P = .Contour;
+	self->Init(P, .skew, .tension );
+	self->GetContour();
+
+	new vec = instance Vector(4 * REBUILD_LEN);
+	new st = self->GetLength() / REBUILD_LEN;
+	new step0 = 1.0 / .Contour->Len();
+	new step = 1.0 / REBUILD_LEN;
+	new mu0 = 0.0;
+	new mu = step0;
+	new pos = 0.0;
+	new pos1 = st;
+    new realpos = 0.0;
+
+	vec[0] = self(0.0);
+	for ( new i = 1; mu < 1.0; ++i)
+	{
+		new delta = step;
+		new flg = -1;
+		new cnt = 1.0;
+		while (TRUE)
+        {
+			vec[i] = self(mu);
+			if ((vec[i] - vec[i - 1])->Module() > st || cnt - (vec[i] - vec[i - 1])->Module() > 2.0)
+				break;
+			mu += step0;
+
+			if (mu >= 1.0)
+				break;
+			mu += step0;
+			if (mu > 1.0)
+				mu = 1.0;
+		}
+	}
+	vec->SetLen(i);
+//	self->Init( vec, .skew, .tension );
+	.A = vec;
+	self->GetContour();
+|};

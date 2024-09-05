@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/singer_grid_selector"
+    android:paddingBottom="5dp"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp"
+    android:paddingTop="5dp">
+
+    <lib.common.CheckRecycleImageView
+        android:id="@+id/imageView"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        android:layout_weight="0.1"
+        android:adjustViewBounds="true"
+        android:padding="5dp"
+        android:scaleType="fitCenter"
+        android:src="@android:drawable/btn_star_big_off" />
+
+    <TextView
+        android:id="@+id/nameDevice"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="1dp"
+        android:layout_weight="0.4"
+        android:ellipsize="end"
+        android:foregroundGravity="center_horizontal"
+        android:gravity="center"
+        android:padding="1dp"
+        android:singleLine="true"
+        android:text="Proba"
+        android:textAppearance="@android:style/TextAppearance"
+        android:textColor="@color/theme_dlg_text_color" />
+
+    <TextView
+        android:id="@+id/statusDevice"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="1dp"
+        android:layout_weight="0.4"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:padding="1dp"
+        android:singleLine="true"
+        android:text="Pera"
+        android:textAppearance="@android:style/TextAppearance"
+        android:textColor="@color/theme_dlg_text_color" />
+
+</LinearLayout>

@@ -1,0 +1,64 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(531,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (AllergoscopeApp.vcxproj, DryApp.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  AllergoscopeApp.cpp
+K:\DryApp\DryApp\AllergoscopeApp.cpp(353,96): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(359,114): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(367,112): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(380,86): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(394,81): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(398,79): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(468,96): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(478,116): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(484,101): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(491,100): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(502,84): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(506,83): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(539,95): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(570,116): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(581,101): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(590,93): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(591,12): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(608,83): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(617,82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+K:\DryApp\DryApp\AllergoscopeApp.cpp(704,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  (compiling source file '/AllergoscopeApp.cpp')
+  
+  DryApp.vcxproj -> h:\Bin64u\DryEyeApp.exe

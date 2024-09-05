@@ -1,0 +1,7 @@
+form "HNO_SWITCH_WND"
+{
+	expr{.Presentation}, boolean, ID_PRESENTATION;
+	, , IDOK;
+		trigger OnOK;
+	closeon: IDCANCEL, IDCLOSE;
+}

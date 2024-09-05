@@ -1,0 +1,409 @@
+class Transform2D {
+	form;
+	invert;
+	disp;
+	rDisp;
+	rDes;
+};
+//------------------------------------------------
+// Constructor for Transform2D class
+//------------------------------------------------
+new Transform2D::Transform2D(void) = <|
+	.form = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+.invert = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+.invert->SetDiagonal(0, 1); // Set the diagonal elements of invert matrix to 1
+.form->SetDiagonal(0, 1); // Set the diagonal elements of form matrix to 1
+|> ;
+
+//------------------------------------------------
+// Initialize Transform2D object with scale and translation
+//------------------------------------------------
+new Transform2D::Init(number, refer object POINT) = <|
+	param Scale, d;
+
+.form->Set(0.0); // Set all elements of form matrix to 0
+.form->SetDiagonal(0, 1.0); // Set the diagonal elements of form matrix to 1
+.form[0][0] = Scale; // Set the scale factor in x-direction
+.form[1][1] = Scale; // Set the scale factor in y-direction
+.form[0][2] = d.x; // Set the translation in x-direction
+.form[1][2] = d.y; // Set the translation in y-direction
+self->InitInvert(); // Initialize the invert matrix
+|> ;
+
+//------------------------------------------------
+// Initialize Transform2D object with source and destination rectangles
+//------------------------------------------------
+new Transform2D::Init(refer object RECT, refer object RECT) = <|
+	param rDisp, rDes;
+
+.rDisp = rDisp; // Set the source rectangle
+.rDes = rDes; // Set the destination rectangle
+.form->Set(0.0); // Set all elements of form matrix to 0
+.form->SetDiagonal(0, 1.0); // Set the diagonal elements of form matrix to 1
+new Scale; // Create a new variable Scale
+if (double(rDes->Height()) == 0.0) // Check if the height of destination rectangle is 0
+Scale = 1.0; // Set Scale to 1
+else
+{
+	new ScaleX = Abs(double(rDisp->Width()) / double(rDes->Width())); // Calculate the scale factor in x-direction
+	new ScaleY = Abs(double(rDisp->Height()) / double(rDes->Height())); // Calculate the scale factor in y-direction
+	Scale = ScaleY > ScaleX ? ScaleX : ScaleY; // Choose the smaller scale factor
+}
+.form[0][0] = Scale; // Set the scale factor in x-direction
+.form[1][1] = Scale; // Set the scale factor in y-direction
+
+new dx = (rDes.left + rDes.right) / 2.0 * Scale; // Calculate the translation in x-direction
+new dy = (rDes.bottom + rDes.top) / 2.0 * Scale; // Calculate the translation in y-direction
+.form[0][2] = double(rDisp.left + rDisp.right) / 2.0 - dx; // Set the translation in x-direction
+.form[1][2] = double(rDisp.top + rDisp.bottom) / 2.0 - dy; // Set the translation in y-direction
+self->InitInvert(); // Initialize the invert matrix
+|> ;
+
+//------------------------------------------------
+// Initialize Transform2D object with offset, scale, and rotation
+//------------------------------------------------
+new Transform2D::Init(number, number, number) = {|
+param off_x, off_y, scale;
+	.form[0][2] = off_x; // Set the translation in x-direction
+	.form[1][2] = off_y; // Set the translation in y-direction
+	.form[0][0] = scale; // Set the scale factor in x-direction
+	.form[1][1] = scale; // Set the scale factor in y-direction
+	self->InitInvert(); // Initialize the invert matrix
+|};
+
+//------------------------------------------------
+// Reset the Transform2D object to its initial state
+//------------------------------------------------
+new Transform2D::Reset(void) = {|
+	self->Init(.rDisp, .rDes); // Initialize the Transform2D object with source and destination rectangles
+	self->InitInvert(); // Initialize the invert matrix
+|};
+
+//------------------------------------------------
+// Offset the Transform2D object by a given amount
+//------------------------------------------------
+new Transform2D::Offset(number, number) = {|
+param x, y;
+	.form[0][2] += x; // Add the offset in x-direction
+	.form[1][2] += y; // Add the offset in y-direction
+	self->InitInvert(); // Initialize the invert matrix
+|};
+
+//------------------------------------------------
+// Scale the Transform2D object by a given factor around a center point
+//------------------------------------------------
+new Transform2D::Scale(number, refer object POINT) = {|
+param fScale, center;
+	new offset = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	new shift = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	new scale = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	new rotate = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	self->Decompose(.form, shift, scale, rotate, offset); // Decompose the form matrix into shift, scale, rotate, and offset matrices
+	new tmp = instance  Transform2D(); // Create a new instance of Transform2D
+	scale[0][0] *= fScale; // Scale the form matrix in x-direction
+	scale[1][1] *= fScale; // Scale the form matrix in y-direction
+	tmp.form = rotate; // Set the form matrix of tmp to rotate matrix
+	tmp.form *= scale; // Multiply the form matrix of tmp by scale matrix
+	new cm = center; // Create a new variable cm and set it to center
+	self->Dp2Lp(cm); // Convert cm from device coordinates to logical coordinates
+	tmp->Lp2Dp(cm); // Convert cm from logical coordinates to device coordinates using tmp
+	.form = tmp.form; // Set the form matrix of Transform2D object to the form matrix of tmp
+	.form[0][2] = center.x - cm.x; // Set the translation in x-direction
+	.form[1][2] = center.y - cm.y; // Set the translation in y-direction
+	self->InitInvert(); // Initialize the invert matrix
+|};
+
+//------------------------------------------------
+// Rotate the Transform2D object by a given angle around a center point
+//------------------------------------------------
+new Transform2D::Rotate(number, refer object POINT) = {|
+param angle_degree, center;
+	new offset = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	new shift = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	new scale = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	new rotate = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	self->Decompose(.form, shift, scale, rotate, offset); // Decompose the form matrix into shift, scale, rotate, and offset matrices
+	new r = instance Matrix(3, 3); // Create a new instance of Matrix with size 3x3
+	r->SetDiagonal(0, 1.0); // Set the diagonal elements of r matrix to 1
+	new angle = angle_degree * PI / 180.0; // Convert the angle from degrees to radians
+	r[1][1] = r[0][0] = Cos(angle); // Set the rotation elements of r matrix
+	r[0][1] = -Sin(angle); // Set the rotation elements of r matrix
+	r[1][0] = -r[0][1]; // Set the rotation elements of r matrix
+	rotate *= r; // Multiply the rotate matrix by r matrix
+	new tmp = instance  Transform2D(); // Create a new instance of Transform2D
+	tmp.form = rotate; // Set the form matrix of tmp to rotate matrix
+	tmp.form *= scale; // Multiply the form matrix of tmp by scale matrix
+	new cm = center; // Create a new variable cm and set it to center
+	self->Dp2Lp(cm); // Convert cm from device coordinates to logical coordinates
+	tmp->Lp2Dp(cm); // Convert cm from logical coordinates to device coordinates using tmp
+	.form = tmp.form; // Set the form matrix of Transform2D object to the form matrix of tmp
+	.form[0][2] = center.x - cm.x; // Set the translation in x-direction
+	.form[1][2] = center.y - cm.y; // Set the translation in y-direction
+	self->InitInvert(); // Initialize the invert matrix
+|};
+
+//---------------------------------------------------
+// Convert a point from logical coordinates to device coordinates
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object POINT) = {|
+param v;
+	new res = v; // Create a new variable res and set it to v
+	self->Lp2Dp(v, res); // Call the overloaded Lp2Dp function with v and res as parameters
+	v = res; // Update v with the converted point
+	return res; // Return the converted point
+|};
+
+//---------------------------------------------------
+// Convert a number from logical coordinates to device coordinates
+//---------------------------------------------------
+new Transform2D::ToInt(number) = {|
+param n;
+	return n > 0.0 ? int(n + 0.5) : int(n - 0.5); // Round the number to the nearest integer
+|};
+
+//---------------------------------------------------
+// Convert a point from logical coordinates to device coordinates
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object POINT, refer object POINT) = {|
+param v, res;
+	new _x = v.x; // Create a new variable _x and set it to v.x
+	new _y = v.y; // Create a new variable _y and set it to v.y
+	res.x = .form[0][0] * _x + .form[0][1] * _y + .form[0][2]; // Convert the x-coordinate from logical to device coordinates
+	res.y = .form[1][0] * _x + .form[1][1] * _y + .form[1][2]; // Convert the y-coordinate from logical to device coordinates
+|};
+
+//---------------------------------------------------
+// Convert a rectangle from logical coordinates to device coordinates
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object RECT) = {|
+param v;
+	new res = v; // Create a new variable res and set it to v
+	self->Lp2Dp(v, res); // Call the overloaded Lp2Dp function with v and res as parameters
+	v = res; // Update v with the converted rectangle
+|};
+
+//---------------------------------------------------
+// Convert a rectangle from logical coordinates to device coordinates
+//---------------------------------------------------
+new Transform2D::Lp2Dp(refer object RECT, refer object RECT) = {|
+param v, res;
+	new _x = v.left; // Create a new variable _x and set it to v.left
+	res.left = .form[0][0] * _x + .form[0][1] * v.top + .form[0][2]; // Convert the left coordinate from logical to device coordinates
+	res.top = .form[1][0] * _x + .form[1][1] * v.top + .form[1][2]; // Convert the top coordinate from logical to device coordinates
+	_x = v.right; // Update _x with v.right
+	res.right = .form[0][0] * _x + .form[0][1] * v.bottom + .form[0][2]; // Convert the right coordinate from logical to device coordinates
+	res.bottom = .form[1][0] * _x + .form[1][1] * v.bottom + .form[1][2]; // Convert the bottom coordinate from logical to device coordinates
+|};
+
+//---------------------------------------------------
+// Convert a vector of points from logical coordinates to device coordinates
+//---------------------------------------------------
+new  Transform2D::Lp2Dp(refer object Vector) = {|
+param v;
+	self->Lp2Dp(v, v); // Call the overloaded Lp2Dp function with v as both input and output parameters
+|};
+
+//---------------------------------------------------
+// Convert a vector of points from logical coordinates to device coordinates
+//---------------------------------------------------
+new  Transform2D::Lp2Dp(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _y, _x; // Create new variables _y and _x
+	for (new i = 0, l = v->Len(); i < l; ++i)
+	{
+		_x = v[i].x; // Set _x to the x-coordinate of the current point
+		_y = v[i].y; // Set _y to the y-coordinate of the current point
+		res[i].x = .form[0][0] * _x + .form[0][1] * _y + .form[0][2]; // Convert the x-coordinate from logical to device coordinates
+		res[i].y = .form[1][0] * _x + .form[1][1] * _y + .form[1][2]; // Convert the y-coordinate from logical to device coordinates
+	}
+|};
+
+//---------------------------------------------------
+// Convert local points to display points
+//---------------------------------------------------
+new Transform2D::Lp2DpPOINT(refer object Vector, refer object Vector) = {|
+param v, res;
+	new tmp = instance POINT();
+	for (new i = 0, l = v->Len(); i < l; ++i)
+	{
+		tmp = v[i];
+		res[i].x = int(.form[0][0] * tmp.x + .form[0][1] * tmp.y + .form[0][2] + 0.5);
+		res[i].y = int(.form[1][0] * tmp.x + .form[1][1] * tmp.y + .form[1][2] + 0.5);
+
+	}
+|};
+
+//---------------------------------------------------
+// Convert local vectors to display vectors
+//---------------------------------------------------
+new Transform2D::Lp2DpV(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _x, _y;
+	for (new i = 0, l = v->Len(); i < l; ++i)
+	{
+		_x = v[i][0];
+		_y = v[i][1];
+		res[i][0] = int(.form[0][0] * _x + .form[0][1] * _y + .form[0][2] + 0.5);
+		res[i][1] = int(.form[1][0] * _x - .form[1][1] * _y + .form[1][2] + 0.5);
+	}
+|};
+
+//---------------------------------------------------
+// Convert local vectors to display vectors and calculate the bounding rectangle
+//---------------------------------------------------
+new Transform2D::Lp2DpVC(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _x, _y;
+	new r = instance RECT(v[0][0], v[0][1], v[0][0], v[0][1]);
+	for (new i = 0, l = v->Len(); i < l; ++i)
+	{
+		_x = v[i][0];
+		_y = v[i][1];
+		res[i][0] = int(.form[0][0] * _x + .form[0][1] * _y + .form[0][2] + 0.5);
+		res[i][1] = int(.form[1][0] * _x - .form[1][1] * _y + .form[1][2] + 0.5);
+		r.left = Min(res[i][0], r.left);
+		r.top = Min(res[i][1], r.top);
+		r.right = Max(res[i][0], r.right);
+		r.bottom = Max(res[i][1], r.bottom);
+
+	}
+	return (r & .disp) != EMPTY;
+|};
+
+//---------------------------------------------------
+// Convert display points to local points
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object Vector) = {|
+param v;
+	new res = v;
+	self->Dp2Lp(v, res);
+	v = res;
+	return res;
+|};
+
+//---------------------------------------------------
+// Convert display vectors to local vectors
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object Vector, refer object Vector) = {|
+param v, res;
+	new _x, _y;
+	for (new i = 0, l = v->Len(); i < l; ++i)
+	{
+		_x = v[i].x;
+		_y = v[i].y;
+		_x += .invert[0][2];
+		_y += .invert[1][2];
+		res[i].x = .invert[0][0] * _x + .invert[0][1] * _y;
+		res[i].y = .invert[1][1] * _y + .invert[1][0] * _x;
+
+	}
+|};
+
+//---------------------------------------------------
+// Convert display point to local point
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object POINT) = {|
+param v;
+	new res = v;
+	self->Dp2Lp(v, res);
+	v = res;
+	return res;
+|};
+
+//---------------------------------------------------
+// Convert display point to local point
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object POINT, refer object POINT) = {|
+param v, res;
+	new _x = v.x;
+	new _y = v.y;
+	_x += .invert[0][2];
+	_y += .invert[1][2];
+	res.x = .invert[0][0] * _x + .invert[0][1] * _y;
+	res.y = .invert[1][1] * _y + .invert[1][0] * _x;
+|};
+
+//---------------------------------------------------
+// Convert display rectangle to local rectangle
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object RECT) = {|
+param v;
+	new res = v;
+	self->Dp2Lp(v, res);
+	v = res;
+|};
+
+//---------------------------------------------------
+// Convert display rectangle to local rectangle
+//---------------------------------------------------
+new Transform2D::Dp2Lp(refer object RECT, refer object RECT) = {|
+param v, res;
+	new _x = v.left;
+	new _y = v.top;
+	_x += .invert[0][2];
+	_y += .invert[1][2];
+	res.left = .invert[0][0] * _x + .invert[0][1] * _y;
+	res.top = .invert[1][1] * _y + .invert[1][0] * _x;
+	_x = v.right;
+	_y = v.bottom;
+	_x += .invert[0][2];
+	_y += .invert[1][2];
+	res.right = .invert[0][0] * _x + .invert[0][1] * _y;
+	res.bottom = .invert[1][1] * _y + .invert[1][0] * _x;
+|};
+
+
+//------------------------------------------------
+// Decompose the transformation matrix into shift, scale, rotate, and offset matrices
+//------------------------------------------------
+new Transform2D::Decompose(refer object Matrix, refer object Matrix, refer object Matrix, refer object Matrix, refer object Matrix) = {|
+param m, shift, scale, rotate, offset;
+	shift->Set(0.0);
+	shift->SetDiagonal(0, 1.0);
+	scale->Set(0.0);
+	scale->SetDiagonal(0, 1.0);
+	rotate->Set(0.0);
+	rotate->SetDiagonal(0, 1.0);
+	offset->Set(0.0);
+	offset->SetDiagonal(0, 1.0);
+
+	offset[0][2] = m[0][2];
+	offset[1][2] = m[1][2];
+	new R = Sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1]);
+
+	shift[1][0] = R != 0.0 ? (m[0][0] * m[1][0] + m[0][1] * m[1][1]) / (R * R) : 0;
+	scale[0][0] = R;
+	scale[1][1] = R != 0.0 ? (m[0][0] * m[1][1] - m[0][1] * m[1][0]) / R : 0;
+	rotate[0][0] = R != 0.0 ? m[0][0] / R : 0;
+	rotate[1][0] = R != 0.0 ? -m[0][1] / R : 0;
+	rotate[0][1] = -rotate[1][0];
+	rotate[1][1] = rotate[0][0];
+|};
+
+//------------------------------------------------
+// Initialize the inverse transformation matrix
+//------------------------------------------------
+new Transform2D::InitInvert(void) = {|
+
+	new offset = instance Matrix(3, 3);;
+	new shift = instance Matrix(3, 3);
+	new scale = instance Matrix(3, 3);
+	new rotate = instance Matrix(3, 3);
+
+	self->Decompose(.form, shift, scale, rotate, offset);
+	if (scale[0][0] != 0.0)
+		scale[0][0] = 1.0 / scale[0][0];
+
+	if (scale[1][1] != 0.0)
+		scale[1][1] = 1.0 / scale[1][1];
+
+	rotate[0][1] = -rotate[0][1];
+	rotate[1][0] = -rotate[1][0];
+
+	offset[0][2] = -offset[0][2];
+	offset[1][2] = -offset[1][2];
+	.invert = offset;
+	.invert *= scale;
+	.invert *= rotate;
+
+|};

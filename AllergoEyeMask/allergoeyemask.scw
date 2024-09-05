@@ -1,0 +1,103 @@
+form "DLG_EDIT_CONTOUR_MENU"
+{
+	, boolean, ID_EDIT;
+		trigger OnEdit;
+	, , ID_DELETE_ROI;
+		trigger OnDelete;
+	, boolean, ID_NEW_ROI;
+		trigger OnNewROI;
+	, , ID_DELETE;
+		trigger OnDelete;
+	, , ID_UNDO;
+		trigger OnUndo;
+	, , ID_REDO;
+		trigger OnRedo;
+	, , ID_SAVE;
+		trigger OnSave;
+	, , ID_OPTIONS;
+		trigger OnOptions;
+	, boolean, ID_NEW_RECT;
+		trigger OnNewROIRect;
+}
+
+form "ROI_TOOL"
+{
+	expr{.Dir}, wstring, ID_PATH;
+	, , ID_ONPATH;
+		trigger OnPath;
+	, , ID_JPG;
+		trigger OnJpg;
+	, , ID_MTF;
+		trigger OnJpg;
+	expr{.Parent.List}, vector, ID_LIST_FILES: items;
+	table
+	{
+		expr{self->Name()}, wstring, 0;
+		, string, 2;
+			image expr{self->Ext() == ".mtf" ? 1 : 0};
+		, string, 1;
+			image expr{self->Modefied() == "" ? 2 : 3};
+	}
+	expr{.IndexJpg}, int, ID_LIST_FILES: indexsel;
+		trigger OnSelectJPG;
+	expr{.Data}, vector, ID_ROI_LIST: items;
+	table
+	{
+		expr{self[0]}, string, 0;
+			bgcolor expr{self[1].roiColor};
+			items expr{GetRoiNames()};
+			trigger OnEditContourName;
+		, string, 1;
+			image expr{self[2] == TRUE ? 0 : 1};
+	}
+	expr{.Index}, int, ID_ROI_LIST: indexsel;
+		trigger OnSelectROI;
+	expr{.fAutoSave}, boolean, ID_AUTO_SAVE;
+	expr{.iColumn = 0}, , ID_LIST_FILES: columnclick;
+		column 0;
+		trigger OnColumn;
+	expr{.iColumn = 1}, , ID_LIST_FILES: columnclick;
+		column 1;
+		trigger OnColumn;
+	expr{.iColumn = 2}, , ID_LIST_FILES: columnclick;
+		column 2;
+		trigger OnColumn;
+}
+
+form "DLG_EDIT_CONTOURS_WND"
+{
+	closeon: IDCLOSE;
+}
+
+form "DLG_SELECT_PLANE"
+{
+	expr{.RoiName}, vector, ID_TABLE_PLANE: items;
+	table
+	{
+		expr{self}, wstring, 0;
+	}
+	expr{.Index}, int, ID_TABLE_PLANE: indexsel;
+	, , IDOK;
+		trigger OnOk;
+	, boolean, IDCLOSE;
+		trigger OnOk;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}
+
+form "DLG_COLOR_PLANE"
+{
+	expr{.Roi}, vector, ID_TABLE_PLANE: items;
+	table
+	{
+		, string, 0;
+			bgcolor expr{self[0]};
+		expr{self[1]}, string, 1;
+	}
+	expr{.Index}, int, ID_TABLE_PLANE: indexsel;
+	, string, ID_TABLE_PLANE: sel;
+		column 0;
+		trigger OnClick;
+	, , IDOK;
+		trigger OnOk;
+	closeon: IDCANCEL, IDCLOSE, IDOK;
+}

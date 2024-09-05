@@ -1,0 +1,411 @@
+class MainWnd  : ModalForm , FormTriggers {
+		ToolBar;
+		RoiBar;
+		ImageWnd;
+		Height;
+		Width;
+		List;
+		iSel;
+		Parent;
+		prevRoi;
+		boolFOK;
+		waitCursor;
+		undo;
+		GraphWnd;
+		Modefied;
+	};
+event WND_SIZE,	MainWnd::OnSize;
+event WND_UPDATE, MainWnd::OnUpdate;
+
+//==========================================
+//
+//==========================================
+new MainWnd::MainWnd(void) = <|
+
+	.Modefied = FALSE;
+	.List = <<>>;
+	.iSel = 0;
+	.boolFOK = FALSE;
+	.prevRoi = <<>>;
+	.undo = <<>>;
+	self->ModalForm("DLG_EDIT_CONTOURS_WND");
+	self->AllowEvent(WND_SIZE);
+	self->AllowEvent(WND_UPDATE);
+	self->Bind(self);
+|>;
+
+//==========================================
+//
+//==========================================
+new MainWnd::OnUpdateROI(void) = <|
+	//.RoiBar->OnUpdateROI2();
+|>;
+//==========================================
+//
+//==========================================
+new MainWnd::Setup(void) = <|
+
+	.ToolBar = instance ToolBar(self);
+	.RoiBar = instance RoiWnd(self);
+	.ImageWnd = instance ImageWnd(self);
+	self->ModalForm::Setup();
+
+	self->UpdateSize();
+|>;
+//==========================================
+//
+//==========================================
+new MainWnd::OnClose(refer ...) = <|
+	
+	self->ModalForm::Close(IDOK);
+	end;
+|>;
+//================================================
+//
+//================================================
+new MainWnd::OnSize(int, int, int) = <|
+param code, width, height;
+	onerror {
+		return 0;
+	}
+	if (code != SIZE_MINIMIZED)
+	{
+		if (.Height == height && .Width == width)
+			return 0;
+		.Height = height;
+		.Width = width;
+		Pluk->FlushIdle();
+		self->UpdateSize();
+	}
+	return 0;
+|>;
+
+//=============================================
+//
+//=============================================
+new MainWnd::OnSelectFile(int) = <|
+param i;
+	.ImageWnd->EndEdit();
+	if (.undo->Len() <= i)
+	.undo->SetLen(i + 1);
+	.iSel = i;
+	.ImageWnd->OnLoad(.List[.iSel]);
+.ImageWnd->Invalidate(TRUE);
+
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::EndNewROI(void) = <|
+	self->OnUpdateROI();
+	if (.ToolBar->GetItem(ID_NEW_ROI))
+		.ToolBar->SetItem(<<ID_NEW_ROI, FALSE>>);
+	.ToolBar->EnableItem(ID_EDIT, TRUE);
+	
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::OnNewROI(void) = <|
+	if (.ToolBar->GetItem(ID_NEW_ROI))
+	{
+		.ToolBar->EnableItem(ID_EDIT, FALSE);
+		.ImageWnd->AddNewROI();
+
+	}
+	else
+	{
+		.ImageWnd->EndNewROI();
+		.ToolBar->EnableItem(ID_EDIT, TRUE);
+	}
+	
+|>;
+//=============================================
+//
+//=============================================
+new MainWnd::OnUpdate(void) = <|
+	onerror {
+		new mdc = instance MDC(self);
+		mdc->OpenDC();
+		mdc->CloseDC();
+		return;
+	}
+		
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	mdc->CloseDC();
+	if (.ImageWnd != EMPTY)
+		.ImageWnd->OnUpdate();
+	
+|>;
+//=============================================
+//
+//=============================================
+
+new MainWnd::OnUpdateViews(void) = <|
+	.ImageWnd->OnUpdate();
+|>;
+//==========================================
+//
+//==========================================
+new MainWnd::UpdateSize(void) = <|
+	new size = self->GetClientSize();
+	.Width = size[0];
+	.Height = size[1];
+	if (.ToolBar != EMPTY)
+		.ToolBar->SetSize(.Width, .ToolBar->GetSize()[1]);
+	if (.RoiBar != EMPTY)
+	{
+		.RoiBar->SetPos(0, .ToolBar->GetSize()[1]);
+	
+		.RoiBar->SetSize(.RoiBar->GetSize()[0], .Height - .ToolBar->GetSize()[1]);
+		.RoiBar->Invalidate(TRUE);
+	}
+
+	if (.ImageWnd != EMPTY)
+	{
+		new top = .ToolBar->GetSize()[1];
+		new left = .RoiBar->GetSize()[0];
+		new Width = (self->GetClientSize()[0] - left - 4);
+		.ImageWnd->SetPos(left, top);
+		.ImageWnd->SetSize(Width, size[1] - top);
+		if (.ImageWnd.Bmp == EMPTY)
+			self->OnSelectFile(.iSel);
+		.ImageWnd->Invalidate(TRUE);
+	}
+	if (.ToolBar != EMPTY)
+	.ToolBar->Invalidate(TRUE);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnEdit(void) = <|
+
+	if (.ToolBar->GetItem(ID_EDIT))
+	{
+		.ToolBar->EnableItem(ID_NEW_ROI, FALSE);
+		.RoiBar->OnEdit();
+	}
+	else
+		.ImageWnd->EndEdit(.RoiBar);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::SetEdit(void) = <|
+
+	.ToolBar->SetItem(<<ID_EDIT, TRUE>>);
+	self->OnEdit();
+
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnEndEdit(void) = <|
+	if (.ToolBar->GetItem(ID_EDIT))
+		.ToolBar->SetItem(<<ID_EDIT, FALSE>>);
+	.ToolBar->EnableItem(ID_NEW_ROI, TRUE);
+
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::EnableEdit(boolean, refer any) = <|
+param flg, ref;
+	.ImageWnd->EnableEdit(flg, ref);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnDelete(void) = <|
+	.ImageWnd->EndNewROI();
+	.ImageWnd->EndEdit();
+	.RoiBar->OnDelete();
+	.Modefied = TRUE;
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::TraceFileName(void) = <|
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnDeleteImage(void) = <|
+
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnSelectRoi(any) = <|
+param b;
+	if (b != EMPTY)
+		.ImageWnd->OnSelectRoi(b == EMPTY ? -1 : b);
+	
+	.ToolBar->EnableDelete(b != EMPTY && b >= 0);
+	.ToolBar->EnableEdit(b != EMPTY && b >= 0);
+|>;
+
+
+//===================================================
+//
+//===================================================
+new MainWnd::AddUndo(refer object String, refer object Vector, int) = <|
+param cmd, prm, indexROI;
+	onerror {
+		return;
+	}
+	if (.undo[.iSel] != EMPTY)
+		if (.undo[.iSel].is_run) return;
+
+	new elmUndo = instance ElmUndo();
+	switch(cmd)
+	{
+		case "InsertPOINT":
+			elmUndo.undo = <<"DeletePOINT", indexROI, prm[1] >>;
+			elmUndo.redo = <<"InsertPOINT", indexROI, prm[0], prm[1] >>;
+			break;
+		case "DeletePOINT":
+			elmUndo.redo = <<"DeletePOINT", indexROI, prm[1] >>;
+			elmUndo.undo = <<"InsertPOINT", indexROI, prm[0], prm[1] >>;
+			break;
+		case "MovePOINT":
+			elmUndo.redo = <<"MovePOINT", indexROI, prm[2], prm[1] >>;
+			elmUndo.undo = <<"MovePOINT", indexROI, prm[2], prm[0] >>;
+			break;
+		case "AddROI":
+			elmUndo.redo = <<"AddROI",  indexROI, prm >>;
+			elmUndo.undo = <<"DeleteROI", indexROI >>;
+			break;
+		case "DeleteROI":
+			elmUndo.undo = <<"AddROI",  indexROI, prm >>;
+			elmUndo.redo = <<"DeleteROI", indexROI >>;
+			break;
+		default:
+			elmUndo = EMPTY;
+	}
+	if (elmUndo != EMPTY)
+	{
+		if (.undo[.iSel] == EMPTY)
+			.undo[.iSel] = instance Undo(100);
+		.undo[.iSel]->Add(elmUndo);
+		self->NotifyUndo();
+	}	
+	
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::NotifyUndo(void) = <|
+	if (.undo[.iSel] == EMPTY)
+	{
+		.ToolBar->EnableItem(ID_REDO, FALSE);
+		.ToolBar->EnableItem(ID_UNDO, FALSE);
+		return;
+	
+	}
+	new l = @.undo[.iSel];
+	if (l->Pos() == l->Len())
+		.ToolBar->EnableItem(ID_REDO, FALSE);
+	else
+		.ToolBar->EnableItem(ID_REDO, TRUE);
+	
+	if (l->Pos() == 0)
+		.ToolBar->EnableItem(ID_UNDO, FALSE);
+	else
+		.ToolBar->EnableItem(ID_UNDO, TRUE);
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnUndo(void) = <|
+new s = .undo[.iSel] == EMPTY ? EMPTY : .undo[.iSel]->Prev();
+	if (s != EMPTY)
+		self->ExecCmd(s.undo);
+	self->NotifyUndo();	
+	
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::OnRedo(void) = <|
+new s = .undo[.iSel] == EMPTY ? EMPTY : .undo[.iSel]->Next();
+	if (s != EMPTY)
+		self->ExecCmd(s.redo);
+	self->NotifyUndo();
+
+|>;
+new MainWnd::IsEditJPG(int) = <|
+param i;
+	return .undo[i] == EMPTY || .undo[i]->Len() == 0 ? FALSE : TRUE;  
+|>;
+//===================================================
+//
+//===================================================
+new MainWnd::ExecCmd(refer object Vector) = <|
+param cmd;
+
+	self->OnUpdateViews();
+	
+|>;
+
+new MainWnd::MakeBmp(refer object MathImage) = <|
+param img;
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = img->GetMaximum();
+	new Params = instance Vector(1);
+	Params = << << img, 255, 255, 255, LUT >> >>;
+	return instance MBmp(Get3BytesBits(Params), img->Width(), img->Height());
+	
+|>;
+
+
+global LoadBmpWithBlur = <|
+param ImageName;
+	new Image = LoadImageWithBlur(ImageName);
+	new LUT = instance SimpleLUT();
+	LUT.Automatic = FALSE;
+	LUT.Min = 0;
+	LUT.Max = 255;
+	new Params = << << Image[0], 255, 0, 0, LUT >>,
+					<< Image[1], 0, 255, 0, LUT >>,
+					<< Image[2], 0, 0, 255, LUT >>
+			>>;
+	return instance MBmp(Get3BytesBits(Params), Image[0]->Width(), Image[0]->Height());
+|>;
+
+global LoadImageWithBlur = <|
+param ImageName;
+	new Image = MathImage::LoadImageSet(ImageName);
+/*
+new f = instance File(MaskName);
+	if (f->Access(ACCESS_EXIST) == TRUE)
+	{
+		f->Open("rb");
+		new bits = f->Read(-1);
+		f->Close();
+		new Blur = Image;
+		new mask = instance MathImage(1, bits, 0, Image[0]->Width(), Image[0]->Height());
+		new iris = mask;
+		iris->SetIfNotEqual(0, 2);
+		iris->SetIfEqual(-1, 2);
+		new iris_1 = iris;
+		iris_1 *= -1;
+		iris_1 -= 1;
+		
+		for (new i = 0; i < Blur->Len(); ++i)
+		{
+			Image[i] &= iris_1;
+			Blur[i] &= iris;
+			Blur[i] = Blur[i]->Binning(24, TRUE); 
+			Blur[i] = Blur[i]->Stretch(24, Image[i]->Width(), Image[i]->Height());
+			Blur[i] &= iris;
+			Image[i] += Blur[i];
+		}
+	}
+	*/
+	return Image;
+|>;
+

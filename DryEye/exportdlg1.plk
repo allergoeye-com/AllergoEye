@@ -1,0 +1,1145 @@
+class  EXPEdit : GEdit {
+	parent;
+	id;
+	
+};
+new EXPEdit::EXPEdit(int, refer object GWnd, int) = <|
+param id, wnd, ind;
+	.parent = &wnd;
+	.id = ind;
+	self->GEdit (id, wnd);
+	
+|>;
+new EXPEdit::OnKeyUp(int) = <|
+param a;
+self->GEdit::OnKeyUp(a);
+	.parent->OnEdit(.id, self->GetText());
+|>;
+
+
+class ExportDlg  : ModalForm , FormTriggers {
+	Patients;
+	IndexPatients;
+	IndexTest;
+	IndexDate;
+	waitCursor;
+	iColumn;
+	fFind;
+	fOpen;
+	sSearch;
+	eBoxID;
+	eBoxFam;
+	eEdit;
+	sDate;
+	vSelColumn;
+
+global:
+	FID;
+	FFAM;
+	FNAM;	
+	FDAT;
+	FSUBDAT;
+	FTEST;
+	INDEX;
+	NAME;
+	FAMILY;
+	DATE;
+	DATE_SUB;
+	SUB_FLG;
+	SUB_OBJ;
+	SUB_PARENT;
+	USED;
+	OBJ;
+	TEST;
+	COLOR;
+	ID;
+	
+
+};
+ExportDlg::NAME = 0;
+ExportDlg::FAMILY = 1;
+ExportDlg::DATE = 2;
+ExportDlg::ID = 3;
+ExportDlg::USED = 4;
+ExportDlg::OBJ = 5;
+ExportDlg::COLOR = 6;
+ExportDlg::TEST = 3;
+ExportDlg::SUB_OBJ = 1;
+ExportDlg::SUB_FLG = 0;
+ExportDlg::SUB_PARENT = 2;
+ExportDlg::DATE_SUB = 3;
+
+ExportDlg::FID = 0;
+ExportDlg::FFAM = 1;
+ExportDlg::FNAM = 2;	
+ExportDlg::FDAT = 3;
+ExportDlg::FSUBDAT = 4;
+ExportDlg::FTEST = 5;
+ExportDlg::INDEX = ExportDlg::COLOR + 1;
+event WND_SIZE, ExportDlg::OnSize;
+event WND_UPDATE, ExportDlg::OnUpdate;
+event WND_MOUSEWHEEL, 		ExportDlg::OnMouseWheel;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::ExportDlg(refer object GWnd ) = <|
+param parent;
+	.iColumn = 0;
+	.CurIndexAll = -1;
+	.sDate = instance TimeDate();
+	.eEdit = <<"", "", "", "", "", "" >>;
+	.sSearch = << instance StrSearch(), 
+	instance StrSearch(),
+	instance StrSearch(),
+	instance DateSearch(),
+	instance DateSearch(),
+	instance SubSearch() >>;
+	.IndexAll = <<>>;
+	DlgNewTest::IndexAlerg = AllergoEyeIni->ReadInt("TEST", "1", 0);
+	DlgNewTest::IndexSide = AllergoEyeIni->ReadInt("TEST", "2", 0);
+	DlgNewTest::IndexDil = AllergoEyeIni->ReadInt("TEST", "3", 0);
+	DlgNewTest::IndexTime = AllergoEyeIni->ReadInt("TEST", "4", 0);
+
+	.PrevIndexAll = <<>>;
+	new tst = TRUE;
+	onerror {
+		tst = FALSE;
+	}
+	if (tst)
+	{
+		new path = AllergoEyeIni->ReadStr("PATH", "PLUK");
+		if (path->GetLastByte() != FD)
+			path @= SFD;
+		if (path == EMPTY)
+			path = "";
+		Pluk->Exec(Printf("%s"@ServerExe, path), FALSE, FALSE);
+	}
+	.fOpen = FALSE;
+
+	.Date = <<>>;
+	.fFind = FALSE;
+	.AllRecord = <<>>;
+
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (.Dir->GetLastByte() != FD)
+		.Dir @= SFD;
+	if (.Dir->GetLastByte() != FD)
+		.Dir @= SFD;
+	self->InitDir();
+
+	self->ModalForm( "DLG_EXPORT", parent );
+	self->AllowEvent( WND_SIZE );
+	self->AllowEvent(WND_UPDATE);
+	self->AllowEvent(WND_MOUSEWHEEL);
+
+
+
+|>;
+//=============================================
+//
+//=============================================
+new ExportDlg::OnMouseWheel(int) = <|
+param zDelta;
+
+	if (.ListSubRecord->OnMouseWheel(zDelta))
+		return TRUE;
+	return FALSE;
+
+|>;
+
+//==========================================
+//
+//==========================================
+new ExportDlg::UpdateSize(void) = <|
+	if (.fOpen == FALSE && .ListSubRecord != EMPTY)
+	{
+		new pos = self->GetItemPos(ID_VIEW);
+		new size = self->GetItemSize(ID_VIEW);
+		.ListSubRecord->SetPos(pos[0], pos[1]);
+		.ListSubRecord->SetSize(size[0], size[1]);
+		self->EnableItem(ID_VIEW, FALSE);
+ 		.ListSubRecord->Invalidate(FALSE);
+		.ListSubRecord->SetFocus();
+		.fOpen = TRUE;
+	}
+
+|>;
+
+new ExportDlg::OnSize(...) =
+<|
+param code, width, height;
+
+	if (code != SIZE_MINIMIZED)
+	{
+		self->UpdateSize();		
+	}
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new ExportDlg::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	self->UpdateForm();
+	.eBoxID = instance EXPEdit( ID_SEARCH_ID, self, 0);
+	.eBoxFam = instance EXPEdit( ID_SEARCH_FAM, self, 1);
+ 	.ListSubRecord = instance BmpListView(TRUE, self);
+
+|>;
+
+//=============================================
+//
+//=============================================
+new ExportDlg::OnUpdate(void) = <|
+	onerror {
+		new mdc = instance MDC(self);
+		mdc->OpenDC();
+		mdc->CloseDC();
+		return;
+	}
+	if (!.fOpen	)
+		self->UpdateSize();		
+	
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	mdc->CloseDC();
+	//if (.ListSubRecord != EMPTY)
+		//.ListSubRecord->OnUpdate();
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::~ExportDlg( void ) =
+<|
+	main.netDir->SetProxy(EMPTY);
+|>;
+
+//===================================================================
+//
+//===================================================================
+new ExportDlg::FromSelectAll(int) = <|
+param IndexAll;
+if (.AllRecord->Len() == 0) return;
+	
+	if (.AllRecord[IndexAll][ExportDlg::OBJ]->NumDir() > 0)
+	{
+		new Record = &.AllRecord[IndexAll][ExportDlg::OBJ];
+		new mIndex = .AllRecord[IndexAll][.INDEX];
+		new list = <<>>;
+		Record->GetDirList(list);
+		.fOpen = FALSE;
+		.AllRecord[IndexAll][ExportDlg::USED] = instance Vector(list->Len());
+		new Date = @.AllRecord[IndexAll][ExportDlg::USED];
+		for (new i = 0, l = list->Len(); i < l; ++i)
+		{
+			Date[i] =  << list[i]->IsSelected(), list[i], .AllRecord[IndexAll], <<>> >>;
+			.sSearch[.FSUBDAT]->Add(list[i].name, mIndex, FALSE);
+			if (list[i]->NumDir() > 0)
+			{
+				new list1 = <<>>;
+				list[i]->GetDirList(list1);
+				Date[i][ExportDlg::DATE_SUB] = instance Vector(list1->Len());
+				new sub = @Date[i][ExportDlg::DATE_SUB];
+				for (new j = 0, lj = list1->Len(); j < lj; ++j)
+				{
+					sub[j] =  <<list1[j]->IsSelected(), list1[j], list[i] >>;
+					.sSearch[.FTEST]->Add(list1[j].name, mIndex);
+				}
+				if (lj > 1)	
+				sub->QSort(<|param key, elem; return key[ExportDlg::SUB_OBJ].name  <> elem[ExportDlg::SUB_OBJ].name;|>);
+	
+			}
+		}
+		if (l > 1)
+			Date->QSort({|param key, elem; return key[ExportDlg::SUB_OBJ].name  <> elem[ExportDlg::SUB_OBJ].name;|});		
+		
+
+	}
+
+|>;
+			
+//===================================================================
+//
+//===================================================================
+new ExportDlg::SelectFromSelectAll(int) = <|
+param IndexAll;
+if (.AllRecord->Len() == 0) return;
+
+	if (.AllRecord[IndexAll][ExportDlg::OBJ]->NumDir() > 0)
+	{
+		new Record = &.AllRecord[IndexAll][ExportDlg::OBJ];
+		new flg = Record->IsSelected();
+		if (!flg) .AllRecord[IndexAll][ExportDlg::COLOR] = CLR_BLACK;
+		new Date = @.AllRecord[IndexAll][ExportDlg::USED];
+		if (Date->Len() != Record->NumDir())
+		{
+			self->FromSelectAll(IndexAll);
+			if (self->GetIndexAll() == IndexAll)
+			{
+				self->InitDate(IndexAll);
+				self->ResetSubRecords();
+
+			}
+			else
+				return <<-1, -1>>;
+
+		}
+		Date = @.AllRecord[IndexAll][ExportDlg::USED];
+		new Index = -1;
+		new IndexSub = -1;
+
+		for (new i = 0; i < Date->Len(); ++i)
+		{
+				onerror {
+				Date->Remove(i);
+				--i;
+				continue;
+				};
+			if (.eEdit[4]->Len() == 0 || (PrinfDateFromTestName(Date[i][ExportDlg::SUB_OBJ].name) == .eEdit[4] && !Date[i][ExportDlg::SUB_OBJ]->IsSelected()))
+				Date[i][ExportDlg::SUB_OBJ]->Select(0, TRUE);
+			Date[i][ExportDlg::SUB_FLG] =  Date[i][ExportDlg::SUB_OBJ]->IsSelected();
+			if (Date[i][ExportDlg::SUB_OBJ]->NumDir() != Date[i][ExportDlg::DATE_SUB]->Len())
+			{
+				self->FromSelectAll(IndexAll);
+				if (self->GetIndexAll() == IndexAll)
+				{
+					self->ResetSubRecords();
+					Date = @.AllRecord[IndexAll][ExportDlg::USED];
+					i = 0;
+					self->InitDate(IndexAll);
+						return <<-1, -1>>;
+
+				}
+				else
+					return <<-1, -1>>;
+			}
+			if (Index == -1 && Date[i][ExportDlg::SUB_FLG])
+				Index = i;
+			new sub = @Date[i][ExportDlg::DATE_SUB];
+			new fCheckTest = Date[i][ExportDlg::SUB_OBJ]->IsSelected();
+			for (new j = 0, lj = sub->Len(); j < lj; ++j)
+			{
+				onerror {
+				sub->Remove(j);
+				lj = sub->Len();
+				--j;
+				continue;
+				};
+				if (fCheckTest && (.eEdit[5]->Len() == 0 || (sub[j][ExportDlg::SUB_OBJ].name->Find(.eEdit[5]) >= 0 && !sub[j][ExportDlg::SUB_OBJ]->IsSelected())))
+					sub[j][ExportDlg::SUB_OBJ]->Select(0, TRUE);
+		
+				sub[j][ExportDlg::SUB_FLG] = sub[j][ExportDlg::SUB_OBJ]->IsSelected();
+				if (sub[j][ExportDlg::SUB_FLG] && IndexSub == - 1 && Index == i)	
+					IndexSub = j; 
+			}
+
+		}
+		return <<Index, IndexSub>>;
+	}
+
+	return <<-1, -1>>;
+
+|>;
+
+//===================================================================
+//
+//===================================================================
+new ExportDlg::SelectSubRecords(void ) = <|
+	for (new i = 0, l = .Date->Len(); i < l; ++i)
+	{
+		if (.Date[i][ExportDlg::SUB_FLG])
+		{
+			new sub = @.Date[i][ExportDlg::DATE_SUB];
+			for (new j = 0, lj = sub->Len(); j < lj; ++j)
+			{
+				if (sub[j][ExportDlg::SUB_FLG])
+				{
+					self->OnSelectSubRecord(sub[j][ExportDlg::SUB_OBJ], TRUE);
+
+				}
+			}
+		}
+
+	
+	}
+
+|>;
+//===================================================================
+//
+//===================================================================
+new ExportDlg::GetIndexAll(void) = <|
+
+
+	if (.IndexAll->Len() - 1 >= 0)
+	{
+		return .IndexAll[.IndexAll->Len() - 1];
+	}
+	return -1;
+|>;	
+//===================================================================
+//
+//===================================================================
+new ExportDlg::SetIndexAll(void) = <|
+
+
+	if (.IndexAll->Len() - 1 >= 0)
+	{
+		return .IndexAll[.IndexAll->Len() - 1];
+	}
+	return -1;
+|>;	
+//===================================================================
+//
+//===================================================================
+new ExportDlg::SetCurIndexAll(void) = <|
+
+	new v1 = .IndexAll;
+	new v = .IndexAll->Intersect(.PrevIndexAll, <|param key, elem; return key <> elem; |>);
+
+		
+|>;	
+
+//===================================================================
+//
+//===================================================================
+new ExportDlg::OnSelectAll(refer ...) = <|
+
+onerror{
+ 	return;
+ };
+	.ListSubRecord->Clear();
+	.ListSubRecord->Invalidate(TRUE);
+	new IndexAll = .CurIndexAll;
+	if (.IndexAll == EMPTY)
+	.IndexAll = <<>>;
+	.PrevIndexAll = .IndexAll;
+
+	if (.IndexAll->Len() > 0 && IndexAll >= 0 && .IndexAll->BFind(.CurIndexAll, <|param key, elem; return key <> elem; |>) > -1)
+	{
+		self->ResetSubRecords();
+
+		.IndexDate = -1;
+		.Date = <<>>;
+		
+		new Index = self->SelectFromSelectAll(IndexAll);
+		self->InitDate(IndexAll);
+		
+		self->UpdateForm(".Date");
+		self->UpdateForm(".IndexDate");
+		if (Index[0] != -1)
+		self->SelectDate(<<Index[0], TRUE>>);
+		self->UpdateForm(".IndexDate");
+
+		self->UpdateForm(".SubRecords");
+		if (Index[1] != -1)
+		{
+		 .IndexSubRecords = Index[1];
+		 self->SelectSubRecords();
+		}
+		self->UpdateForm(".IndexSubRecords");
+		self->OnUpdate();
+	
+	}
+	else
+	{
+		self->ClearSubDir();
+		if (.CurIndexAll >= 0)
+		{
+			.AllRecord[.CurIndexAll][ExportDlg::OBJ]->ClearSelect(0);
+		}
+	}
+	self->UpdateLastFamNam();
+
+|>;
+
+//=================================================
+//
+//=================================================
+new ExportDlg::SelectAll(refer object BaseString, refer object BaseString, refer object BaseString) = <|
+param all, date, sub;
+	.ListSubRecord->Clear();
+	.ListSubRecord->Invalidate(TRUE);
+	if (self->GetIndexAll() > -1)
+	{
+		self->ResetSubRecords();
+
+		.IndexDate = -1;
+		.Date = <<>>;
+		new index = .AllRecord->Find(all, 0, <| param key, elem; return key == elem[ExportDlg::OBJ].name; |> );
+		if (index != -1)
+		{
+			.IndexAll @= index;
+			.CurIndexAll = index;
+		}
+		self->SelectFromSelectAll(.CurIndexAll);
+		self->InitDate(.CurIndexAll);
+
+		self->UpdateForm(".Date");
+		self->UpdateForm(".IndexDate");
+		index = .Date->Find(date, 0, <| param key, elem; return key == elem[ExportDlg::SUB_OBJ].name; |> );
+		if (index != -1)
+		{
+			.IndexDate = index;
+			self->SelectDate(<<index, TRUE>>);
+		}
+		self->UpdateForm(".IndexDate");
+
+		self->UpdateForm(".SubRecords");
+		index = .SubRecords->Find(sub, 0, <| param key, elem; return key == elem[ExportDlg::SUB_OBJ].name; |> );
+		if (index != -1)
+		{
+			.IndexSubRecords = index;
+			 self->SelectSubRecords();
+		}
+		self->UpdateForm(".IndexSubRecords");
+		self->OnUpdate();
+	
+	}
+
+
+|>;
+//===================================================================
+//
+//===================================================================
+new ExportDlg::Cleanup( void ) =
+<|
+|>;
+//=================================================
+//
+//=================================================
+new ExportDlg::OnOk(refer ...) = <|
+	self->UpdateForm();
+	self->ModalForm::Close(IDOK);
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnSelectSubRecord(pointer object DirNode, boolean) = <|
+param m, fSelect;
+	new currentList = m->GetFileList(<<".jpg", ".tif">>);
+	for (new i = 0, l = currentList->Len(); i < l; ++i)
+	{
+		if (fSelect)
+		{
+			if (!.ListSubRecord->IsSelect(currentList[i]))
+			{
+				new bmp = instance MBmp();
+				new dir = .Dir @ currentList[i]->GetWinPath();
+				if (currentList[i].parent.childs->Find(JustName(dir) @ ".ctr", 0,  <| param key, elem; return key == elem.name; |>) != -1)
+				{
+					new v = <<>>;
+					new names = << >>;
+					new distr = << >>;
+					currentList[i].result =main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+					currentList[i].res_distr <- distr;
+					if (v->Len() > 0)
+					{
+						currentList[i].roi <- v;
+						currentList[i].names <- names;
+					}
+				}
+				
+				bmp->LoadImage(dir);
+				.ListSubRecord->AddBmp(bmp, currentList[i]);
+			}
+		}
+		else
+			.ListSubRecord->Remove(currentList[i]);
+		
+	}
+	.ListSubRecord->RecalcLayout();
+	.ListSubRecord->Invalidate(TRUE);
+ 	
+|>;	
+
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnSelectSubRecord(refer ...) = <|
+param data, par;
+onerror {
+		self->SelectFromSelectAll(.CurIndexAll);
+	};
+	new Table = instance GTable(ID_TREE, self);
+	new pos = Table->GetNotifyPos();
+	if (pos[0] >= 0)
+	{
+		if (pos[1] == 0 || !.SubRecords[pos[0]][0])
+		{
+			.SubRecords[pos[0]][0] = !.SubRecords[pos[0]][0];
+			if (.SubRecords[pos[0]][ExportDlg::SUB_OBJ]->IsSelected() != .SubRecords[pos[0]][ExportDlg::SUB_FLG])
+			{
+				if(.SubRecords[pos[0]][ExportDlg::SUB_FLG])
+					.SubRecords[pos[0]][ExportDlg::SUB_OBJ]->Select(0, .SubRecords[pos[0]][ExportDlg::SUB_FLG]);
+				else
+					.SubRecords[pos[0]][ExportDlg::SUB_OBJ]->ClearSelect(0);
+			}
+	
+			self->UpdateForm(".SubRecords");
+		
+		}
+		if (.SubRecords[pos[0]][0] && !.Date[.IndexDate][0])
+		{
+			.Date[.IndexDate][0] = TRUE;
+			self->UpdateForm(".Date");
+		}
+		self->OnSelectSubRecord(.SubRecords[pos[0]][ExportDlg::SUB_OBJ], .SubRecords[pos[0]][ExportDlg::SUB_FLG]);
+	}
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new ExportDlg::UpdateForm(void) = <|
+
+	onerror {
+	return;
+	};
+		self->ModalForm::UpdateForm();
+
+|>;
+
+//=================================================
+//
+//=================================================
+new ExportDlg::OnSelectDate(refer ...) = <|
+	if (.CurIndexAll > -1)
+	{
+		new Table = instance GTable(ID_DATE, self);
+		new pos = Table->GetNotifyPos();
+		self->SelectDate(pos);
+	
+	}
+
+
+|>;
+//=================================================
+//
+//=================================================
+new ExportDlg::UpdateLastFamNam(void) = <|
+	if (.IndexAll != EMPTY && .CurIndexAll != EMPTY &&	.IndexAll->BFind(.CurIndexAll, <|param key, elem; return key <> elem; |>) > -1)
+		.LastFamNam = .AllRecord[.CurIndexAll][ExportDlg::FAMILY] @ " " @ .AllRecord[.CurIndexAll][ExportDlg::NAME];
+	else
+		.LastFamNam = "";
+	self->UpdateForm(".LastFamNam");
+
+|>;
+
+//=================================================
+//
+//=================================================
+new ExportDlg::InitDate(int) = <|
+param IndexAll;
+
+		new date = @.AllRecord[IndexAll][ExportDlg::USED];
+		.Date = instance Vector(date->Len());
+		for (new i = 0, l = date->Len(); i < l; ++i)
+		{
+			if (date[i][ExportDlg::SUB_OBJ]->NumDir() != date[i][ExportDlg::DATE_SUB]->Len())
+			{
+				self->FromSelectAll(IndexAll);
+				if (.CurIndexAll == IndexAll)
+				{
+					self->InitDate(IndexAll);
+					return;
+				}
+			}
+			.Date[i] = date[i];
+			.Date[i][ExportDlg::SUB_FLG] =  date[i][ExportDlg::SUB_OBJ]->IsSelected();
+		
+			new sub = @.Date[i][ExportDlg::DATE_SUB];
+			for (new j = 0, lj = sub->Len(); j < lj; ++j)
+				sub[j][ExportDlg::SUB_FLG] = sub[j][ExportDlg::SUB_OBJ]->IsSelected();
+				
+
+		}
+|>;
+//=================================================
+//
+//=================================================
+new ExportDlg::ResetSubRecords(void) = <|
+		.SubRecords = <<>>;
+		.IndexSubRecords = EMPTY;
+	
+
+|>;
+
+//=================================================
+//
+//=================================================
+new ExportDlg::SelectDate(refer object Vector) = <|
+param pos;
+	new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (ph->GetLastByte() != FD)
+		ph @= SFD;
+		
+	onerror {
+		
+		
+	if (.AllRecord[.CurIndexAll][ExportDlg::OBJ]->ReloadDir(ph, <<>>, FALSE))
+	{
+		self->FromSelectAll(.CurIndexAll);
+		self->InitDate(.CurIndexAll);
+		
+	}
+	else
+	return;
+	};
+	
+	if (.CurIndexAll > -1)
+	{
+		if (pos[1] == 0 || !.Date[pos[0]][ExportDlg::SUB_FLG])
+			.Date[pos[0]][ExportDlg::SUB_FLG] = !.Date[pos[0]][ExportDlg::SUB_FLG];
+		if (.Date[pos[0]][ExportDlg::SUB_OBJ]->IsSelected() != .Date[pos[0]][ExportDlg::SUB_FLG])
+		{
+			if(.Date[pos[0]][ExportDlg::SUB_FLG])
+				.Date[pos[0]][ExportDlg::SUB_OBJ]->Select(0, .Date[pos[0]][ExportDlg::SUB_FLG]);
+			else
+				.Date[pos[0]][ExportDlg::SUB_OBJ]->ClearSelect(0);
+		}
+		self->ResetSubRecords();
+		.IndexDate = pos[0];
+		if (.Date[.IndexDate][ExportDlg::SUB_OBJ]->NumDir() > 0)
+		{
+			new Record = .Date[.IndexDate][ExportDlg::SUB_OBJ];
+			new list = <<>>;
+			Record->GetDirList(list);
+			.fOpen = FALSE;
+			.SubRecords = instance Vector(list->Len());
+			for (new i = 0, l = list->Len(); i < l; ++i)
+			{
+				.SubRecords[i] = @.Date[.IndexDate][ExportDlg::DATE_SUB][i];
+				if (.Date[pos[0]][ExportDlg::SUB_FLG] && (.eEdit[5]->Len() == 0 || (.SubRecords[i][ExportDlg::SUB_OBJ].name->Find(.eEdit[5]) >= 0 && !.SubRecords[i][ExportDlg::SUB_OBJ]->IsSelected())))
+				{
+					.SubRecords[i][ExportDlg::SUB_OBJ]->Select(0, TRUE);
+					.SubRecords[i][ExportDlg::SUB_FLG] = TRUE;
+					self->OnSelectSubRecord(.SubRecords[i][ExportDlg::SUB_OBJ], .SubRecords[i][ExportDlg::SUB_FLG]);
+				}
+				else
+				if (!.Date[.IndexDate][ExportDlg::SUB_FLG] && .SubRecords[i][ExportDlg::SUB_FLG])
+				{
+					.SubRecords[i][0] = FALSE;
+					self->OnSelectSubRecord(.SubRecords[i][ExportDlg::SUB_OBJ], .SubRecords[i][ExportDlg::SUB_FLG]);
+				}
+				
+			}
+
+		}
+
+
+		self->OnSelectSubRecord(.Date[pos[0]][ExportDlg::SUB_OBJ],.Date[pos[0]][ExportDlg::SUB_FLG]);
+		.ListSubRecord->SetFocus();
+
+		self->UpdateForm(".Date");
+		self->UpdateForm(".SubRecords");
+		self->UpdateForm(".IndexSubRecords");
+		self->OnUpdate();
+	
+	}
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new ExportDlg::InitDir(void) = <|
+	if (.dirNode != EMPTY) return;
+	
+	.dirNode = instance TreeDir(.Dir, <<>>);
+	.ListCard = .dirNode->Root()->GetFileList(<<".ini">>, TRUE);
+	new n, f, date, id, info, index = 0;
+
+	for (new i = 0, l = .ListCard->Len(); i < l; ++i)
+	{
+	
+		if (.ListCard[i].name == "info.ini" && .ListCard[i]->Level() == 1)
+		{
+
+
+			info = instance IniFile(.Dir @ .ListCard[i]->GetWinPath());
+			f = info->ReadStrW("CARD", "FAMILY", "");
+			n = info->ReadStrW("CARD", "NAME", "");
+			id = info->ReadStrW("CARD", "ID", "");
+			date = info->ReadStrW("CARD", "DATE", "");
+			date = date->Tokenize("/.");
+			if (date->Len() < 2)
+				date = instance Date()->PrintDMY()->Tokenize("/.");
+			new y = int(date[2]);
+			if (y < 1000)
+				y = y % 100;
+			if (y < 100)
+			{
+				if (y > 25)
+					y += 1900;
+				else
+					y += 2000;
+			}
+			else
+			{
+				if (y > 20000)
+					y = 2000 + y % 1000;
+				else
+				if (y > 19000)
+					y = 1900 + y % 1000;
+			}
+			date = instance WString(instance Date(int(date[0]), int(date[1]), y)->PrintDMY());
+			.sSearch[.FID]->Add(id, .AllRecord->Len()); 
+			.sSearch[.FFAM]->Add(f, .AllRecord->Len()); 
+			.sSearch[.FNAM]->Add(n, .AllRecord->Len()); 
+			.sSearch[.FDAT]->Add(date, .AllRecord->Len()); 
+
+	  		.AllRecord @= << << f,
+	        n, 
+	        date, id, <<>>, &.ListCard[i].parent,
+	        CLR_BLACK, index>> >>;
+	        ++index;
+	    }
+	
+	}
+	//2
+	.Cards <- .AllRecord;
+	.AllRecord = instance Vector(.Cards->Len());
+	new v = <<>>;
+	.iColumn = 1;
+	.sSearch[.iColumn]->Search("", v);
+
+	for (i = 0, l = .AllRecord->Len(); i < l; ++i)
+	{
+		new k = @.Cards[v[i][1]];
+		.AllRecord[v[i][0]] = &k;
+	}
+	.vSelColumn <- v; 
+	
+
+	//.AllRecord->QSort({|param key, elem; return (key[ExportDlg::NAME] @ key[ExportDlg::FAMILY])  <> (elem[ExportDlg::NAME] @ elem[ExportDlg::FAMILY]);|});
+	for (i = 0, l = .AllRecord->Len(); i < l; ++i)
+	self->FromSelectAll(i);
+	
+
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnSelectView(int) = <|
+param column;
+new v = <<>>;
+	.sSearch[column]->Search(.eEdit[column], v);
+	for (new i = 0, l = .eEdit->Len(); i < l; ++i)
+		if (i != column && .eEdit[i] != "")
+		{
+			new v1 = <<>>;
+			.sSearch[i]->Search(.eEdit[i], v1);
+			v = v->Intersect(v1, <|param key, elem; return key[1] <> elem[1]; |>);
+			
+		}
+	.AllRecord = instance Vector(v->Len());
+	v->QSort(<|param key, elem; return key[0] <> elem[0]; |>);
+	.IndexAll = <<>>;
+	for (i = 0, l = .AllRecord->Len(); i < l; ++i)
+	{
+		new k = @.Cards[v[i][1]];
+		.AllRecord[i] = &k;
+	}
+	.CurIndexAll = EMPTY;
+	if (column == 0)
+	{
+	
+		.AllRecord->QSort({|param key, elem; return int(key[ExportDlg::ID])  <> int(elem[ExportDlg::ID]);|});
+	}
+	for (i = 0, l = .AllRecord->Len(); i < l; ++i)
+	{
+		if (.AllRecord[i][ExportDlg::OBJ]->IsSelected())
+		.IndexAll @= i;
+	}
+	
+	if (.IndexAll->Len() > 0)
+		.CurIndexAll = .IndexAll[0];
+	
+	self->ClearSubDir();	
+	self->UpdateForm(".AllRecord");
+	self->UpdateForm(".IndexAll");
+	self->UpdateForm(".CurIndexAll");
+	if (.IndexAll->Len() > 0)
+		self->OnSelectAll();
+	else
+		self->UpdateLastFamNam();
+	
+
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnColumn(...) = <|
+parest par;
+.vSelColumn = <<>>;
+new column = par[0];
+	.sSearch[column]->Search(.eEdit[column], .vSelColumn);
+
+	self->OnSelectView(par[0]);
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnEdit(int, object String) = <|
+param id, str;
+	.eEdit[id] = str;
+	
+	self->OnColumn(.iColumn);	
+
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnSearchTest(...) = <|
+	new combo = instance GComboBox(ID_TEST_ALERGEN, self);
+	new txt = combo->GetText();
+	.eEdit[.FTEST] = combo->GetText();
+	if (txt != EMPTY && txt->Len() > 0)
+	{
+		combo = instance GComboBox(ID_DIL, self);
+		new txt = combo->GetText();
+		if (txt != EMPTY && txt->Len() > 0)
+		{
+			.eEdit[.FTEST] @= " " @ txt;
+			combo = instance GComboBox(ID_SIDE, self);
+			new txt = combo->GetText();
+			if (txt != EMPTY && txt->Len() > 0)
+				.eEdit[.FTEST] @= " " @ txt;
+		}
+	}
+			
+	self->OnSelectView(.iColumn);
+	self->UpdateForm(".eEdit[5]");	
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnSearchDate(...) = <|
+	.eEdit[.FSUBDAT] =.sDate->Date::Print();
+
+	self->OnSelectView(.iColumn);
+	self->UpdateForm(".eEdit[4]");	
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::ClearSubDir(void) = <|
+	.IndexDate = 0;
+	.IndexSubRecords =0;	
+	.Date = <<>>;
+	.SubRecords = <<>>;
+	.ListSubRecord->Clear();
+	.ListSubRecord->Invalidate(FALSE);
+	self->UpdateForm(".Date");
+	self->UpdateForm(".SubRecords");
+
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnClearTest(...) = <|
+	.eEdit[5] = "";
+	self->OnColumn(.iColumn);	
+	self->UpdateForm(".eEdit[5]");	
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnClearDate(...) = <|
+	.eEdit[4] = "";
+	self->OnColumn(.iColumn);	
+	self->UpdateForm(".eEdit[4]");	
+|>;
+
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnClearQuery(...) = <|
+
+	
+	.eEdit = <<"", "", "", "", "", "" >>;
+	self->OnColumn(.iColumn);	
+	self->UpdateForm(".eEdit[0]");	
+	self->UpdateForm(".eEdit[1]");	
+	self->UpdateForm(".eEdit[4]");	
+	self->UpdateForm(".eEdit[5]");	
+
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::OnClearSelect(...) = <|
+	for (new i = 0, l = .Cards->Len(); i < l; ++i)
+	{
+		if (.Cards[i][ExportDlg::OBJ]->IsSelected())
+			.Cards[i][ExportDlg::OBJ]->ClearSelect(0);
+	}
+	self->OnColumn(.iColumn);
+|>;
+//====================================================================
+//====================================================================
+new ExportDlg::OnToExcel(refer ...) = <|
+new v = <<>>;
+	for (new i = 0, l = .Cards->Len(); i < l; ++i)
+	{
+		new card = @.Cards[i];
+		if (card[ExportDlg::USED] != EMPTY && card[ExportDlg::OBJ]->IsSelected())
+		{
+	
+			new date = @.Cards[i][ExportDlg::USED];
+			for (new n = 0, nl = date->Len(); n < nl; ++n)
+			{
+				if (date[n][ExportDlg::SUB_OBJ]->IsSelected())
+				{
+					if (date[n][ExportDlg::DATE_SUB] != EMPTY)
+					{
+						new sub = @date[n][ExportDlg::DATE_SUB];
+						for (new j = 0, lj = sub->Len(); j < lj; ++j)
+						{
+							new r = @sub[j];
+							if (r[ExportDlg::SUB_OBJ]->IsSelected())
+							{
+								new pos = v->Len();
+								v->SetLen(pos + 1);
+								v[pos] =  <<&r, &card>>; 
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	self->CToExcel(self, v);
+
+|>;
+//====================================================================
+//====================================================================
+new ExportDlg::CToExcel(refer object GWnd, refer object Vector) = <|
+param wnd, SubRecords;
+	new com;
+
+	onerror {
+		if (com != EMPTY)
+		{
+			com->gWorkbooks()->gItem(1)->Close(0);
+			com->Quit();
+
+		}
+		com = EMPTY;
+		return FALSE;
+	};
+	new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	com = instance ComObj()->CreateComObject("Excel.Application", "ex");
+		
+	new prg1 = instance GProgressWnd(FALSE, "Copy To Excel ", wnd);
+	new bk = com->gWorkbooks()->Add();
+	com->pVisible(TRUE);
+
+	new cls = com->gWorksheets()->gItem(1)->gCells();
+	new w1 = cls->gItem(1, 1)->gColumnWidth();
+	new w2 = cls->gItem(1, 1)->gWidth();
+	w2 /= float(w1); 
+	new x, y;
+	x = y = 1;
+	new h1 = cls->gItem(1, 1)->gRowHeight();
+	new h2 = cls->gItem(1, 1)->gHeight();
+	h2 /= float(h1); 
+	new exCell;
+	new d = DEF_WORDSCALE;
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	y = 1;
+	self->DrawText("First Name", cls, mdc, y, 1, d, size_mm, w2, h2);	
+	self->DrawText("Last Name", cls, mdc, y, 2, d, size_mm, w2, h2);	
+	self->DrawText("Date of Birth", cls, mdc, y, 3, d, size_mm, w2, h2);
+	self->DrawText("Test Date", cls, mdc, y, 4, d, size_mm, w2, h2);
+	self->DrawText("Test Name", cls, mdc, y, 5, d, size_mm, w2, h2);
+	self->DrawText("Image Time", cls, mdc, y, 6, d, size_mm, w2, h2);
+	self->DrawText("L/R", cls, mdc, y, 7, d, size_mm, w2, h2);
+	self->DrawText("SEM", cls, mdc, y, 8, d, size_mm, w2, h2);
+	++y;
+	for (new n = 0, N = SubRecords->Len(); n < N; ++n)
+	{ 
+		new currentList = SubRecords[n][0][ExportDlg::SUB_OBJ]->GetFileList(<<".jpg", ".tif">>);
+	
+		currentList->QSort({|param key, elem; return key.name <> elem.name; |});
+		for (new j = 0, lj = currentList->Len(); j < lj; ++j)
+		{
+		
+			new current = currentList[j].parent->GetFile(JustName(currentList[j].name) @ ".res");
+			if (current == EMPTY)
+				continue;
+			onerror {
+				continue;
+			}
+			self->DrawText(SubRecords[n][1][ExportDlg::NAME], cls, mdc, y, 1, d, size_mm, w2, h2);	
+			self->DrawText(SubRecords[n][1][ExportDlg::FAMILY], cls, mdc, y, 2, d, size_mm, w2, h2);	
+			new bd = SubRecords[n][1][ExportDlg::DATE]->Tokenize("/.");
+			if (GetDim(bd) == 3)
+			{
+				Swap(bd[0], bd[2]);
+				bd = bd->SynStr("-");
+			}
+			else
+				bd = bd[0];
+			self->DrawText(bd, cls, mdc, y, 3, d, size_mm, w2, h2);
+			
+			new dir = Dir @ current->GetWinPath();
+			new path = JustDirName(dir) @ current.name;
+			new test = JustDirName(dir)->Tokenize(SFD);
+			new test_date = test[test->Len() - 2];
+			new test_name = test[test->Len() - 1];
+			test_date = test_date->Tokenize("-");
+			test_date = Printf("%s-%s-%s", test_date[2], test_date[1], test_date[0]);
+			self->DrawText(test_date, cls, mdc, y, 4, d, size_mm, w2, h2);
+			self->DrawText(test_name, cls, mdc, y, 5, d, size_mm, w2, h2);
+	
+			new image_time = JustName(current.name)->Tokenize(" ");
+			image_time = image_time[image_time->Len() - 1];
+			image_time->ReplaceAll("-", ":");
+			self->DrawText(image_time, cls, mdc, y, 6, d, size_mm, w2, h2);
+			new f = instance File(path);
+			if (!f->Open("rb"))
+				continue;
+			new s = f->Gets();
+			new data = s->Tokenize(" = \r\n");
+			data = data->Last();
+			data = data->Tokenize("+-");
+			self->DrawText(data[0], cls, mdc, y, 7, d, size_mm, w2, h2);
+			self->DrawText(data[data->Len() == 2 ? 1 : 0], cls, mdc, y, 8, d, size_mm, w2, h2);
+			f->Close();
+			++y;
+		}
+	}
+	onerror {
+		return FALSE;
+	}
+	mdc->CloseDC();
+//	com->gWorkbooks()->gItem(1)->Close(-1);
+	return TRUE;
+|>;
+//=========================================================
+//
+//=========================================================
+new ExportDlg::DrawText(refer object BaseString, refer object ComObj, refer object MDC, int, int, number, number, number,number) = <|
+param data, cls, mdc, i, j, d, size_mm, w2, h2;
+	cls->pItem(i, j, data);
+	new rc = mdc->GetStringRect(data);
+	//rc.right += data->Len();
+	new w1 = (rc.right * d/size_mm)/w2 + 0.6;
+	new exCell = cls->gItem(i, j);
+	exCell->pRowHeight((d * rc->Height()/size_mm)/h2);
+
+	if (w1 > cls->gItem(i, j)->gColumnWidth())
+		exCell->pColumnWidth(w1);
+|>;

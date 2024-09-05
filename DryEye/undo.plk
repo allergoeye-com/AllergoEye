@@ -1,0 +1,107 @@
+class ElmUndo {
+	undo;
+	redo;
+};
+
+class Undo {
+	list;
+	curpos;
+	max_pos;
+	is_run;
+};
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Undo(int) = <|
+param a;
+	.list = << >>;
+	.curpos = -1;
+	.max_pos = a;
+	.is_run = FALSE;
+|>;
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Reset(void) = <|
+	.list = << >>;
+	.curpos = -1;
+	.is_run = FALSE;
+|>;
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Add(refer object ElmUndo) = <|
+param r;
+	if (.curpos == -1)
+		.list = << >>;
+		
+	if (.list->Len() == 0)
+	{
+		.list ,= EMPTY;
+		.list[0] <- r;
+		.curpos = 0;
+		return;
+	}
+	new len = .list->Len() - 1;
+	
+	if (.curpos < len)
+	{
+		.list->Remove(.curpos + 1, len - .curpos);
+		len = .list->Len() - 1;
+	}
+	if (len == .max_pos)
+		.list->Remove(0, 1);	
+	.list ,= EMPTY;
+	.curpos = .list->Len() - 1;
+	.list[.curpos] <- r;	
+|>;
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Prev(void) = <|
+	new l;
+
+	if (.curpos >= 0)
+	{
+		l = .list[.curpos];
+		--.curpos;
+	}
+	return l;
+|>;
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Next(void) = <|
+	if (.list->Len() == 0)
+		return EMPTY;
+
+	if (.curpos < .list->Len() - 1)
+	{
+ 		++.curpos;
+		return .list[.curpos];
+	}
+	return EMPTY;
+|>;
+
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Curent(void) = <|
+	if (.list->Len() != 0 && .curpos >= 0 && .curpos < .list->Len())
+		return .list[.curpos];
+	return EMPTY;
+|>;
+
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Len(void) = <|
+	return .list->Len();
+|>;
+//-----------------------------------------------
+//
+//-----------------------------------------------
+new Undo::Pos(void) = <|
+	return .curpos + 1;
+|>;
+

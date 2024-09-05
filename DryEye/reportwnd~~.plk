@@ -1,0 +1,200 @@
+class AE_ReportWnd : ModalForm {
+	Parent;
+	ReportName;
+	DownloadReport;
+	Report;
+	NumbData;
+	ToolBar;
+	Height;
+	Width;
+	TherapyControl;
+};
+event WND_SIZE, AE_ReportWnd::OnSize;
+//event WND_HSCROLL, AE_ReportWnd::OnHScroll;
+//event WND_VSCROLL, AE_ReportWnd::OnVScroll;
+
+
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::AE_ReportWnd(refer object GWnd) = <|
+param Parent;
+	.TherapyControl = FALSE;
+	.Parent = &Parent;
+	self->InitReportName();
+	self->ModalForm("REPORT_WND", Parent);
+	self->AllowEvent( WND_SIZE );
+	self->Bind(self);
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::AE_ReportWnd(refer object GWnd, boolean) = <|
+param Parent, TherapyControl;
+	.TherapyControl = TherapyControl;
+	.Parent = &Parent;
+	self->InitReportName();
+	self->ModalForm("REPORT_WND", Parent);
+	self->AllowEvent( WND_SIZE );
+	self->Bind(self);
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::AE_ReportWnd(refer object GWnd, refer object BaseString) = <|
+param Parent, DownloadReport;
+	.Parent = &Parent;
+	.DownloadReport = DownloadReport;
+	self->ModalForm("REPORT_WND", Parent);
+	self->AllowEvent( WND_SIZE );
+	self->Bind(self);
+
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::InitReportName(void) = <|
+	if (.TherapyControl == TRUE)
+		.ReportName = AllergoEyeIni->ReadStr("PATH", "PLUK") @ "report_therapy.rpj";
+	else
+	{
+		.ReportName = AllergoEyeIni->ReadStr("PATH", "PLUK") @ "report.rpj";
+		if (AllergoEyeIni->ReadBool("REPORT", "HNO", FALSE))
+			.ReportName = JustDirName(.ReportName) @ JustName(.ReportName) @ "_ger-hno" @ ".rpj";
+	}
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::Setup(void) = <|
+	.ToolBar = instance ReportToolBar(self);
+	.Report = instance AllergoReport("REPORT_CHILD", self);
+	.Report.dir = instance TreeDir();
+	.Report.Dir = .Parent.Dir;
+	
+	.Report->Open();
+	if (.DownloadReport == EMPTY)
+	{
+		.Parent->GetSelect2(.Report.dir);
+		if (!AllergoEyeIni->ReadBool("REPORT", "HNO", FALSE))
+		{
+			.Report->Load(<< << "AReport", .ReportName>> >>);
+			.Parent->SetHeaderAnFooterFromReport(.Report);
+		}
+		else
+		{
+			if (.TherapyControl)
+			{
+				.Report->Load(<< << "TherapyReport", .ReportName>> >>);
+				.Parent->SetHeaderAnFooterFromReportHNO(.Report);
+			}
+			else
+			{
+				.Report->Load(<< << "AReport", .ReportName>> >>);
+				.Parent->SetHeaderAnFooterFromReportHNO(.Report);
+				new ImageFileName = .Report.Dir @ .Parent.AllRecord[.Parent.IndexAll][0].Date[.Parent.IndexDate].Tests[.Parent.IndexSubRecords].Pictures[0].Path;
+				new bmp = instance MBmp();
+				bmp->LoadImage(ImageFileName);
+				.Report->FillCellAndShow("IMG_DATA", "image_tab", bmp);
+			}
+		}
+	}
+	else
+	{
+		.Report->Load(.DownloadReport);
+		.ToolBar->DisableViewImage();
+	}
+	if (.Report.vRep[0].ReportName == "TherapyReport")
+	{
+		.ToolBar->HideItem(ID_TEXT_VIEW_IMG);
+		.ToolBar->HideItem(ID_VIEW_IMAGES);
+	}
+		
+	self->ModalForm::Setup();
+//	self->Maximize();
+	self->UpdateReportSizePos();
+|>;
+//====================================================
+//
+//====================================================
+new EditReportWnd::FillCellAndShow(refer ...) = <|
+parest p;
+	self->FillCell("AReport", [p]);
+|>;
+//====================================================
+//
+//====================================================
+new EditReportWnd::GetRectReport(void) = <|
+	return .vRep[0]->GetRectReport();
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::UpdateReportSizePos(void) = <|
+	new size = self->GetClientSize();
+	.Width = size[0];
+	.Height = size[1];
+	if (.ToolBar != EMPTY)
+		.ToolBar->SetSize(.Width, .ToolBar->GetSize()[1]);
+
+	if (.Report != EMPTY)
+	{
+		new top = .ToolBar->GetSize()[1];
+		new Width = (self->GetClientSize()[0] - 4);
+		.Report->SetPos(0, top);
+		.Report->SetSize(Width, size[1] - top);
+		.Report->SetScrollRange();
+		.Report->Invalidate(TRUE);
+	}
+	if (.ToolBar != EMPTY)
+		.ToolBar->Invalidate(TRUE);
+|>;
+
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::OnSize(int, int, int) = <|
+param code, width, height;
+	if (code != SIZE_MINIMIZED)
+	{
+		if (.Height == height && .Width == width)
+			return 0;
+		.Height = height;
+		.Width = width;
+		Pluk->FlushIdle();
+		self->UpdateReportSizePos();
+	}
+	return 0;
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::CanClose(void) = <|
+	return TRUE;
+|>;
+
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::OnPrint(void) = <|
+	.Report->PrintDlg();
+|>;
+
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::OnSave(void) = <|
+	 .Report->Save(.DownloadReport);	
+	
+|>;
+//====================================================
+//
+//====================================================
+new AE_ReportWnd::OnViewImg(boolean) = <|
+param b;
+	.Report.fImegesView = b;
+	.Report->Reload();
+	self->UpdateReportSizePos();
+|>;
+
+

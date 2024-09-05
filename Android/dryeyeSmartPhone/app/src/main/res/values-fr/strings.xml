@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_info">Informations patient</string>
+    <string name="card_cync">Synchroniser</string>
+    <string name="roi">ROI</string>
+    <string name="exit">Sortie</string>
+    <string name="card_first_name">Prénom</string>
+    <string name="card_last_name">Nom de famille</string>
+    <string name="card_birthdate">Date de naissance</string>
+    <string name="hostname">Nom du téléphone</string>
+    <string name="select_lang">Choisissez la langue</string>
+    <string name="str_de">Deutsch</string>
+    <string name="str_en">English</string>
+    <string name="set_timer">Régler la minuterie</string>
+    <string name="minute">minutes</string>
+    <string name="stop_timer">Arrêter le minuteur ?</string>
+    <string name="ok">OK</string>
+    <string name="cancel">ANNULER</string>
+    <string name="yes">OUI</string>
+    <string name="no">NON</string>
+    <string name="set_date">Définir la date de naissance</string>
+    <string name="new_test">Créer un essai</string>
+    <string name="test_choise">drye eye/démarrer le test;solution de contrôle/des deux côtés;droit;gauche/0 min;5 min;10 min;15 min</string>
+    <string name="photo_over">Autre photo</string>
+    <string name="view_done">Fait</string>
+    <string name="ids_delete_image">Supprimer l\'image actuelle?</string>
+    <string name="del_sel">Supprimer la sélection actuelle ?</string>
+    <string name="rename_test">Renommer le test</string>
+    <string name="choise_photo">Choisissez une photo:</string>
+    <string name="select_date">Sélectionner une date</string>
+    <string name="today">AUJOURD\'HUI</string>
+    <string name="select_test">Sélectionnez l\'essai</string>
+    <string name="select_new_test">NOUVEAU TEST</string>
+    <string name="new_card">Nouveau patient</string>
+    <string name="card_list">Liste des patients</string>
+    <string name="host_comment">Cela s\'affichera dans la vue d\'ensemble de l\'appareil sur le PC.</string>
+    <string name="sync_poc">Images traitées</string>
+    <string name="str_es">Spanish</string>
+    <string name="str_fr">French</string>
+    <string name="prick">Prick</string>
+</resources>

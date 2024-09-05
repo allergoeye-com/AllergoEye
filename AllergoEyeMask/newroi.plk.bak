@@ -1,0 +1,231 @@
+class NewROI {
+	Points;
+	Edit;
+	View;
+	pointMove;
+	indexMove;
+	vMoved;
+	
+	pointStartLine;
+global :
+	pointLine;
+
+};
+NewROI::pointLine = TRUE;
+
+//=============================================
+// Constructor for NewROI class
+//=============================================
+new NewROI::NewROI(void) = <| // Initializes the NewROI object
+	.Points = <<>>; // Initialize the Points property as an empty array
+	.Edit = TRUE; // Set the Edit property to true
+	.View = TRUE; // Set the View property to true
+	.vMoved = <<>>; // Initialize the vMoved property as an empty array
+|>;
+
+//=============================================
+// OnDraw method of NewROI class
+//=============================================
+new NewROI::OnDraw(refer object MDC, refer object Transform2D, refer object GWnd) = {| 
+param mdc, trans, Parent;
+	if (!.View) return; // If the View property is false, return
+	if (.Points->Len() == 0) // If the Points array is empty, return
+		return;
+	
+	mdc->SetFgColor(CLR_LIGHTRED);
+	mdc->SetBgColor(CLR_LIGHTRED);
+	new pt = .Points;
+	trans->Lp2Dp(pt, pt);
+	new len = .Points->Len();
+	if (len > 2)
+	{
+		new curve = instance BetaCurve(pt);
+		new  contour = curve->GetContour();
+		mdc->PolyLine(contour);
+	}
+	else
+		mdc->PolyLine(pt);
+
+	
+	if (.Edit)
+	{
+		// Draw a small rectangle at each point in the Points array
+		for (new i = 0; i < len; ++i)
+		{		
+			mdc->Bar(pt[i].x - 4, pt[i].y - 4, pt[i].x + 3, pt[i].y + 3);
+		}
+		if (.pointLine && .pointStartLine != EMPTY)
+		{
+			if (len > 1)
+			{
+				pt = <<.Points[len - 1] >>;
+				pt @= .pointStartLine;
+			}
+			else
+				pt = .pointStartLine;
+			
+			trans->Lp2Dp(pt, pt);
+			mdc->PolyLine(pt);
+		}
+	}
+|};
+
+//=============================================
+// OnLButtonDown method of NewROI class
+//=============================================
+new NewROI::OnLButtonDown(int, int, refer object Transform2D, refer any) = <| // Handles the left mouse button down event
+param x, y, trans, Parent;
+.vMoved = <<>>; // Initialize the vMoved property as an empty array
+	if (self->OnSelect(x, y, trans, Parent)) return TRUE; // If the OnSelect method returns true, return true
+	new lpt = .pointMove;
+	
+	.indexMove = .Points->Len(); // Set the indexMove property to the length of the Points array
+	trans->Dp2Lp(lpt);
+	if (lpt.y >= 0 && lpt.y < Parent.Bmp->GetHeight() && lpt.x >= 0 && lpt.x < Parent.Bmp->GetWidth())
+	{
+		if (.pointLine)
+		.pointStartLine = <<lpt>>; // Set the pointStartLine property to the current mouse position
+		.Points @= lpt; // Add the current mouse position to the Points array
+		return TRUE; // Return true
+	}
+
+	return FALSE; // Return false
+|>;
+
+//=============================================
+// OnSelect method of NewROI class
+//=============================================
+new NewROI::OnSelect(int, int, refer object Transform2D, refer any) = <| // Handles the select event
+param x, y, trans, Parent;
+	.pointMove = instance POINT(x, y); // Set the pointMove property to the current mouse position
+	if (.Points->Len() > 0)
+	{	
+		new pt = .Points;
+		trans->Lp2Dp(pt, pt);
+		new len = pt->Len();
+		new i, cur, d, dist = 100.0;
+		for (i = 0; i < len; ++i)
+		{
+			// Find the closest point to the current mouse position
+			if ((d = ((pt[i].x - x)**2 + (pt[i].y - y)**2)) < dist)
+			{
+				dist = d;
+				cur = i;
+			}
+		}
+		if (cur != EMPTY)
+		{
+			.indexMove = cur; // Set the indexMove property to the index of the closest point
+			.pointMove = pt[cur]; // Set the pointMove property to the closest point
+			.vMoved = <<.Points[cur], .Points[cur], .indexMove>>; // Set the vMoved property to the closest point, the closest point, and the index of the closest point
+
+			return TRUE; // Return true
+		}
+	}
+	return FALSE; // Return false
+|>;
+
+//=============================================
+// Delete method of NewROI class
+//=============================================
+new NewROI::Delete(void) = <| // Deletes the selected point
+	if (.indexMove != EMPTY)
+	{
+		.Points->Remove(.indexMove); // Remove the point at the indexMove position from the Points array
+		.pointMove = EMPTY; // Set the pointMove property to EMPTY
+		.indexMove = EMPTY; // Set the indexMove property to EMPTY
+	}
+|>;
+
+//=============================================
+// Len method of NewROI class
+//=============================================
+new NewROI::Len(void) = <| // Returns the length of the Points array
+	return .Points->Len();
+|>;
+
+//=============================================
+// OnLButtonUp method of NewROI class
+//=============================================
+new NewROI::OnLButtonUp(int, int, refer object Transform2D, refer any) = {| // Handles the left mouse button up event
+param x, y, trans, Parent;
+onerror {
+	.pointMove = EMPTY; // Set the pointMove property to EMPTY
+	.indexMove = EMPTY; // Set the indexMove property to EMPTY
+}
+	new fRet = FALSE;
+	if (.pointMove != EMPTY && .indexMove != EMPTY)
+	{
+		new lpt = instance POINT(x, y);
+		trans->Dp2Lp(lpt);
+		if (lpt.y >= 0 && lpt.y < Parent.Bmp->GetHeight() && lpt.x >= 0 && lpt.x < Parent.Bmp->GetWidth())
+		{
+			if (.pointLine && .pointStartLine != EMPTY && .pointStartLine->Len() > 5)
+			{
+				.indexMove = .Points->Len();
+				.Points @= .pointStartLine[.pointStartLine->Len() - 1];
+				.pointStartLine = <<lpt>>;	
+			}
+			else
+			{
+				.Points[.indexMove] = lpt;
+				if (.vMoved->Len() > 1)
+					.vMoved[1] = lpt;
+			}
+			fRet = TRUE; // Set fRet to true		
+
+		}
+		
+	
+	}
+	.pointMove = EMPTY; // Set the pointMove property to EMPTY
+	.indexMove = EMPTY; // Set the indexMove property to EMPTY
+	.pointStartLine = EMPTY; // Set the pointStartLine property to EMPTY
+	return fRet; // Return fRet
+|};
+
+//=============================================
+// OnMouseMove method of NewROI class
+//=============================================
+new NewROI::OnMouseMove(int, int, refer object Transform2D, refer any) = {| // Handles the mouse move event
+param x, y, trans, Parent;
+	new lpt = instance POINT(x, y);
+	new fRet = FALSE;
+	if (.pointMove != EMPTY && .indexMove != EMPTY && (.pointMove.x != x || .pointMove.y != y))
+	{
+		
+		.pointMove = lpt; // Set the pointMove property to the current mouse position
+		trans->Dp2Lp(lpt);
+		if (lpt.y >= 0 && lpt.y < Parent.Bmp->GetHeight() && lpt.x >= 0 && lpt.x < Parent.Bmp->GetWidth())
+		{
+			if (.pointLine && .indexMove != 0 && .pointStartLine != EMPTY)
+			{
+				
+				new pt = .Points[.Points->Len() - 1];
+				trans->Lp2Dp(pt);
+				pt.x -= .pointMove.x;
+				pt.y -= .pointMove.y;
+				if (.pointStartLine->Len() > 0 && pt.x * pt.x + pt.y * pt.y > 1024) 
+			//	if (.pointStartLine->Len() == 15)
+				{
+					.indexMove = .Points->Len();
+					.Points @= .pointStartLine[.pointStartLine->Len() - 1];
+					.pointStartLine = <<lpt>>;	
+				}
+				else
+				.pointStartLine @= lpt;	
+
+			}
+			else
+			{
+				if (.vMoved->Len() > 1)
+					.vMoved[1] = lpt;
+				.Points[.indexMove] = lpt;
+
+			}
+			fRet = TRUE; // Set fRet to true
+		}
+		
+	}
+	return fRet;	 // Return fRet
+|};

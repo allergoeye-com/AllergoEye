@@ -1,0 +1,324 @@
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+class ViewGraphWnd : GraphicWnd {
+		Parent;
+global:
+		IniFileName;
+	};
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::ViewGraphWnd(refer object GWnd) = <|
+param Parent;
+	.Parent = &Parent;
+	self->GWnd("GRAPH_WND", Parent);
+	self->Init();
+	self->Open();
+	self->Show();
+	.ShowScaleGrid = FALSE;
+	new pos = Parent->GetItemPos(ID_GRAPH);
+	new size = Parent->GetItemSize(ID_GRAPH);
+	self->SetPos(pos[0] + 2 , pos[1]  + 2);
+	self->SetSize(size[0] - 4, size[1] - 4);
+|>;
+//==============================================
+//
+//==============================================
+new Curve::TrimZeros(void) = {|
+	for (new i = 0; i < .X->Len(); ++i)
+	{
+		if (.Y[i] > 0.002)
+			break;
+	}
+	if (i > 1)
+		self->Remove(0, i);
+	for (i = .Len - 1; i >= 0; --i)
+	{
+		if (.Y[i] > 0.002)
+			break;
+	}
+	if (i < .Len - 1)
+		self->Remove(i, .Len - i);
+|};
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::SetGraph(refer object DBTest) = <|
+param test;
+	self->Clear();
+	onerror {
+		return;
+	}
+	while (self->GetNumbGraph() < 2)
+		self->AddGraphic();
+	new distr = test->GetDistrMeasurements();
+	new distrL = distr[0];
+	new distrR = distr[1];
+//	distrR[0]->TrimZeros();
+//	distrL[0]->TrimZeros();
+	self->AddCurve(distrR[0], CLR_LIGHTRED, 0);
+	self->AddCurve(distrR[1], CLR_LIGHTRED, 1);
+	self->AddCurve(distrL[0], CLR_LIGHTBLUE, 0);
+	self->AddCurve(distrL[1], CLR_LIGHTBLUE, 1);
+	self->FindScale();
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::SetGraph(refer object DBDate, int) = <|
+param study, test_index;
+	self->Clear();
+	onerror {
+		return;
+	}
+	while (self->GetNumbGraph() < 2)
+		self->AddGraphic();
+	new h = study.Tests[test_index]->GetDistrMeasurements();
+	if (h != EMPTY)
+	{
+//		h[0][0]->TrimZeros();
+//		h[1][0]->TrimZeros();
+		self->AddCurve(h[0][0], h[0][0].Comment == "Right" ? CLR_LIGHTRED : CLR_LIGHTBLUE, 0);
+		self->AddCurve(h[1][0], h[1][0].Comment == "Right" ? CLR_LIGHTRED : CLR_LIGHTBLUE, 0);
+		self->AddCurve(h[2], CLR_BLACK, 0);
+
+//		h[0][1]->TrimZeros();
+//		h[1][1]->TrimZeros();
+
+		self->AddCurve(h[0][1], h[0][0].Comment == "Right" ? CLR_LIGHTRED : CLR_LIGHTBLUE, 1);
+		self->AddCurve(h[1][1], h[1][0].Comment == "Right" ? CLR_LIGHTRED : CLR_LIGHTBLUE, 1);
+	}
+	self->FindScale();
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::SetGraph(refer object DBDate) = <|
+param study;
+	self->Clear();
+	onerror {
+		return;
+	}
+
+	while (self->GetNumbGraph() < 1)
+		self->AddGraphic(FALSE);
+	new h = study->GetAERednessGraph();
+	new s = study->GetAERednessScoreGraph();
+//	.Graph[0].NameY = W1_REDNESS;
+	if (h != EMPTY && h->Len() > 1)
+	{
+		self->AddCurve(s, CLR_LIGHTRED, 0);
+		self->AddCurve(h, CLR_LIGHTBLUE, 0);
+		self->FindScale();
+		if (.Graph[0].Ymax < 3.5)
+			.Graph[0].Ymax = 3.5;
+		else
+			.Graph[0].Ymax += 0.05;
+
+		.Graph[0].Ymin = -0.05;
+		.Graph[0].Marker[0] = << 0, 6 >>;
+		.Graph[0].L_Offset = 55;
+/*		new h1 = h;
+		h1.Y->Set(0.3);
+		self->AddCurve(h1, CLR_BLACK, 0);
+		.Graph[0].Marker[1] = << 0, 1, 2 >>;*/
+		self->Invalidate(TRUE);
+	}
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::SetOpGraph(refer object Date, refer object Vector) = <|
+param StartDate, DBDates;
+	self->Clear();
+	onerror {
+		return;
+	}
+
+	while (self->GetNumbGraph() < 1)
+		self->AddGraphic(FALSE);
+	new X = << >>;
+	new Y = << >>;
+	DBDates->QSort({|param key, elem; return key.Date <> elem.Date; |});
+	for (new i = 0; i < DBDates->Len(); ++i)
+	{
+		new d = int((DBDates[i].Date - StartDate) / 30.0 + 0.5);
+		if (d < 0)
+			d = 0;
+		if (d == 0 && X->Len() > 0)
+		{
+			Y[0] = DBDates[i]->GetOpScore();
+		}
+		else
+		{
+			X ,= Printf("%d mon", d);
+			Y ,= DBDates[i]->GetOpScore();
+		}
+	}
+	if (X->Len() > 1)
+	{
+		new h = instance BarHistogram(X, Y);
+		h.Comment = "OpScore";
+		self->AddCurve(h, CLR_LIGHTRED, 0);
+		self->FindScale();
+		if (.Graph[0].Ymax < 0.9)
+			.Graph[0].Ymax = 1.0;
+		else
+			.Graph[0].Ymax += 0.05;
+
+		.Graph[0].Ymin = -0.05;
+		.Graph[0].Marker[0] = << 0, 6 >>;
+		.Graph[0].L_Offset = 55;
+		.Graph[0].B_Offset = 229;
+		self->Invalidate(TRUE);
+		Pluk->FlushIdle();
+	}
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::SetAEGraph(refer object Date, refer object Vector) = <|
+param StartDate, DBDates;
+	self->Clear();
+	onerror {
+		return;
+	}
+
+	while (self->GetNumbGraph() < 1)
+		self->AddGraphic(FALSE);
+	new X = << >>;
+	new Y = << >>;
+	for (new i = 0; i < DBDates->Len(); ++i)
+	{
+		new d = int((DBDates[i].Date - StartDate) / 30.0 + 0.5);
+		if (d < 0)
+			d = 0;
+		if (d == 0 && X->Len() > 0)
+		{
+			Y[0] = DBDates[i]->GetOpScore();
+		}
+		else
+		{
+			X ,= Printf("%d mon", d);
+			Y ,= DBDates[i]->GetAEScore();
+		}
+	}
+	if (X->Len() > 1)
+	{
+		new h = instance BarHistogram(X, Y);
+		h.Comment = "GetAEScore";
+		self->AddCurve(h, CLR_LIGHTRED, 0);
+		self->FindScale();
+		if (.Graph[0].Ymax < 0.9)
+			.Graph[0].Ymax = 1.0;
+		else
+			.Graph[0].Ymax += 0.05;
+
+		.Graph[0].Ymin = -0.05;
+		.Graph[0].Marker[0] = << 0, 6 >>;
+		.Graph[0].L_Offset = 55;
+		.Graph[0].B_Offset = 229;
+		self->Invalidate(TRUE);
+		Pluk->FlushIdle();
+	}
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::SetOpSynGraph(refer object Date, refer object Vector) = <|
+param StartDate, DBDates;
+	self->Clear();
+	onerror {
+		return;
+	}
+
+	while (self->GetNumbGraph() < 1)
+		self->AddGraphic(FALSE);
+	new X = << >>;
+	new Y = << >>;
+	for (new i = 0; i < DBDates->Len(); ++i)
+	{
+		new d = int((DBDates[i].Date - StartDate) / 30.0 + 0.5);
+		if (d < 0)
+			d = 0;
+		if (d == 0 && X->Len() > 0)
+		{
+			Y[0] = DBDates[i]->GetOpScore();
+		}
+		else
+		{
+			X ,= Printf("%d mon", d);
+			Y ,= DBDates[i]->GetOpSynScore();
+		}
+	}
+	if (X->Len() > 1)
+	{
+		new h = instance BarHistogram(X, Y);
+		h.Comment = "GetAEScore";
+		self->AddCurve(h, CLR_LIGHTRED, 0);
+		self->FindScale();
+		if (.Graph[0].Ymax < 0.9)
+			.Graph[0].Ymax = 1.0;
+		else
+			.Graph[0].Ymax += 0.05;
+
+		.Graph[0].Ymin = -0.05;
+		.Graph[0].Marker[0] = << 0, 6 >>;
+		.Graph[0].L_Offset = 55;
+		.Graph[0].B_Offset = 229;
+		self->Invalidate(TRUE);
+		Pluk->FlushIdle();
+	}
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::GetBmp(void) = <|
+	new size = self->GetClientSize();
+	new Bmp = instance MBmp([size]);
+	new Mdc = instance MDC();
+	Mdc->OpenMBmp(Bmp);
+	Mdc->SetBgColor(instance ColorRef(255, 255, 255));
+	Mdc->Bar(0, 0, [size]);
+	self->DrawFile(Mdc);
+	Mdc->CloseMBmp();
+	return Bmp;
+|>;
+//==============================================
+//
+//==============================================
+new ViewGraphWnd::GetBmp(refer object Rect) = <|
+param rect;
+	new Bmp = instance MBmp(rect->Width(), rect->Height());
+	new Mdc = instance MDC();
+	Mdc->OpenMBmp(Bmp);
+	Mdc->SetBgColor(instance ColorRef(255, 255, 255));
+	Mdc->Bar(0, 0, rect->Width(), rect->Height());
+	.Graph[0]->Draw(Mdc);
+	Mdc->CloseMBmp();
+	return Bmp;
+|>;
+//==============================================
+//
+//==============================================
+/*
+new ViewGraphWnd::SetGraph(refer object DBDate, int) = <|
+param study, test_index;
+	self->Clear();
+	onerror {
+		return;
+	}
+	while (self->GetNumbGraph() < 2)
+		self->AddGraphic();
+	new h;
+	for (new i = 0; i < study.Tests->Len(); ++i)
+	{
+		h = study.Tests[i]->GetDistrMeasurements();
+		h[0][0]->TrimZeros();
+		self->AddCurve(h[0][0], CLR_BLACK, 0);
+
+	}
+	self->FindScale();
+|>;
+
+*/

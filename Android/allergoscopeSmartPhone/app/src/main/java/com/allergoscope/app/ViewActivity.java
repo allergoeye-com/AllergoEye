@@ -14,6 +14,7 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -42,6 +43,7 @@ import lib.common.CHandler;
 import lib.common.CWnd;
 import lib.common.IResultFragmentDlg;
 import lib.common.MessageBox;
+import lib.common.button.CMenuButton;
 import lib.common.layout.CPanelDialog;
 import lib.common.layout.LayoutButton;
 import lib.utils.AGlobals;
@@ -291,6 +293,7 @@ public class ViewActivity extends AActivity {
     //----------------------------------------------------
     //
     //----------------------------------------------------
+    static int Numb = 1;
     public void OnSave()
     {
 //        Intent intent = new Intent(this, ExplorerActivity.class);
@@ -303,6 +306,13 @@ public class ViewActivity extends AActivity {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
                 Calendar c = Calendar.getInstance();
                 String sname = sdf.format(c.getTime());
+                String s1 = sname.substring(0, sname.length() - 2);
+                sname = s1 + ("0" + Numb);
+                ++Numb;
+                if (Numb >= 60)
+                    Numb = 1;
+
+
             try
             {
                 pathImage = App.cardPath.Dir() + "/" + sname + ".jpg";
@@ -534,6 +544,20 @@ public class ViewActivity extends AActivity {
             view.Invalidate();
         }
         OnUpdateInfo();
+    }
+    public void LoadBitmap(ArrayList<Bitmap> bmp)
+    {
+        roi = null;
+        pathImage = null;
+        _InitButtonRoi();
+        for (Bitmap b:bmp)
+        {
+            bitmap = b;
+            view.OnOpenDocument(bitmap);
+            OnSave();
+
+        }
+        OnImages();
     }
 
     public void LoadFile(ViewActivity v, String res)

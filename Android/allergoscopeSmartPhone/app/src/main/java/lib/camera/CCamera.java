@@ -8,6 +8,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -298,7 +299,9 @@ public class CCamera implements Closeable {
             fAutoFlash = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) != null;
             Integer maxAFRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
             Integer maxAERegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
+
                 isMeteringAreaAFSupported = maxAFRegions != null && maxAFRegions >= 1;
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
                 {
                     int [] s = characteristics.get(CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
@@ -595,9 +598,10 @@ public class CCamera implements Closeable {
             if(isMeteringAreaAFSupported)
             {
                 MeteringRectangle [] focus = null;
-                if (focusRect != null)
+                Rect rc_screen = null;
+                if (false) //focusRect != null)
                 {
-                  /*  int y = (lastCrop.top + lastCrop.bottom)/2;
+  /*  int y = (lastCrop.top + lastCrop.bottom)/2;
                     int x1 = (int)(lastCrop.left + lastCrop.width()/4.0f - 50.0f/zoom);
                     int x2 = (int)(x1 + 100.0f/zoom);
                     if (x1 < 0) x1 = 0;
@@ -611,16 +615,19 @@ public class CCamera implements Closeable {
                     float y = lastCrop.top +  (focusRect.top - cropDisplay.top) * scaley;
 
                     focus = new MeteringRectangle [] {
-                        new MeteringRectangle(
+                            new MeteringRectangle(
                                 (int) x,
                                 (int) y,
                                 (int) (scalex * focusRect.width()),
                                 (int)(scaley * focusRect.height()),
                                 MeteringRectangle.METERING_WEIGHT_MAX - 1),
                         };
+
+
                 }
                 else
                 {
+                    /*
                     focus = new MeteringRectangle [] {
                             new MeteringRectangle(
                                     lastCrop.left,
@@ -630,12 +637,37 @@ public class CCamera implements Closeable {
 
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1),
                     };
+
+                     */
+                    rc_screen = lastCrop;
+                    int y = (rc_screen.top + rc_screen.bottom)/2;
+                    int x1 = rc_screen.left + rc_screen.width()/4;
+                    int x2 = x1 + rc_screen.width()/2;
+                    focus = new MeteringRectangle [] {
+                            new MeteringRectangle(
+                                    x1 - 100,
+                                    y - 100,
+                                    200,
+                                    200,
+
+                                    MeteringRectangle.METERING_WEIGHT_MAX),
+                            new MeteringRectangle(
+                                    x2 - 100,
+                                    y - 100,
+                                    200,
+                                    200,
+
+                                    MeteringRectangle.METERING_WEIGHT_MAX)
+                    };
                 }
+
 
                 if (focus != null)
                 {
                     builder.set(CaptureRequest.CONTROL_AF_REGIONS, focus);
                     builder.set(CaptureRequest.CONTROL_AE_REGIONS, focus);
+                    builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+
                 }
 
             }
@@ -781,6 +813,7 @@ public class CCamera implements Closeable {
                     captureBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, previewBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
                     captureBuilder.set(CaptureRequest.SCALER_CROP_REGION, previewBuilder.get(CaptureRequest.SCALER_CROP_REGION));
                     captureBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, previewBuilder.get(CaptureRequest.LENS_FOCUS_DISTANCE));
+                MeteringRectangle [] rc = previewBuilder.get(CaptureRequest.CONTROL_AF_REGIONS);
                     Set<Object> set = cModes.keySet();
                     for (Object key: set)
                     {

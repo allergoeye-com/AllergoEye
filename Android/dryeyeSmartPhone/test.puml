@@ -1,0 +1,2932 @@
+@startuml
+class com.dryeye.app.wifi.SyncMsgBox {
++ {static} boolean onFinish
++ int DoModal()
+}
+class lib.colorpicker.ColorPicker {
+~ ColorPlane plane
+~ CSliderLum lum
+~ float _H
+~ boolean fSetSize
++ ActionCallback oncolorChanged
++ ActionCallback oncolorChanging
++ void SetRadius(int)
+- void InitAtribut(Context,AttributeSet)
++ void InitRow()
++ int GetColor()
++ void SetColor(int)
+~ int BOUND(int,int,int)
+~ void HSL(int,int,int)
+~ int HSL2RGB(float,float,float)
++ float H()
++ float S()
++ float L()
++ void OnHS(float,float,int)
++ void OnEvent(int)
++ void OnL(float,int)
+# void onLayout(boolean,int,int,int,int)
++ {static} void HLSPlane(Bitmap,float,float,float,int,int,int,int)
++ {static} void HLSLum(Bitmap,float,float,int,int,int,int)
+}
+abstract class lib.common.AActivity {
+# View lockedCapture
+# boolean fIgnoreMouse
+# Intent returnIntent
+# ActionCallback onexit
++ boolean fIsToush
+~ boolean fInFinish
++ void LockMouse(boolean)
++ boolean IsLockedMouse()
+# void onCreate(Bundle)
++ void ShowHintMessage(String)
+# void onDestroy()
++ boolean dispatchTouchEvent(MotionEvent)
++ boolean dispatchTouchEvent(MotionEvent,ViewGroup)
++ boolean DispatchTouchEvent(MotionEvent,ViewGroup)
++ IControlOnClick CheckControlOnClick(MotionEvent,ViewGroup)
++ View GetCapture()
++ boolean SetCapture(View)
++ boolean ReleaseCapture(View)
++ void onBackPressed()
++ void Finish()
++ void finish()
++ boolean onEditorAction(TextView,int,KeyEvent)
++ void onPointerCaptureChanged(boolean)
+}
+class lib.common.CComboBox {
+# ComboBoxAdapter adapter
+# int index
+# int text_color
+# int bg_color
+# int text_size
++ void SetColors(int,int)
+- void InitAtribut(Context,AttributeSet)
++ void Init(String[],int,ActionCallback)
++ void Init(ArrayList<String>,int,ActionCallback)
++ void Init(String[],int[],int,ActionCallback)
++ int GetSel()
++ void SetSel(int)
++ String GetSelString()
++ int GetSelColor()
+}
+class lib.common.CComboBox.ComboBoxAdapter {
+~ ActionCallback action
+~ String[] data
+~ int[] colors
+~ Context context
++ void Init(String[],ActionCallback)
++ void Init(String[],int[],ActionCallback)
++ int getCount()
++ Object getItem(int)
++ long getItemId(int)
++ View getView(int,View,ViewGroup)
++ View getDropDownView(int,View,ViewGroup)
++ void onItemSelected(AdapterView<?>,View,int,long)
++ void onNothingSelected(AdapterView<?>)
+}
+class lib.OrientActivity {
++ Activity parent
+~ boolean fStartHideDialog
+# void onCreate(Bundle)
+# void onResume()
+# void SetParent(Activity)
++ void OnMonitor(WifiInfo)
++ void OnChangeConnect()
++ void showFragment(Fragment,int,Bundle)
++ void replaceFragment(int,Fragment)
++ void dismissFragment(Fragment)
++ boolean TryConnectIsAllowed()
++ void CloseDialog()
++ void DialogHide()
+}
+class lib.common.CThreadLoooper {
+# Thread self
+# EventIdle mLooper
+# Semaphore sec
++ boolean IsRun()
++ void run()
+- void Start()
++ boolean IsValid()
++ boolean Run()
++ void close()
+}
+class com.dryeye.app.roi.FragmentROI {
+~ View self
+~ SelectedBlockIcon data
+~ SelectedList adapter
+~ int Nstart
+~ CView document
+~ MResult result
+~ RecyclerView recyclerViewSelected
+~ LinearLayoutManager linearLayoutManager
++ Runnable GetResult()
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void OnInitDialog()
++ void OnDestroyDialog()
+~ void InitControls()
++ void OnOk()
++ void OnCancel()
+~ void OnSelect(int)
+~ boolean OnColor(int)
+}
+class com.dryeye.app.roi.FragmentROI.MResult {
+~ SelectedBlockIcon data
+~ CView document
++ void run()
+}
+class com.dryeye.app.roi.FragmentROI.SelectedList {
+~ int lastVisibleFirst
+~ int lastVisibleLast
++ void onAttachedToRecyclerView(RecyclerView)
++ void SetVisibleRange(int)
++ SelectedHolder onCreateViewHolder(ViewGroup,int)
++ void onBindViewHolder(SelectedHolder,int)
++ void onDetachedFromRecyclerView(RecyclerView)
++ int getItemCount()
+}
+class com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder {
+~ View v
+~ ImageView imgView
+~ CheckBox box
+~ CMenuButton bcolor
++ void OnBtnColor()
+~ void SetListner()
+~ void ResetrListner()
+}
+class com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder.COnClick {
++ void onClick(View)
+}
+class com.dryeye.app.App {
++ {static} int WM_DESTROY
++ {static} int WM_USER
+~ {static} App instance
++ {static} String defaultPath
++ {static} CurrentPath cardPath
++ {static} SimpleDateFormat formatDate
+- Thread.UncaughtExceptionHandler uncaughtExceptionHandler
+~ CAlarm alarm
++ {static} App GetInstance()
++ void onCreate()
++ void OnTimeButton()
+}
+class com.dryeye.app.card.CurrentPath {
+~ TreeDir.DirNode root
+~ TreeDir.FileNode current
++ {static} int LEVEL_FIO
++ {static} int LEVEL_DATE
++ {static} int LEVEL_TEST
++ void Init(String)
++ void Reset()
++ void Select(String)
++ void SelectRel(String)
++ TreeDir.DirNode Root()
++ TreeDir.DirNode Current()
++ String RootDir()
++ boolean CreateNew(String[])
++ boolean CreateNewDate()
+~ String Path()
+~ String RelPath()
++ String Dir()
++ String RelDir()
++ int Level()
++ void CurrentDirList(ArrayList<TreeDir.DirNode>)
++ boolean CreateNewTest()
++ String RenameTest(TreeDir.DirNodeVisible)
++ String[] ReadCardInfo()
+}
+abstract class lib.explorer.common.TaskDir {
+# CompletionService cs
++ void Release()
++ void OnResult(Integer)
++ {abstract}boolean Submit(ILoadingListener)
++ {abstract}boolean Read(ILoadingListener)
++ void close()
+}
+class lib.explorer.common.TaskDir.CompletionService {
+- ExecutorService mExecutor
++ void shutdown()
++ boolean isTerminated()
+}
+class com.dryeye.app.wifi.MDNSServerClient {
++ {static} String address
++ {static} int RUN_IDLE
++ {static} int RUN_CMD
++ {static} int RUN_SERVER
++ {static} int RUN_CLIENT
++ {static} int RUN_SERVER_CLIENT
++ {static} int EXIT
+- String mdnsPatern
+- String mdnsName
++ {static} String LocalHost
+# CriticalCounter fRun
+- CSemaphore sec
+~ MDNSServerClient self
+- String INET_ADDR
+- int PORT
+- CHandler client
+- MulticastSocket clientSocket
+- InetAddress inetAddress
+- String findName
+- int iTimeOut
+- ActionCallback calback
+- int WAIT_MULTISOCK
+- int TIMER_TIMEOUT
+- long MDNS_TIMEOUT
+- long iStartTime
++ {static} int SINC_TRUE
++ {static} int SINC_FALSE
+# CriticalCounter inSinc
++ int Number
++ {static} byte[] msg
++ void Pause()
++ void Run()
++ void ChangeOptions()
++ void ChangeHostName()
++ void run()
+- void CloseSocket()
+- boolean OpenSocket()
+- void OnSocketError()
++ void SetSync(boolean)
++ void OnServer()
++ boolean IsRun()
++ void Run(int,CHandler,ActionCallback,String)
++ void Close()
++ void Close(int)
++ void OnClient()
++ void close()
+}
+class lib.colorpicker.CSliderLum {
+~ Rect draw
++ int border
+~ Point point
+~ boolean fLock
++ {static} void Init()
+# void onDetachedFromWindow()
+# void DrawScene(Canvas)
++ void InitPlane(int,int)
++ boolean onTouch(View,MotionEvent)
+}
+class lib.utils.StringUtils {
++ {static} String ReplaceAll(String,String,String)
+}
+class com.dryeye.app.wifi.DlgSelectHost {
+# RecyclerView recyclerView
++ AddapterListScan adapter
+~ View view
++ void OnInitDialog()
++ void OnCancel(View)
++ void OnConnect(View)
+}
+class com.dryeye.app.wifi.DlgSelectHost.AddapterListScan {
+~ RecyclerView View
+~ boolean fEnableScan
++ ArrayList<Comp> results
++ int selectedPos
+~ int count
+~ boolean fInFunc
++ Comparator<Comp> cmp
++ void FindHost(MDnsInfo)
++ void Enable(boolean)
+~ void UpdateList(ArrayList<Comp>,Comp)
++ void Clear()
++ Comp Result()
++ void Scan(EventIdle)
++ void onAttachedToRecyclerView(RecyclerView)
++ void onDetachedFromRecyclerView(RecyclerView)
++ AddapterListScan.AdapterListWiFiHolder onCreateViewHolder(ViewGroup,int)
++ void onBindViewHolder(AddapterListScan.AdapterListWiFiHolder,int)
++ int getItemCount()
+}
+class com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.AdapterListWiFiHolder {
+~ android.view.View v
+~ TextView name
+~ TextView status
+~ ImageView imageView
++ void OnClick(View)
+}
+class com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.Comp {
++ String Name
++ String IP
++ boolean equals(Object)
+}
+interface com.dryeye.app.wifi.INetwork {
+~ void onAvailable(String,Network)
+~ void onLosing(Network)
+~ void onLost(Network)
+}
+class com.dryeye.app.card.CDateDlg {
+~ View view
++ String date
+~ DatePicker pic
++ void OnOk()
+}
+class lib.common.layout.ProgressLayout {
+~ boolean fStop
+~ int count
+~ AnimatedView[] spots
+~ Animator[] animators
+~ CAnimatorListenerAdapter animator
++ void Init()
++ void Play()
++ void Stop()
+}
+class lib.common.layout.ProgressLayout.CAnimatorListenerAdapter {
+~ boolean fStop
++ void onAnimationEnd(Animator)
+~ void Play()
+~ void Stop()
+- void Run()
+}
+class lib.common.layout.ProgressLayout.AnimatedView {
+- int target
++ float getXFactor()
++ void setXFactor(float)
++ void setTarget(int)
++ int getTarget()
+}
+class lib.utils.GlobalRef {
++ Object obj
++ long ID
+}
+class com.dryeye.app.card.DlgNewTest {
+~ View self
+~ EditText test
++ String result
+~ {static} int t1
+~ {static} int t2
+~ {static} int t3
+~ {static} int t4
+~ boolean isDismiss
++ void OnInitDialog()
++ void show()
+# void OnCommand(int)
++ void ReadStr(String)
+}
+class com.dryeye.app.card.DlgNewTest.CSetText {
+~ EditableSpinner edit
+~ String s
++ void run()
+}
+class lib.camera.CameraCalculatePreview {
+- CCamera camera
++ {static} CF_Size mPreviewSize
++ {static} Rect mCropRect
++ {static} CF_Size largest
++ {static} Rect cropDisplay
++ CF_Size CalcRatio(int,int)
++ Matrix MakeTransform(int,int)
+- Size chooseOptimalSize(Size[],int,int,CF_Size)
+}
+class lib.camera.CameraCalculatePreview.CompareSizesByArea {
++ int compare(Size,Size)
+}
+class lib.common.EditableSpinner {
+- int idLayout
+- int idEdit
+- int idLabel
+~ boolean IsEdit
+~ boolean inCalback
+- ListAdapter adapter
+- ActionCallback callback
+~ int selected
+~ EditableSpinner self
+~ String label
+~ boolean isShow
++ CEdit nextFocus
++ Integer color
++ void Detach(ArrayList<Object>)
+# void InitAtribut(Context,AttributeSet)
++ void Detach()
++ void OnClk()
++ void Init()
++ Editable GetSelString()
++ int GetSel()
++ boolean onTouchEvent(MotionEvent)
+# void onMeasure(int,int)
+# void onLayout(boolean,int,int,int,int)
++ void InitData(String[],String)
++ void Hide()
++ void updateString(String)
++ void SetText(String)
++ boolean SetCallback(Object,String)
++ void setSelection(int)
+}
+class lib.common.EditableSpinner.OnCloseKeyboard {
++ boolean onEditorAction(TextView,int,KeyEvent)
+}
+class lib.common.EditableSpinner.ListAdapter {
+~ ArrayList<String> list
+~ String tempSelect
++ void Init(String[])
++ CEdit GetTextViewSelected()
++ int getCount()
++ Object getItem(int)
++ long getItemId(int)
++ View getView(int,View,ViewGroup)
++ View getDropDownView(int,View,ViewGroup)
++ void onItemSelected(AdapterView<?>,View,int,long)
++ void OnChangeText()
++ void onNothingSelected(AdapterView<?>)
+}
+class com.dryeye.app.MainActivity {
++ {static} MainActivity mainActivity
++ CView view
+~ Bitmap tmp_bmp
+~ {static} SharedPreferences prefs
++ {static} boolean fClearCache
++ {static} String ReadIni(String)
++ {static} void WriteIni(String,String)
+# void onCreate(Bundle)
++ void OnResume(Activity)
++ void OnNewCard(MenuActivity,String)
++ void OnNewCard(Bitmap)
++ void OnLoadMenu()
++ boolean dispatchTouchEvent(MotionEvent)
++ void onDestroy()
++ void OnExit()
++ void OnBack()
++ void Finish()
+# void onPause()
+# void onResume()
++ void OnLoadCard(MenuActivity,String)
+# void onActivityResult(int,int,Intent)
+}
+class lib.explorer.common.DirEntry {
++ boolean fSelect
++ boolean fIsDir
++ Object any
++ String thumb_img
++ String title
++ String info
++ Entry thumb
++ Entry img
++ {static} Comparator<DirEntry> cmp
++ Integer self
++ Entry GetTrue()
++ Entry GetFalse()
++ String MakeTrumbName()
+}
+class lib.explorer.common.DirEntry.Entry {
++ String url
++ int width
++ int height
+}
+class lib.common.CheckRecycleImageView {
++ Rect rect
+~ Bitmap mBitmap
++ ActionCallback onFirstDraw
++ void Invalidate()
+# void onDraw(Canvas)
+# void onDetachedFromWindow()
++ void CleanUp()
+}
+class com.dryeye.app.card.CTreeDir {
+~ ListBoxAdapter adapter
+~ ActionCallback action
+~ int iSelected
+~ TreeDir root
++ TreeDir.DirNodeVisible[] data
++ TreeDir.DirNodeVisible GetSelect()
+- void Init(Context)
++ void SetSelect(String)
++ void Init(TreeDir,ActionCallback)
+}
+class com.dryeye.app.card.CTreeDir.ListBoxAdapter {
+~ Context context
++ void Init(TreeDir)
++ void SelectDir(String)
++ View getView(int,View,ViewGroup)
++ void onItemClick(AdapterView<?>,View,int,long)
+}
+class lib.common.CF_Size {
++ float m_cx
++ float m_cy
++ int getWidth()
++ int getHeight()
++ void CX(float)
++ void CY(float)
++ void Set(CF_Size)
++ void Set(RectF)
++ void Set(float,float)
+~ void Inflate(float)
+~ void Inflate(float,float)
+}
+class lib.utils.ASound {
++ {static} void PlayAudio(String)
+~ {static} void Test(String)
++ {static} void PlayVibrate()
++ {static} void Play(String)
+}
+class lib.common.button.CMenuButton {
+~ int color_btn_down
+~ int color_btn
+~ int color_btn_disable
+~ int currentColor
+~ boolean colors_png
+~ boolean disable_color
+# boolean fSetCalback
+~ int idResourceDown
+~ int idResourceUp
+~ boolean fDisable
+# Call callback
++ Rect GetScreenRect()
++ boolean PtIn(float,float)
++ void SetImageResource(int,int)
+- void InitAtribut(Context,AttributeSet)
++ boolean IsDown()
++ boolean GetCheck()
++ void SetCheck(boolean)
++ boolean IsEnable()
++ int GetCurrentColor()
++ View GetCapture()
++ void UpdateState()
+# void _UpdateState(boolean)
++ void SetColorUp(int)
++ void SetColorDown(int)
++ void SetColorDisable(int)
+# void UpdateColor()
+# void SetTwoColor()
+# void SetSingeColor(int)
++ void SetCallback(Object,String)
++ void Enable(boolean)
++ void Detach(ArrayList<Object>)
++ void Detach()
++ void Init()
++ boolean onTouch(View,MotionEvent)
+}
+class lib.common.button.CMenuButton.Call {
++ void onClick(View)
+}
+class com.dryeye.app.wifi.MDnsInfo {
++ String ip
++ String name
++ int num
++ String[] records
+}
+class lib.common.button.CMenuTogleButton {
+~ Drawable push
+~ Drawable pop
+# boolean isTogleColor
+# boolean isDown
+- Drawable drawable
+- void InitAtribut(Context,AttributeSet)
++ void setImageDrawable(Drawable)
++ boolean IsDown()
+# void SetState()
++ void UpdateState()
+- void updateState()
+# void UpdateColor()
++ void SetCheck(boolean)
++ boolean GetCheck()
+}
+class com.dryeye.app.DialogCameraInfo {
+~ View view
++ void OnInitDialog()
++ void Trace(String)
+}
+class com.dryeye.app.card.FragmentCard {
+~ View self
+~ Grid grid
+~ String[] info
+~ Cell[] date
+~ Cell[] name
+~ Cell[] surname
+~ Cell[] id
++ String[] result_info
+~ Runnable runnable
+~ String path
+~ ActionCallback onexit
+~ CheckVisibility checkVisibility
+~ float Y
+~ CPanelDialog container
+~ int heightKeyboard
+~ TreeDir.DirNodeVisible node
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void OnOk()
++ void OnCancel()
+~ void InitTextGrid()
++ void OnClickDate()
++ void OnInitDialog()
++ void OnDestroyDialog()
++ void OnKeyboardShow(int)
++ Runnable GetResult()
++ void OnKeyboardHidden()
+~ void InitStandartKeyboardInput()
+}
+class com.dryeye.app.card.FragmentCard.CheckVisibility {
+~ Rect rcFrame
+~ int lastDecorHeight
++ void onGlobalLayout()
+}
+class com.dryeye.app.card.CExpandableListView {
+}
+class lib.utils.FileUtils {
++ {static} ActionCallback log
+~ {static} Object syncLog
++ {static} byte[] Load(String)
++ {static} boolean FileExists(String)
++ {static} boolean DeleteFile(String)
++ {static} boolean AddTextLine(String,String)
++ {static} String GetLogFileName()
++ {static} void DeleteLog()
++ {static} boolean AddToLog(String)
++ {static} boolean AddToLog(Exception)
++ {static} boolean SaveText(String,ArrayList<String>)
++ {static} boolean ReadText(String,ArrayList<String>)
++ {static} boolean Save(String,byte[],Date)
++ {static} boolean Save(File,byte[])
++ {static} boolean Save(File,byte[],Date)
++ {static} boolean Copy(String,String)
++ {static} boolean CopyDir(File,File)
++ {static} boolean Copy(File,File)
++ {static} boolean Save(String,byte[])
++ {static} long GetDirSize(String)
++ {static} long GetDirSize(File)
++ {static} boolean DeleteDir(String)
++ {static} boolean DeleteDir(File)
++ {static} boolean Clear(File)
++ {static} void Clear(File,String[])
++ {static} void MakeDir(String)
++ {static} void DeleteFilesDir(File)
++ {static} int GetFileList(String,List<String>,String[],boolean)
++ {static} void GetFileList(File,String[],boolean,List<String>)
++ {static} void GetFileList(File,String[],ArrayList<File>,ArrayList<File>)
++ {static} void GetDirList(File,List<String>)
++ {static} void GetDirList(String,List<String>)
++ {static} File[] GetListDirs(String)
++ {static} String StringLastModify(String)
++ {static} boolean UnZip(String,String)
++ {static} int ReadZip(File,String[],ArrayList<String>)
++ {static} File CreateTempDir(String,String)
++ {static} File CreateTempDir(File,String)
++ {static} boolean CheckPath(File)
++ {static} boolean UnZip(File,File,ArrayList<String>)
++ {static} boolean UnZip(File,File)
++ {static} boolean Zip(String,File)
++ {static} boolean Zip(String,File[])
+- {static} boolean Zip(ZipOutputStream,File,File)
++ {static} byte[] ReadFromAssets(String)
++ {static} ArrayList<String> GetAssetsList(String,String[])
+}
+class com.dryeye.app.card.DlgDeleteMerge {
+~ View view
++ int pos
++ void OnOk()
+}
+class lib.common.CEdit {
+~ Paint borderPaint
+~ Paint borderSelectPaint
+~ int fgColor
+~ int fgSelectColor
+~ Rect clipRect
+~ int borderWidth
+~ int borderRadius
+~ boolean fPaint
+~ boolean show_ui
++ ActionCallback onClick
++ ActionCallback onChar
++ ActionCallback onSize
+~ CTextChanger callback
++ boolean performClick()
+- void InitAtribut(Context,AttributeSet)
+~ boolean InitBorder()
++ void SetCallback(Object,String)
++ void OnCustomKeuboard_KeyDown(int,int[])
++ void Detach(ArrayList<Object>)
++ void Detach()
+# void onDraw(Canvas)
++ void Init()
++ boolean OnClick()
++ void setSelection(int,int)
++ void selectAll()
++ void extendSelection(int)
++ boolean dispatchTouchEvent(MotionEvent)
+# void onSizeChanged(int,int,int,int)
++ Rect ScreenRect()
++ void SetClipRect(Rect)
+}
+class lib.common.CEdit.EditTextInputConnection {
++ boolean commitText(CharSequence,int)
+}
+class lib.common.CEdit.CTextChanger {
++ void beforeTextChanged(CharSequence,int,int,int)
++ void onTextChanged(CharSequence,int,int,int)
++ void afterTextChanged(Editable)
+}
+class lib.common.button.CTextButton {
+~ ActionCallback callback
++ void Init(ActionCallback)
+}
+class lib.common.button.CTextButton.ClickListener {
++ void onClick(View)
+}
+class lib.common.CWnd {
+# SurfaceHolder holder
++ long ID
++ long cObject
+# boolean fThreadDisable
++ Bitmap bitmap
++ Bitmap bitmap_tools
++ void Init()
++ void OnTest()
++ void Reset()
++ int GetWidth()
++ int GetHeight()
++ void Invalidate()
+# void OnDraw()
++ void onDraw(Canvas)
++ void invalidate()
++ boolean SetCapture()
++ boolean ReleaseCapture()
++ void surfaceCreated(SurfaceHolder)
++ void surfaceChanged(SurfaceHolder,int,int,int)
++ void surfaceDestroyed(SurfaceHolder)
++ void close()
++ {static} CWnd CreateInstance(Class<?>,Context)
++ {static} CWnd CreateInstance(Class<?>,Context,int,int)
+# void OnCreate(long)
+# {static} GlobalRef CreateGlobalInstance(Class<?>,Context)
+# {static} GlobalRef _CreateGlobalInstance(Class<?>,Context,int,int)
+}
+class com.dryeye.app.timer.CAlarm {
+~ long time
+~ long wait
+~ long elapsedTime
+~ CTimer timer
++ void StartTimer(long)
++ void OnTimer()
++ void StopTimer()
++ void OnTimeButton()
+~ void setTime(ViewGroup,String)
+~ void stopTimer()
++ boolean IsRun()
+}
+class lib.common.OnClickCalback {
++ void onClick(View)
+}
+interface lib.explorer.common.IQuerySelectedPage {
+~ void Query(String)
+~ void Show()
+~ void Start()
+}
+class lib.explorer.common.IQuerySelectedPage.WaitState {
++ int state
++ boolean deleted
++ void run()
+}
+class lib.common.layout.LayoutButton {
+~ CMenuButton btn
+~ int color_down
+~ int color_up
+~ boolean fCheck
+~ boolean disable_change_color
+~ ActionCallback callback
+- void InitAtribut(Context,AttributeSet)
++ void SetText(String)
++ void OnChangeColor()
++ void Enable(boolean)
++ void SetImage(int)
++ boolean IsEnable()
++ boolean onTouchEvent(MotionEvent)
++ void SetCallback(ActionCallback)
++ void SetCallback(Object,String)
++ boolean GetCheck()
++ void SetCheck(boolean)
++ void Detach(ArrayList<Object>)
++ void Detach()
++ void Init()
+}
+class lib.common.layout.LayoutButton.COnClickButton {
++ void onClick(View)
+}
+abstract class lib.explorer.common.ILoadingListener {
++ DirEntry obj
++ int width
++ int height
++ String GetPath()
++ {abstract}boolean OnStart()
++ {abstract}void OnEnd(byte[],int)
++ {abstract}void OnEnd(Bitmap)
++ {abstract}void OnEnd(String,Bitmap)
++ {abstract}void OnEnd(String)
++ {abstract}void OnCancel()
++ {abstract}void OnProgress(int,int)
++ {abstract}boolean IsVisiblePosition(int)
++ void OnEnd(String,Typeface)
+}
+class lib.common.CListBox {
+~ ListBoxAdapter adapter
+~ ActionCallback action
+~ int index
+- void Init(Context)
++ void Init(String[],int,ActionCallback)
++ void Replace(String[],int)
++ void Replace(ArrayList<String>,int)
++ void Init(ArrayList<String>,int,ActionCallback)
++ void Init(String[],int)
++ void Init(ActionCallback)
++ int GetSel()
++ void SetSel(int)
++ String GetSelString()
+}
+class lib.common.CListBox.ListBoxAdapter {
+~ String[] data
+~ Context context
++ void Init(String[])
++ View getView(int,View,ViewGroup)
++ void onItemClick(AdapterView<?>,View,int,long)
+}
+class com.dryeye.app.card.FragmentExploreCards {
+~ View self
+~ Runnable runnable
+# TaskReadDir _task
+# AGlobals.CasheFromExplore cache
+# RecyclerView recyclerView
+# GridLayoutManager gridLayoutManager
+# ProgressBar bar
+# AdapterExplorerView mAdapter
+~ CTreeDir listView
+~ ProgressBar waitCursor
+~ File currentDir
+~ String cardPath
+~ ActionCallback onexit
+~ ActionCallback onnewtest
+~ TreeDir dir
+~ LayoutButton rename
++ {static} String LastPath
++ String pathJPG
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void Start()
++ void Show()
++ void OnQuery()
+- int onQuery(String)
++ void Query(String)
+# void CreateAdapter()
++ void OnSelect(DirEntry)
++ void OnSelect(boolean)
+~ boolean OnNextStep()
++ void OnClickDownload(View)
++ void OnRenameCard(String[],TreeDir.DirNodeVisible)
++ void OnRename()
++ void onViewCreated(View,Bundle)
++ void OnCancel()
++ void OnDelete()
++ void OnInitDialog()
++ void OnDestroyDialog()
++ Runnable GetResult()
++ DirEntry GetSelectedElement()
++ boolean IsSelectedElement()
++ boolean onEditorAction(TextView,int,KeyEvent)
++ void OnSelectDir(TreeDir.DirNodeVisible)
+}
+class lib.camera.CCameraView {
+~ CCamera camera
+~ Activity activity
+~ CameraCalculatePreview calc
+~ CF_Size mRatio
+- ScaleListener.SCALE scale
+- float lastScaleFactor
+- ScaleGestureDetector mScaleDetector
+~ TextureView self
++ View fromUpdate
+~ int rotation
++ ActionCallback callbackOnScale
++ ActionCallback callbackOnPreviewOk
++ CCamera Camera()
+- void Init(Context)
+# void onMeasure(int,int)
++ void ChangeOrient()
++ void Restart()
++ void onSurfaceTextureAvailable(SurfaceTexture,int,int)
++ void onSurfaceTextureSizeChanged(SurfaceTexture,int,int)
++ boolean onSurfaceTextureDestroyed(SurfaceTexture)
++ void onSurfaceTextureUpdated(SurfaceTexture)
++ void Scale(float)
++ float GetScale()
++ boolean onTouch(View,MotionEvent)
+}
+class lib.common.ScaleListener {
+- float mScaleFactor
+~ SCALE scale
++ boolean onScale(ScaleGestureDetector)
++ boolean onScaleBegin(ScaleGestureDetector)
++ void onScaleEnd(ScaleGestureDetector)
+}
+class lib.common.ScaleListener.SCALE {
+- float scaleFactor
+~ boolean fCancelNextScale
++ PointF focus
+- boolean fStart
++ void start()
++ void scaled(float)
++ boolean IsScale()
++ float GetScale()
++ void SetScale(float)
++ void CancelNextScale()
++ void end()
+}
+class lib.common.CKeyboardView {
++ void Init(Context)
++ void ShowFrom(View)
++ void Hide()
++ void Register(CEdit)
+}
+class lib.common.CKeyboardView.CTouchListener {
++ boolean onTouch(View,MotionEvent)
+}
+class lib.common.CKeyboardView.CClickListener {
++ void onClick(View)
+}
+class lib.common.CKeyboardView.CFocusChangeListener {
++ void onFocusChange(View,boolean)
+}
+class lib.common.CKeyboardView.CKeyboardListner {
++ void onPress(int)
++ void onRelease(int)
++ void onKey(int,int[])
++ void onText(CharSequence)
++ void swipeLeft()
++ void swipeRight()
++ void swipeDown()
++ void swipeUp()
+}
+class lib.explorer.ExplorerActivity {
+# TaskReadDir _task
+~ ArrayList<String> dirs
+# AGlobals.CasheFromExplore cache
+# RecyclerView recyclerView
+# GridLayoutManager gridLayoutManager
+# ProgressBar bar
+# AdapterExplorerView mAdapter
+~ ProgressBar waitCursor
+~ File path
+# void onCreate(Bundle)
++ void OnHome()
++ void OnBack()
+~ void InitDirList()
++ void OnSelectDir(int)
+# void onDestroy()
++ void finish()
+# void onPause()
+# void onResume()
+# void CreateAdapter()
++ void onBackPressed()
++ void OnSelect(DirEntry)
++ void OnClickDownload(View)
++ void OnQuery()
++ void Query(String)
++ void Show()
++ void Start()
+}
+class lib.common.EventIdle {
+- String name_loop
++ {static} int IDLE
++ {static} int RUN
++ {static} int EXIT
++ {static} int RUN_AND_EXIT
+# CriticalCounter fRun
+# WaitThread thread
+# boolean fInIdle
+# CSemaphore enter
+# CSemaphore leave
+# Looper mloop
+# EventIdle self
+# boolean fErrorExit
+# int _timeout
+~ ActionCallback prevRun
++ Looper GetLooper()
++ Looper SettLooper(Looper)
++ void Run(Runnable)
++ void Run(Runnable,int)
++ void close()
++ void RunAndExit()
++ void Exit()
++ void Init(String,Looper,ActionCallback)
+# void IntSemaphore()
+# void CreateThread()
+# boolean Run()
++ boolean Idle()
++ boolean Idle(int)
++ boolean Loop()
++ boolean IsInLoop()
++ void ExitLoop()
+~ void Throw()
+}
+class lib.common.EventIdle.ExitIdleException {
++ EventIdle looper
+}
+class lib.common.EventIdle.WaitThread {
++ void run()
+}
+class lib.common.EventIdle.ExitHandle {
++ void run()
+}
+class lib.common.CTimer {
++ {static} int NONE
++ {static} int RUN
+- CriticalCounter timer_run
+- Timer timer
+# int ms
+- CriticalCounter count_timer
+- Object sync
+~ CHandler mHandler
+~ CTimerTask current
++ int Status()
++ boolean Run(int)
++ boolean Run()
++ boolean Stop()
+# void OnException()
+- void _SetTimer()
++ void run()
+# void onrun()
+- void OnTimer()
+# void onTimer()
+}
+class lib.common.CTimer.CTimerTask {
+~ CriticalCounter running
+~ void Reset()
++ void run()
+}
+class lib.common.CFragment {
++ void checkButton(int,boolean)
++ void CheckButton(int,boolean)
++ void enableButton(int,boolean)
++ void EnableButton(int,boolean)
++ void setText(int,String)
++ void SetText(int,String)
+}
+class lib.common.layout.AnimatedLayout {
+~ boolean fLock
+# boolean fDraging
+# Direct orient
+# boolean orientVH
+# boolean willNotDraw
+# View panel
+# boolean isVisible
+# float startPos
+# int hand_size
+# boolean VERT
+# boolean HORZ
+# boolean LeftToRight
+# int curentVisibilety
+# Rect screen
+# DecelerateInterpolator sDecelerator
+# VelocityTracker velocityTracker
+# ObjectAnimator animator
+# Object sync
+# Integer idToDrag
+# ActionCallback onKey
+# ArrayList<Runnable> onhide
+# ArrayList<Runnable> onshow
++ void SetFlagIsVisible(boolean)
++ void setLayoutParams(ViewGroup.LayoutParams)
++ boolean SetOrient(String)
++ void EnableDraging(boolean)
++ boolean IsDragingEnable()
++ void Lock(boolean)
++ boolean IsLock()
+# void SetOrient()
+# void InitAtribut(Context,AttributeSet)
++ Rect GetScreenRect()
++ void Hide()
++ void Show()
++ void OnStartHide()
++ void OnStartShow()
+# Rect GetRectVisible()
++ void SetCallbakOnKeyRun(ActionCallback)
++ boolean dispatchKeyEventPreIme(KeyEvent)
+# void onLayout(boolean,int,int,int,int)
+# void StartDrag(MotionEvent)
+# void Dragging(MotionEvent)
+# void EndDrag(MotionEvent)
++ boolean onInterceptTouchEvent(MotionEvent)
++ boolean onTouchEvent(MotionEvent)
++ void SetScreenVisible(boolean,boolean)
++ boolean Expand(boolean,float)
+# void Expanding(float)
++ boolean IsVisible()
+# void finalize()
++ void AddOnHideAction(Runnable)
++ void AddOnShowAction(Runnable)
+# void OnHide()
+# void OnShow()
+# void SetState(boolean)
++ void draw(Canvas)
+}
+class lib.common.layout.AnimatedLayout.AnimatedListener {
+~ int oldLayerType
+~ boolean fOpen
++ void onAnimationStart(Animator)
++ void onAnimationRepeat(Animator)
++ void onAnimationEnd(Animator)
++ void onAnimationCancel(Animator)
+}
+class lib.utils.TListLong {
++ TListLongEntry first
++ TListLongEntry last
++ int num
++ int Add(int,TListLongEntry)
++ int AddFirst(TListLongEntry)
++ int Add(TListLongEntry)
++ void Reset()
++ void MoveTo(TListLongEntry,TListLong)
++ void MoveTo(TListLong)
++ void Del(TListLongEntry)
+}
+class lib.utils.TListLong.TListLongEntry {
++ TListLongEntry prev
++ TListLongEntry next
++ int val
++ void Init(TListLongEntry)
++ void Reset()
++ void Init(int,TListLongEntry,TListLongEntry)
++ void Init(int,TListLongEntry)
++ void Init(int)
+}
+class lib.camera.CSaveFotoListner {
+- EventIdle wait
+- ActionCallback action
++ void onImageAvailable(ImageReader)
+}
+interface lib.common.ISelectedElement {
+~ DirEntry GetSelectedElement()
+~ boolean IsSelectedElement()
+}
+class com.dryeye.app.wifi.DlgLocalHostName {
+~ View view
+~ EditText test
++ String result
++ void OnInitDialog()
+# void OnCommand(int)
+}
+class com.dryeye.app.MenuActivity {
+- {static} boolean fFirstTime
+- Fragment dialog
+- Fragment dialog2
+- CPanelDialog dialogContainer
+- CPanelDialog dialogContainer2
+~ int ID_NEW_CARD
+~ int ID_LOAD_CARD
+~ int ID_EXIT
+~ int ID_SYNC
+~ int ID_SETTING
+~ ActionCallback onload
+~ ActionCallback onnewcard
+~ ActionCallback oncamera
+~ ActionCallback _onexit
+~ boolean flagFirsRun
+# void onCreate(Bundle)
++ void showFragment(Fragment,int,Bundle)
++ void dismissFragment(Fragment)
++ void Exit()
++ void onBackPressed()
++ void onDestroy()
+# void onPause()
+# void onResume()
+# void DrawText()
++ void OnLang()
++ void SetLang(String)
+- void CheckAppPermissions(Context)
+- {static} String[] GetManifestPermissions(Context)
++ void onRequestPermissionsResult(int,String[],int[])
++ void OnLoadCardFragment()
++ void OnAddTestFromCard()
++ void OnSyncFragment()
++ boolean OnSyncGet(String)
++ void OnOpenNewCardFragment()
++ void OnEditCardFragment(TreeDir.DirNodeVisible,ActionCallback)
++ void OnOpenCameraFragment(boolean)
++ boolean dispatchTouchEvent(MotionEvent)
++ void DialogHide()
++ void CloseDialog()
+- void InitInstance()
+}
+class com.dryeye.app.MenuActivity.COnClickButton {
+~ int id
++ void onClick(View)
+}
+class com.dryeye.app.card.FraggmentCardImages {
+~ View self
+~ Runnable runnable
+~ String path
+~ CPanelDialog test
+~ ImageSlider slider
+~ ActionCallback onexit
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
+- void InitCard()
++ void OnOk(View)
++ void OnCancel()
++ void OnInitDialog()
++ void OnDestroyDialog()
++ Runnable GetResult()
+}
+class lib.utils.AGlobals {
++ {static} String cachePath
++ {static} Application App
++ {static} Context contextApp
++ {static} ContentResolver contentResolver
++ {static} Bitmap default_image
++ {static} Bitmap error_image
++ {static} Activity currentActivity
++ {static} int touchSlop
++ {static} boolean fNoText
++ {static} long mainTreadID
++ {static} CHandler rootHandler
++ {static} int SINGER_DIALOG_THEME
++ {static} ActionCallback onResumed
+~ {static} HashMap<String,CasheFromExplore> dataExplore
++ {static} void SetTextColor(TextView,int)
++ {static} void SetBackground(TextView,int)
++ {static} void showFragment(Fragment,int,Bundle)
++ {static} void dismissFragment(Fragment)
++ {static} boolean hideSpinnerDropDown(Spinner)
++ {static} String GetString(String)
++ {static} String GetInternalString(String)
++ {static} boolean KeyboardIsAtached()
++ {static} void ShowKeyboard(boolean)
++ {static} void ShowKeyboard(View)
++ {static} DisplayMetrics GetDisplayMetrcs()
++ {static} float StringToFloat(String)
++ {static} String FloatToString(float)
++ {static} Object CreateInstance(Class<?>,Object)
++ {static} CasheFromExplore CreateCache(String)
++ {static} void ClearCache()
++ {static} File[] DirPicture()
++ {static} String[] MaskPicture()
++ {static} File[] DirDesign()
++ {static} File[] DirFonts()
++ {static} String[] MaskFonts()
++ {static} String[] MaskDesign()
++ {static} String[] MaskWriteDesign()
++ {static} String CreateHashKey(String)
++ {static} void hideFloatingActionButton(FloatingActionButton)
++ {static} void showFloatingActionButton(FloatingActionButton)
++ {static} void BackTrace()
++ {static} void BackTrace(String)
++ {static} void Sleep(int)
++ {static} Drawable GetDrawable(String,int,int,int,int)
++ {static} VectorDrawableCompat GetDrawable(String)
++ {static} boolean SendCommand2Thread(long,long,long,long)
++ {static} boolean PostCommand2Thread(long,long,long,long)
++ {static} boolean CallCommand(long,long,long,long)
++ {static} long AttachThread(long)
++ {static} boolean DetachThread(long)
++ {static} boolean OnThreadLoop(long)
++ {static} Object LongToObject(long)
++ {static} void ReleaseGlobalInstance(long)
++ {static} void AddGlobalIdle(ActionCallback)
++ {static} void ReleaseGlobalIdle()
++ {static} String ReadString(String)
++ {static} void SaveIni(String,String,String,String)
++ {static} String ReadIni(String,String,String)
++ {static} String ReadLang()
++ {static} void WriteLang(String)
+}
+class lib.utils.AGlobals.CasheFromExplore {
++ ImagesCache cache
++ ArrayList<DirEntry> result
++ void Clear()
+}
+class lib.utils.AGlobals.CActivityCallback {
++ void onActivityCreated(Activity,Bundle)
++ void onActivityStarted(Activity)
++ void onActivityResumed(Activity)
++ void onActivityPaused(Activity)
++ void onActivityStopped(Activity)
++ void onActivitySaveInstanceState(Activity,Bundle)
++ void onActivityDestroyed(Activity)
+}
+class lib.camera.CFotoCallback {
+- EventIdle wait
+- ActionCallback action
+~ boolean fNotSupportFocuse
++ void onCaptureCompleted(CameraCaptureSession,CaptureRequest,TotalCaptureResult)
++ void onCaptureFailed(CameraCaptureSession,CaptureRequest,CaptureFailure)
+}
+interface lib.common.IControlOnClick {
+~ boolean OnClick()
+~ Rect ScreenRect()
+~ void SetClipRect(Rect)
+}
+class lib.camera.ViewRect {
++ void Init()
+# void onDraw(Canvas)
+}
+class lib.common.CDialog {
++ {static} int IDOK
++ {static} int IDCANCEL
++ {static} int IDABORT
++ {static} int IDRETRY
++ {static} int IDIGNORE
++ {static} int IDYES
++ {static} int IDNO
++ {static} int IDCLOSE
++ {static} int IDSYSTEMERROR
++ {static} int MB_YESNO
++ {static} int MB_OK
++ {static} int MB_OKCANCEL
++ {static} int MB_CANCEL
++ {static} int MB_UNKNOWN
++ {static} int MB_MINIMIZE
+# int Result
+# boolean isDismiss
+# Point dimensionPixel
+# boolean fLock
+# EventIdle idle
++ HashMap<Integer,ActionCallback> commands
++ void SetDimensions(int,int)
++ void SetDimensionsProcent(float,float)
++ void show()
++ void OnInitDialog()
+# void OnCommand(int)
++ void OnOk()
++ void OnCancel()
++ void AddButton(int,CharSequence,int)
++ void EnableButton(int,boolean)
+# void InitRCButton(View,int,String)
++ void ShowDialog()
++ void Show()
++ void Hide()
++ int DoModal()
++ void dismiss()
++ void Lock(boolean)
++ void EndDialog(int)
+}
+class lib.common.CDialog.CShowListener {
++ void onShow(DialogInterface)
+}
+class lib.common.CDialog.COnClick {
+~ int id
++ void onClick(DialogInterface,int)
+}
+class lib.common.CObject {
++ long ID
++ long cObject
++ {static} CObject CreateInstance(Class<?>)
++ long GetID()
++ void OnCreate(long)
++ void OnDestroy()
++ void close()
+# {static} GlobalRef CreateGlobalInstance(Class<?>)
+}
+class lib.common.CriticalCounter {
++ void Clear()
++ int Increment()
++ int SetCount(int)
++ int Count()
++ int Decrement()
+}
+class lib.colorpicker.ModalColorDialog {
+~ View view
+~ TextView colorCtrl
++ int colorResult
++ void OnInitDialog()
++ void SetCurrent(int)
++ void _SetCurrent(int)
++ void OnLongClickColor()
++ void colorChanged(int)
+# void OnCommand(int)
++ void OnSelectPaletteColor(String[],int)
+}
+class lib.colorpicker.ModalColorDialog.CLongClickListener {
++ boolean onLongClick(View)
+}
+interface lib.common.INotify {
+~ void OnNotify(long,long,long)
+~ void OnNotify(Object,Object)
+}
+interface lib.common.IAdapter {
+~ RecyclerView.Adapter Adapter()
+~ boolean IsInvalid()
+~ boolean Invalidate()
+~ void NotifyDataSetChanged()
+~ void Select(String)
+~ void DowloadImage(int,int)
+}
+interface lib.common.IActionCalbackClient {
+~ void Detach(ArrayList<Object>)
+~ void Detach()
+~ void Init()
+}
+class lib.explorer.FileLocal {
++ Integer execute(ILoadingListener)
+}
+class lib.common.grid.CCell {
++ void SetLayout(boolean)
+}
+class lib.camera.CStateCamera {
+- EventIdle wait
+- ActionCallback actionCallback
++ CameraDevice device
++ String state
+~ String error
++ void onOpened(CameraDevice)
++ void onDisconnected(CameraDevice)
++ void onError(CameraDevice,int)
+}
+class lib.explorer.AdapterExplorerView {
++ ActionCallback onselect
+~ TaskDir task
+~ AGlobals.CasheFromExplore cache
+~ ArrayList<DirEntry> result
+~ int lastVisibleFirst
+~ int lastVisibleLast
+~ AdapterExplorerView self
+~ GridLayoutManager grid
+~ boolean firstTime
+~ int[] iIndex
+~ int[] invIndex
+~ int numIndex
+~ int selectedPos
+~ Object syncLastVisible
+~ Object sync
+- int w
+- int h
+- HashSet<Integer> colect
+~ int grid_view_items
++ void Refresh()
++ RViewHolder onCreateViewHolder(ViewGroup,int)
++ void RefreshBoundRect(Rect)
++ void onBindViewHolder(RViewHolder,int)
++ int getItemCount()
++ DirEntry GetSelectedElement()
++ void onDetachedFromRecyclerView(RecyclerView)
+# boolean Check(RViewHolder,DirEntry)
+# boolean Invalidate(RViewHolder,DirEntry)
++ Bitmap GetImage(DirEntry)
++ void Select(String)
+# void CheckIndex()
++ void SetVisibleRange(int)
+~ void setImageFile(Bitmap)
+}
+class lib.explorer.AdapterExplorerView.RViewHolder {
+~ CheckRecycleImageView imgFile
+~ ProgressBar progressBar
+~ TextView title
+~ TextView sizeImage
+~ View v
++ void OnClick(View)
+}
+class lib.explorer.AdapterExplorerView.LoadThumbImage {
++ void OnNotify(long,long,long)
++ boolean IsVisiblePosition(int)
++ boolean OnStart()
++ void OnEnd(byte[],int)
++ void OnEnd(Bitmap)
++ void OnEnd(String,Bitmap)
++ void OnEnd(String)
+- void OnLoad()
++ void OnCancel()
++ void OnProgress(int,int)
+}
+interface lib.common.IResultFragmentDlg {
+~ Runnable GetResult()
+}
+class com.dryeye.app.ParentFromMainAndViewActivity {
++ HashMap<String,ActionCallback> menuMainMenu
++ HashMap<String,ActionCallback> menuViewMenu
+# void onCreate(Bundle)
+}
+class com.dryeye.app.card.CExpandableListAdapter {
++ ArrayList<TreeDir.DirNode> list
++ ArrayList<Boolean> isDir
+~ Context context
++ int iSelected
++ int DefaultTextColor
++ void Update(TreeDir)
++ int getGroupCount()
++ int getChildrenCount(int)
++ Sel GetSel()
++ Object getGroup(int)
++ Object getChild(int,int)
++ long getGroupId(int)
++ long getChildId(int,int)
++ boolean hasStableIds()
++ View getGroupView(int,boolean,View,ViewGroup)
++ View getChildView(int,int,boolean,View,ViewGroup)
++ boolean isChildSelectable(int,int)
+}
+class com.dryeye.app.card.CExpandableListAdapter.Sel {
+~ int group
+~ int sub
+}
+class lib.common.grid.Grid {
+~ Paint paint
+~ ArrayList<GridRow> data
+~ Rect clipRect
++ int iLayoutParamsWidth
++ int iLayoutParamsHeight
++ void Init()
++ void SetClipRect(Rect)
++ void UpdateClipRect()
++ Cell GetFocused()
++ void AddRow(Cell)
++ void ReplaceRow(int,Cell)
++ void SetRowColor(int,int)
++ void SetVisible(int,int)
++ void SetRowCalback(int,ActionCallback)
++ void UpdateView()
++ int GetNumRow()
++ void UpdateData()
++ int CountRow()
++ GridRow GetGridRow(int)
++ Cell[] GetRow(int)
++ Cell GetCell(int,int)
++ int Size()
++ void Clear()
++ void ClearFrom(int)
+# void onDraw(Canvas)
+}
+class lib.print.PrintAndPreview {
+~ PrintedPdfDocument mPdfDocument
+~ ActionCallback mDraw
+~ ActionCallback mError
+~ ActionCallback mInit
+~ Context mContext
++ void onStart()
++ {static} PrintAndPreview InitInstance(String,Context,PrintAttributes.MediaSize,ActionCallback,ActionCallback,ActionCallback)
++ void onFinish()
++ void onLayout(PrintAttributes,PrintAttributes,CancellationSignal,PrintDocumentAdapter.LayoutResultCallback,Bundle)
++ void onWrite(android.print.PageRange[],android.os.ParcelFileDescriptor,CancellationSignal,PrintDocumentAdapter.WriteResultCallback)
+}
+class lib.camera.CPreviewCallback {
+- EventIdle wait
+- ActionCallback action
+~ boolean fNotSupportFocuse
++ void onCaptureCompleted(CameraCaptureSession,CaptureRequest,TotalCaptureResult)
++ void onCaptureFailed(CameraCaptureSession,CaptureRequest,CaptureFailure)
+}
+class lib.common.MessageBox {
+- CDialog dlg
+~ String lpText
+~ String lpCaption
+~ int uType
+~ CTimer timer
++ HashMap<Integer,ActionCallback> commands
++ void SetAutocloseCloseMiliseconds(int)
+- void Init()
++ void Lock(boolean)
++ void ShowDialog()
++ void EndDialog(int)
++ int DoModal()
++ void SetText(CharSequence)
++ void Hide()
++ void Show()
+}
+class com.dryeye.app.camera.FragmentCamera {
+~ View self
+~ ActionCallback onexit
+~ Runnable runnable
+~ CPanelDialog test
+~ boolean fAnimate
+~ TextView zoomText
+~ CCameraView drawPtreview
+~ CPanelDialog menu
+~ Grid grid
+~ CSpinButton[] repeat
+~ HashMap<Object,CCamera.MapModeKey> modes
+~ int LastState
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void OnDestroyMenu()
++ void OnInitMenu()
++ void OnOkMenu()
++ void OnCancelMenu()
++ void OnSetting()
++ void OnZoom(float)
++ void OnZoomPlus()
++ void OnZoomMinus()
++ void onViewCreated(View,Bundle)
++ void OnCameraState(int)
++ void OnFoto()
++ void onFoto()
++ void onErrorFoto()
++ void OnOk(Bitmap)
++ void OnInitDialog()
++ void OnDestroyDialog()
++ Runnable GetResult()
+}
+class com.dryeye.app.wifi.WiFiUtils {
+- {static} MDNSServerClient mdns
+~ {static} ThreadCheckNetwork network
+~ {static} ThreadCheckMonitor monitor
+~ {static} ThreadScan scan
+~ {static} CriticalCounter fConnect
+~ {static} Object checkConnect
++ {static} void Run()
++ {static} void Stop()
++ {static} boolean IsNetworkConnect()
++ {static} boolean WiFiIsConnected()
++ {static} String[] GetWiFiInfo()
++ {static} boolean EnableWiFi()
++ {static} boolean IsWiFiEnable()
++ {static} String GetIP(int)
++ {static} CharSequence GetStringWiFiInfo()
++ {static} boolean IsNetOk()
++ {static} void StartMDNS(int,CHandler,ActionCallback)
++ {static} boolean MDNSIsRun()
++ {static} void MDNSPause()
++ {static} void MDNSChangeHostName()
++ {static} void MDNSChangeOptions()
++ {static} void OnSync()
++ {static} void StartMDNS(int,CHandler,ActionCallback,String)
++ {static} void StopMDNS()
++ {static} void NetworkStartTrace(String,INetwork)
++ {static} void NetworkEndTrace()
++ {static} void Init()
++ {static} void Close()
++ {static} void RegisterMonitor(BroadcastReceiver)
++ {static} void UnRegisterMonitor(BroadcastReceiver)
++ {static} void RegisterScan(BroadcastReceiver)
++ {static} void UnRegisterScan(BroadcastReceiver)
+}
+class com.dryeye.app.wifi.WiFiUtils.ThreadCheckNetwork {
+~ CNetwork network
++ void Run()
+# void OnRun()
++ void close()
+- UncaughtExceptionHandler OutOfException()
+# void OnClose()
++ void Start(String,INetwork)
++ void End()
+}
+class com.dryeye.app.wifi.WiFiUtils.ThreadCheckMonitor {
+~ CMonitor network
+# void OnRun()
+# void OnClose()
+~ void Register(BroadcastReceiver)
+~ void UnRegister(BroadcastReceiver)
+}
+class com.dryeye.app.wifi.WiFiUtils.ThreadScan {
+~ CScan network
+# void OnRun()
+# void OnClose()
+~ void Register(BroadcastReceiver)
+~ void UnRegister(BroadcastReceiver)
+}
+class com.dryeye.app.wifi.WiFiUtils.CMonitor {
+# WifiManager manager
+~ {static} ArrayList<BroadcastReceiver> receivers
+# Object sync
+# Looper looper
++ void Register(BroadcastReceiver)
++ void UnRegister(BroadcastReceiver)
++ void Resume()
++ void onReceive(Context,Intent)
++ void close()
+}
+class com.dryeye.app.wifi.WiFiUtils.CScan {
+# WifiManager manager
+~ {static} ArrayList<BroadcastReceiver> receivers
+# Object sync
+# Looper looper
++ void UnRegister(BroadcastReceiver)
++ void onReceive(Context,Intent)
++ void close()
++ void Resume()
++ void Register(BroadcastReceiver)
+}
+class com.dryeye.app.wifi.WiFiUtils.CNetwork {
+~ ConnectivityManager connectivityManager
+~ {static} String netSSID
+~ {static} Network net
+~ {static} INetwork receiver
+~ Looper loop
+~ void Start(String,INetwork)
+~ void End()
++ void onAvailable(Network)
++ void onLosing(Network,int)
++ void onLost(Network)
+# void BindNetwork(Network)
++ void close()
+}
+class lib.common.CSemaphore {
++ boolean Leave()
+- boolean _Enter()
++ boolean Enter()
++ boolean TryEnter(int)
++ boolean TryEnter()
++ int SetCount(int)
++ int Count()
+}
+class lib.common.layout.LinearLayoutBorder {
+~ Paint paint
+~ int color
+~ boolean draw_cell
+- void InitAtribut(Context,AttributeSet)
+# void Init(Context)
+# void onDraw(Canvas)
+}
+class lib.explorer.DirLocal {
+- ArrayList<DirEntry> temp
+- ArrayList<DirEntry> dirEntries
+- {static} Object sinc
+- String query
+- IQuerySelectedPage context
+- ProgressBar progress
+- String[] mask
+- File dir
+- ArrayList<String> path
+~ boolean fAddDir
+# String doInBackground(Void)
+# void onProgressUpdate(Integer)
+# void onPostExecute(String)
+}
+class lib.camera.CCamera {
+- {static} SparseIntArray ORIENTATIONS
++ {static} CCamera self
++ {static} int LENS_FACING
++ {static} Rect clipRect
+~ boolean fStartFoto
+~ ActionCallback callbackOnPreviewOk
++ ActionCallback onexit
++ ActionCallback onErrorFoto
++ CameraManager mCameraManager
++ String cameraId
++ CameraDevice device
++ int imageFormat
++ CaptureRequest.Builder previewBuilder
++ CameraCaptureSession session
++ EventIdle wait
+- ImageReader mImageReader
++ SurfaceTexture preview
+- Boolean fAutoFlash
+~ Rect lastCrop
+~ CFotoCallback fotoCallback
+~ CaptureRequest mPreviewRequest
+~ boolean isMeteringAreaAFSupported
+~ boolean fSizeRange
+~ CPreviewCallback previewCallback
+~ Handler handler
+~ HashMap<Object,Object> cModes
+~ CaptureRequest.Builder captureBuilder
++ void WriteOrient(int)
+~ CameraCharacteristics Characteristics()
++ StreamConfigurationMap StreamConfigurationMap()
++ boolean Init(SurfaceTexture)
++ boolean IsOpenedSession()
++ boolean OpenCamera(ActionCallback)
++ float Scale(float)
+- float SetCropRegion(CaptureRequest.Builder,float)
+- void FlushOff(CaptureRequest.Builder)
+- void StartCaptureSesion()
++ void OnCameraAction(CameraDevice,String)
++ void StartFoto(ActionCallback,ActionCallback)
++ void OnPreview()
++ void OnFoto(String,TotalCaptureResult)
++ void OnSavePicture(ImageReader)
+- void unlockFocus()
+~ Range<Integer> GetLuminate()
++ void InitPreview(CameraCaptureSession,String)
++ void OnPreviewOk(int)
++ boolean IsValid()
++ void close()
+- Matrix GetOrientation()
++ CCell[] GetParamSceneMode()
++ CCell[] GetEdgeMode()
++ CCell[] GetToneModes()
++ CCell[] GetHotPixelMode()
++ CCell[] GetNoiceReductionMode()
++ CCell[] GetShadingMode()
++ CCell[] GetOpticalMode()
++ CCell[] GetControlModes()
++ CCell[] GetCorrectionModes()
++ CCell[] GetAWBMode()
++ CCell[] GetShadingLensModes()
++ HashMap<Object,MapModeKey> GetModes()
++ void SetModes(HashMap<Object,MapModeKey>)
+~ void ReadIni()
+}
+class lib.camera.CCamera.MapModeKey {
++ CCell[] key
++ String str
+}
+class lib.colorpicker.CtrlWnd {
+# Bitmap bitmap
+# Paint strokeLine1
+# Paint strokeLine2
+# ColorPicker parent
+# int touchSlop
+# void InitDraw()
++ void draw(Canvas)
++ void Init(ColorPicker)
+# void DrawScene(Canvas)
++ void Invalidate()
++ void onDraw(Canvas)
++ boolean SetCapture()
++ boolean ReleaseCapture()
++ boolean onTouch(View,MotionEvent)
+}
+class com.dryeye.app.wifi.SyncThread {
+- {static} SyncThread instance
+- Thread self
+~ {static} int RUN_TRUE
+~ {static} int RUN_FALSE
+- CriticalCounter fIsRun
+- Semaphore sec
+- String address
+~ {static} int port
+- ActionCallback onconnect
+- ActionCallback ondisconnect
++ {static} SyncThread MakeInstance()
++ {static} SyncThread Instance()
++ {static} boolean IsRun()
++ boolean IsWait()
++ boolean Run(String,ActionCallback,ActionCallback)
+- void Start()
++ void Stop()
++ void run()
+- boolean run_TryConnect()
+- void _run()
+- void _run_ExitThread()
++ {static} String LocalHost()
++ {static} String MulticastAddress()
++ {static} int MulticastPort()
++ {static} void MulticastAddress(String)
+~ {static} void MulticastPort(String)
++ {static} void LocalHost(String)
++ {static} Profile ReadProfile()
++ {static} void SaveProfile(Profile)
+- void DetachCppThread()
+- boolean TryConnect(String,int)
+- void LoopThread()
++ String SendFile(String,String,boolean)
++ String Write(String,String)
++ String Read(String)
++ String GetROI(String,String)
++ String GetFile(String,String,String)
++ {static} String[] ReadMdnsRecords(byte[],int)
++ {static} byte[] CreateMdnsRecords(String,String[])
+}
+class com.dryeye.app.wifi.SyncThread.Profile {
++ String SSID
++ String HostName
++ boolean IsEmpty()
+}
+class com.dryeye.app.timer.TimerButton {
+~ String gText
++ void SetText(String)
++ void draw(Canvas)
+}
+class lib.colorpicker.ColorPlane {
+~ boolean fLock
+~ Rect draw
+~ int border
++ {static} void Init()
+# void onDetachedFromWindow()
++ void InitPlane(int,int)
++ void SetRadius(int)
+# void DrawScene(Canvas)
++ boolean onTouch(View,MotionEvent)
+}
+class com.dryeye.app.ViewActivity {
+- {static} boolean fFirstTime
++ CView view
+- Fragment dialog
+- CPanelDialog dialogContainer
+~ Uri uri
+~ String pathImage
+~ Bitmap bitmap
+~ boolean fInit
+~ String roi
+~ boolean fRoiView
+# void onCreate(Bundle)
++ void OnUpdateInfo()
++ void OnInfo()
++ void OnImages()
++ void DialogHide()
++ void OnNewCard(ViewActivity,String)
++ void CloseDialog()
++ void OnCamera()
+# void onActivityResult(int,int,Intent)
++ void OnSave()
++ void OnDelete()
++ boolean dispatchTouchEvent(MotionEvent)
++ void onDestroy()
+# void onPause()
+# void onResume()
+~ void _InitButtonRoi()
+~ void InitButtonRoi()
++ void LoadBitmap(Bitmap)
++ void LoadFile(ViewActivity,String)
++ void OnNewRoi()
++ void OnRoi()
++ boolean IsFragmentSyncFile()
++ void OnSync()
+~ void ExitDlg()
++ void onBackPressed()
++ void OnBackPressed()
+}
+class com.dryeye.app.wifi.DlgOptions {
+~ View view
+~ EditText test
++ String result
+# void OnCommand(int)
+}
+class lib.common.button.CSpinButton {
+~ Object sync
+~ boolean fRunSpin
+# Call callback_spin
+~ int speed
+~ Rect clipRect
+- boolean fSpinMode
++ void SetSpinMode(boolean)
+- void _InitAtribut(Context,AttributeSet)
++ void SetSpeed(int)
++ boolean OnClick()
++ Rect ScreenRect()
++ void SetClipRect(Rect)
++ void Detach(ArrayList<Object>)
++ void SetCallback(Object,String)
++ boolean onTouchEvent(MotionEvent)
++ boolean IsDown()
++ void Enable(boolean)
+# void Spin()
+}
+class com.dryeye.app.wifi.FragmentDownloadFile {
+~ View self
+~ CPanelDialog test
+~ TextView idNameText
+~ String link
+# {static} String URI_CHARS
+# {static} int REDIRECT_COUNT
+# {static} int CONNECT_TIMEOUT
+# {static} int READ_TIMEOUT
+# InputStream pStream
+# HttpURLConnection pHttp
+# int iSizeStream
++ boolean isSownload
++ byte[] buffer
+~ String text
+~ ActionCallback callback
+~ Runnable result
+~ DownloadThread thread
+~ boolean fShow
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void OnShow()
+~ void Start()
++ void OnInitDialog()
++ void OnDestroyDialog()
++ Runnable GetResult()
+~ void DrawText(String)
+}
+class com.dryeye.app.wifi.FragmentDownloadFile.DownloadThread {
+# HttpURLConnection Connection(String)
+# boolean Start(String)
+# boolean Stop()
+# void OnRun()
+# void OnClose()
+}
+class lib.common.CHandler {
+~ Object sync
++ void Send(Runnable)
++ void Send(Runnable,int)
+}
+class lib.common.layout.HandLayout {
+# boolean fFirstTime
+# CMenuButton hand
+# HandLayout self
+~ Integer id
+# void onLayout(boolean,int,int,int,int)
+# void InitAtribut2(Context,AttributeSet)
++ void Init()
++ void On_Hand()
+# void OnToushUp()
++ boolean onTouchEvent(MotionEvent)
+}
+class com.dryeye.app.timer.TimerDlg {
+~ TextView test
+~ CListBox box
++ String[] data
++ int result
+~ View view
++ void OnClick(int)
+}
+class lib.common.ImageSlider {
+~ ArrayList<DirEntry> dirEntries
+~ CListBox cListBox
+~ String[] types
+~ Bitmap[] bitmaps
+~ boolean[] fChanged
+~ int index
+~ ViewPager viewPager
+~ CMenuButton[] button
+~ boolean isSlide
+~ ActionCallback callback
+~ SlideAdapter adapter
++ ActionCallback OnTypeChanged
+~ AGlobals.CasheFromExplore cache
+~ TaskDir task
+~ Bitmap[] data
+~ boolean fReplace
+~ boolean ttt
++ void Init(ArrayList<DirEntry>,int,ActionCallback)
++ String Result()
++ void Replace(int,Bitmap)
++ void Replace(int,String)
++ void Reset()
++ void OnListChanged(int)
++ void OnChangeSlide(int)
+~ void CheckButtons()
+~ void OnDestroySlideAdapter()
++ void OnPrevSlide()
++ void OnNextSlide()
+- void _OnTypeChanged(int,boolean)
+}
+class lib.common.ImageSlider.COnChangeSlide {
++ void onPageScrolled(int,float,int)
++ void onPageSelected(int)
++ void onPageScrollStateChanged(int)
+}
+class lib.common.ImageSlider.SlideAdapter {
+~ boolean fFirstTime
++ int getCount()
++ boolean isViewFromObject(View,Object)
++ Object instantiateItem(ViewGroup,int)
++ void destroyItem(ViewGroup,int,Object)
++ int getItemPosition(Object)
+}
+class lib.common.ImageSlider.LoadThumbImage {
++ boolean OnStart()
++ void OnEnd(byte[],int)
++ void OnEnd(Bitmap)
++ void OnEnd(String,Bitmap)
++ void OnEnd(String)
++ void OnCancel()
++ void OnProgress(int,int)
++ boolean IsVisiblePosition(int)
+}
+abstract class lib.common.CStdThread {
+# CHandler client
+# Semaphore sec
+# Looper looper
++ Looper GetLooper()
++ void close()
++ void run()
++ void Run()
+# {abstract}void OnRun()
+# {abstract}void OnClose()
+}
+class lib.ExitProgramActivity {
+~ CTimer timer
+# void onCreate(Bundle)
++ void onExit()
++ {static} void exitApplication(Context)
+}
+class com.dryeye.app.roi.SelectedBlockIcon {
++ Bitmap[] bmp
++ boolean[] fSel
++ String[] names
++ int[] colors
++ int Count()
+}
+class lib.common.layout.CScrollView {
+~ Rect rc
++ Rect screenRect
++ ActionCallback onChangeLayout
+# void onScrollChanged(int,int,int,int)
+# void onLayout(boolean,int,int,int,int)
++ void onLayoutChange(View,int,int,int,int,int,int,int,int)
+}
+class lib.common.grid.Cell {
++ {static} int CELL_TEXT
++ {static} int CELL_CHECKBOX
++ {static} int CELL_SPIN
++ {static} int CELL_COMBOBOX
++ {static} int CELL_LISTBOX
++ {static} int CELL_COLOR
++ {static} int CELL_BUTTON
++ {static} int CELL_SPACE
++ {static} int CELL_IMAGE
++ {static} int CELL_IMAGE_SLIDER
++ {static} int CELL_RADIOBUTTON
++ {static} int CELL_GRID
++ {static} int TEXT_EDIT
++ {static} int TEXT_READONLY
++ {static} int TEXT_INTEGER
++ {static} int TEXT_DECIMAL
++ {static} int BUTTON_TRANSPARENT
++ {static} int TEXT_BOLD
++ {static} int CELL_WIGHT
++ {static} int TEXT_MOVING
++ boolean fIsFocused
++ Integer iAligment
++ int type
++ int prop
++ String[] text
++ Bitmap[] bitmaps
++ String[] bitmaps_path
++ int extra
++ int value
++ View ctrl
++ ActionCallback callback
++ long c_object
++ int id
++ ArrayList<DirEntry> dirEntries
++ Cell[][] param_grid
++ Grid GetGrid()
++ View Control()
++ void SetDelegate(long,int)
++ View Create(Context,ViewGroup)
++ void Reset()
++ boolean Replace(Context,Cell)
+- void UpdateText(Context)
+- void UpdateColor(Context)
+- void UpdateComboBox(Context)
+- void UpdateTextButton(Context)
+- void UpdateImageSlider(Context)
+- void UpdateListBox(Context)
+- void UpdateCheckBox(Context)
+- void UpdateRadioButton(Context)
+- void UpdateSpin(Context)
+- void SetColor(int)
++ void OnChangeColor()
+- void CreateSpace(Context)
+- void CreateImageView(Context)
+- void CreateColor(Context)
+- void CreateComboBox(Context)
+- void CreateTextButton(Context)
+- void CreateRadioButton(Context)
++ void SetRadioButtonData()
+- void CreateImageSlider(Context)
+- void CreateListBox(Context)
+- void CreateCheckBox(Context)
+- void CreateSpin(Context,ViewGroup)
+- void CreateGrid(Context)
++ void OnSpinPlus()
++ void OnSpinMinus()
+# void CreateText(Context)
++ void SetClipRect(Rect)
++ void SetLayout(boolean)
++ void SetLayout(int,int,int)
++ void UpdateData()
+- void GetColor()
+- void GetComboBox()
+- void GetListBox()
+- void GetText()
+- void GetSpin()
+- void GetCheckBox()
+- void GetRadioButton()
++ void OnClick()
++ void OnSelect(int)
++ void OnCheck(boolean)
++ void onFocusChange(View,boolean)
+}
+class lib.explorer.cashe.ImagesCache {
++ String path
+- HashMap<Integer,String> location
+- MemCache mem
+~ Object sync
++ boolean Init(String)
++ boolean Restart()
++ void close()
++ void ClearMemory()
++ Bitmap Get(Integer,String,Integer,Integer)
++ String Add(Integer,Integer,Integer,Bitmap)
++ String Add(String,Integer,Integer,Integer,Bitmap)
++ String Add(String,Integer,Integer,Integer,byte[],int)
++ int MemPoolSize()
++ long SizeCache()
+}
+class lib.explorer.cashe.ImagesCache.MemCache {
+~ Object sync
+~ ThreadRecycle thread
+~ int count
+~ ArrayList<Entry> list
+~ int size_dop
+~ void close()
+- int dopFirst(int,int)
+- int dopLast(int,int)
++ void clear()
+- Point Update(int,int)
++ void Save(String,Bitmap)
++ void Save(String,byte[],int)
++ int PoolSize()
++ Entry Get(Integer,int,int)
+}
+class lib.explorer.cashe.ImagesCache.MemCache.Entry {
++ int key
++ Bitmap value
+}
+class lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle {
+# CompletionService cs
+~ void ClearResult()
++ void Release()
++ void Delete(Bitmap)
++ int PoolSize()
++ void Save(String,Bitmap)
++ void Save(String,byte[],int)
++ void close()
+}
+class lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.ImageTask {
+~ Bitmap bmp
+~ String filename
+~ byte[] bytes
+~ int scale
++ Boolean call()
+}
+class lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.CompletionService {
+- ExecutorService mExecutor
++ void shutdown()
++ boolean isTerminated()
+}
+class com.dryeye.app.DlgExit {
+~ View view
++ void OnCancel()
++ void OnExit()
++ void OnSaveAndExit()
+}
+class lib.common.CDrawableThread {
+# Thread thread
+# long threadID
+# SurfaceHolder holder
+# Bitmap bitmap
+~ Object sync
++ Rect drawablRect
+# void Run()
++ void start(SurfaceHolder,Bitmap)
++ void stop()
++ void close()
+}
+class lib.utils.CDateTime {
++ int wYear
++ int wMonth
++ int wDay
++ int wHour
++ int wMinute
++ int wSecond
++ String date
+~ boolean fValid
++ {static} SimpleDateFormat formatDate
++ {static} SimpleDateFormat formatView
++ {static} Comparator<CDateTime> cmp
++ {static} int Compare(CDateTime,CDateTime)
+~ boolean IsValid()
++ Long GetFileTime()
++ {static} String ConvertDate(String)
++ {static} String ConvertTime(String)
++ void InitDate(String)
++ void InitTime(String)
++ void Init(String)
+}
+class com.dryeye.app.card.ListBoxDlg {
+~ View view
+~ TextView test
++ String[] data
++ String result
++ ArrayList<TreeDir.DirNode> list
+~ CListBox box
+~ int index
++ int ResultIndex
+~ boolean fInserted
++ {static} int IDCREATE
++ void OnInitDialog()
+# void OnCommand(int)
++ void OnClick(int)
+}
+class com.dryeye.app.card.CException {
+}
+class lib.common.grid.GridRow {
++ Cell[] cells
+~ Paint paint
+~ ActionCallback calback
+~ int param_calback
++ void SetCalback(ActionCallback,int)
++ void UpdateData()
++ void Reset()
++ void Clear()
++ void Replace(Cell)
++ void SetClipRect(Rect)
++ Cell GetFocused()
+# void onDraw(Canvas)
++ boolean onTouchEvent(MotionEvent)
+}
+class com.dryeye.app.wifi.FragmentSyncFile {
+~ View self
+~ ActionCallback onexit
+~ CPanelDialog test
+~ SyncThread syncThread
+~ ArrayList<String> list
+~ ArrayList<String> roi
+~ SendThread thread
+~ TextView idNameText
+~ CTimer timer
+~ int count
+~ boolean fShow
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void OnShow()
+~ void Start()
++ void OnTimer()
+~ void StartMDNS(boolean)
++ void OnFindHost(MDnsInfo)
++ void onconnect(boolean)
++ void ondisconnect(boolean)
++ void OnInitDialog()
++ void OnDestroyDialog()
++ Runnable GetResult()
+~ void DrawText(String)
+}
+class com.dryeye.app.wifi.FragmentSyncFile.SendThread {
+# void OnRun()
+# void OnClose()
+}
+class lib.explorer.TaskReadDir {
++ boolean Submit(ILoadingListener)
++ boolean Read(ILoadingListener)
+}
+class lib.explorer.TaskReadDir.ImageTask {
+- ILoadingListener listner
++ Integer call()
+}
+class lib.common.layout.HandLayoutButton {
+~ Rect clipRect
++ boolean OnClick()
++ void SetClipRect(Rect)
++ Rect GetScreenRect()
++ Rect ScreenRect()
+}
+class lib.common.OnLongClickCalback {
++ boolean onLongClick(View)
+}
+class lib.camera.CCameraState {
+- EventIdle wait
+- ActionCallback action
++ void onConfigured(CameraCaptureSession)
++ void onConfigureFailed(CameraCaptureSession)
++ void onReady(CameraCaptureSession)
++ void onActive(CameraCaptureSession)
++ void onClosed(CameraCaptureSession)
++ void onSurfacePrepared(CameraCaptureSession,Surface)
+}
+class com.dryeye.app.wifi.FragmentSyncAll {
+~ View self
+~ ActionCallback onexit
+~ DlgSelectHost dlgSelectHost
+~ Runnable runnable
+~ CPanelDialog test
+~ File zip
+~ SyncThread syncThread
+~ String mydir
+~ ArrayList<String> list
+~ ArrayList<String> roi
+~ SendThread thread
+~ TextView idNameText
+~ CTimer timer
+~ int count
+~ String sget
+~ boolean fWaitCalc
+~ String command
+~ LinearLayout barWait
++ {static} Comparator<TreeDir.FileNode> cmpFileNode
++ {static} Comparator<File> cmpFile
+~ boolean fShow
++ View onCreateView(LayoutInflater,ViewGroup,Bundle)
++ void onViewCreated(View,Bundle)
++ void OnShow()
+~ void Start()
++ void OnTimer()
+~ void StartMDNS(boolean)
++ void OnFindHost(MDnsInfo)
++ void onconnect(boolean)
++ void ondisconnect(boolean)
++ void OnInitDialog()
++ void OnCancelWait()
++ void OnDestroyDialog()
++ Runnable GetResult()
+~ void DrawText(String)
+}
+class com.dryeye.app.wifi.FragmentSyncAll.SendThread {
+# void OnRun()
+# void OnRun2(TreeDir)
+# void Sync(TreeDir,String[],File,String)
+# void OnClose()
+}
+class lib.common.CThread {
+# long IDThread
+# HashMap<Integer,Object> data
+# Object sync
++ INotify parent
++ boolean Submit(int,Object)
++ void OnResult(int,Object)
++ void OnResult(int,Object[])
++ boolean Start()
++ void close()
+# boolean _Start(long)
+# boolean _Submit(long,int,Object)
+# boolean _Stop(long)
+}
+class lib.common.layout.CPanelDialog {
+~ ActionCallback start
+~ ActionCallback end
+~ ActionCallback hide
+~ boolean fStartHide
++ boolean fDetachOld
+# boolean fStartExpand
++ boolean fAutoClosed
+~ boolean fDisableRequestLayout
++ void DisableRequestLayout(boolean)
++ void SetSizeHand(int)
+# void onLayout(boolean,int,int,int,int)
+# void DetachChilds(View)
++ void Detach(ArrayList<Object>)
++ void Detach()
++ void SetCallbacks(ActionCallback,ActionCallback)
++ void SetCallbacks(ActionCallback,ActionCallback,ActionCallback)
++ void Start(boolean)
++ void Start()
++ void OnStartHide()
+# void SetState(boolean)
+# void Init(View)
++ void Init()
++ void Reset()
+}
+class lib.common.ActionCallback {
+# Object parent
+# Method method
+# Class[] param
++ String funcName
+# Object[] sendParams
+# Object sync
+~ {static} boolean CHECK_ACTION
++ Object Parent()
++ boolean IsEmty()
++ void SetSendParams(Object)
++ boolean IsValid()
++ void Clear()
++ boolean SetCallback(Object,String)
++ boolean SetCallback(Object,String,Class)
+- Class CheckPrimitive(Class)
+# void OnException()
++ void run(Looper,Object)
++ void run(EventIdle,Object)
++ void run(Looper)
++ void run(Object)
+- void _run(Object[])
++ void run()
++ void Detach(ArrayList<Object>)
++ void Detach()
++ void Init()
+}
+class lib.utils.TreeDir {
+- DirNode root
++ {static} Comparator<FileNode> cmp
+~ void AddDir(String)
++ void AddFile(String)
++ FileNode get(int)
++ int size()
++ int NumDir(boolean)
++ FileNode GetFromPath(String)
++ DirNode Root()
++ void CreateDirFromDisk(String)
++ void DeleteNode(FileNode)
++ ArrayList<String> GetFileList(String[])
++ ArrayList<FileNode> GetFileNodeList()
++ int GetFileList(String,String[],ArrayList<FileNode>,ArrayList<FileNode>)
++ ArrayList<FileNode> GetFileNodeList(String[])
++ ArrayList<String> ReadXml(String)
++ String MakeXml()
++ String MakeDirXml()
+~ Tree _ReadXML(String)
+~ void GetFileListAll(ArrayList<FileNode>)
+}
+class lib.utils.TreeDir.FileNode {
++ String name
++ String date
++ FileNode parent
+~ int Level(int)
++ int Level()
+~ FileNode GetRoot()
++ boolean IsDir()
+- String GetPath(String)
++ String GetPath()
+~ boolean equals(FileNode)
+}
+class lib.utils.TreeDir.DirNodeVisible {
++ boolean fExpanded
++ boolean fVisible
++ boolean fBox
++ int level
++ DirNode dir
+}
+class lib.utils.TreeDir.DirNode {
++ ArrayList<FileNode> childs
++ DirNodeVisible ref
++ FileNode get(int)
+~ DirNode AddDir(ArrayList<String>,int)
+~ FileNode AddFile(ArrayList<String>)
+~ void AddFile(String)
+~ void AddDir(String)
++ FileNode GetNode(StringTokenizer)
++ int GetFileList(String[],ArrayList<FileNode>,ArrayList<FileNode>)
++ void DeleteNode(FileNode)
++ FileNode Find(String,boolean)
++ FileNode GetFromPath(String)
++ void ReloadDir(String)
++ void ReloadFiles(String,String[])
++ void CreateDirFromDisk(String)
++ int NumDir(boolean)
++ int GetFileList(ArrayList<FileNode>,String[])
++ int GetDirList(int[],DirNodeVisible[],boolean)
++ boolean MakeZip(File,String)
+- boolean Zip(ZipOutputStream,String)
++ int GetDirList(int[],DirNodeVisible[],int)
++ int SetChildsVisible(boolean)
++ int GetNumDirNodes(boolean)
++ int GetNumFile(String[])
++ int GetDirList(ArrayList<DirNode>)
++ int GetFileListAll(ArrayList<FileNode>,String[])
+~ String MakeXml(boolean)
+~ int GetFileListAll(ArrayList<FileNode>)
+~ int GetFileList(ArrayList<FileNode>)
+- FileNode GetChild(String)
+}
+class lib.utils.TreeDir.Tree {
+~ Node root
+~ Node last
+~ void CreateNode(String)
+~ void AddData(String)
+~ void CloseNode(String)
+}
+class lib.utils.TreeDir.Tree.Node {
+~ String name
+~ String data
+~ ArrayList<Node> child
+~ boolean fClosed
+~ Node parent
+~ Node GetChild(String)
+~ Node Get(String)
+~ Node FindFolder(String)
+}
+class lib.utils.BitmapUtils {
++ {static} Bitmap Create(int,int)
++ {static} Bitmap ResizeBitmap(Bitmap,int,int)
++ {static} Bitmap Copy(Bitmap)
++ {static} Bitmap DrawableToBitmap(Drawable)
++ {static} Bitmap LoadAssets(String)
++ {static} Bitmap Load(String,int)
++ {static} Bitmap Load(byte[],int)
++ {static} boolean Save(File,Bitmap)
++ {static} boolean Save(String,Bitmap)
++ {static} Point Dimensions(String)
++ {static} Point Dimensions(byte[])
++ {static} HashMap<String,String> getLocalThumbs()
+}
+class lib.common.layout.LinearLayoutShadow {
+~ Paint paint
+~ int color
+# void Init()
+- void InitAtribut(Context,AttributeSet)
+# void onDraw(Canvas)
+}
+class lib.common.CSlider {
+# float iMin
+# float iMax
+# float iPos
+# float step
+# boolean fIsLn
+~ ActionCallback onchaned
++ int ONSTART
++ int ONEND
++ int ONPROGRESS
++ float GetMax()
++ float GetMin()
++ void SetCalback(Object,String)
++ void SetCalback(ActionCallback)
++ void SetRange(float,float,boolean)
++ void SetRange(int,int)
++ void SetRange(float,float)
++ float Min()
++ float Max()
++ void SetPos(float)
++ void SetPos(int)
++ float GetPos()
+# int ConvertToPos(float)
+# float ConvertPos(int)
+}
+class lib.common.CSlider.OnProgressChange {
++ void onProgressChanged(SeekBar,int,boolean)
++ void onStartTrackingTouch(SeekBar)
++ void onStopTrackingTouch(SeekBar)
+}
+class lib.common.CriticalSection {
+~ long threadID
+~ boolean fIgnoreThisThread
++ boolean Enter()
++ long GetThreadID()
++ boolean TryEnter()
++ boolean TryEnter(int)
++ boolean Leave()
+}
+class com.dryeye.app.CView {
+- boolean fCapture
+- int iClick
+- ScaleListener.SCALE scale
+- HashMap<Integer,CurPoint> history
+- ScaleGestureDetector mScaleDetector
+~ boolean fPointInSelect
+~ boolean fClickedCornerPoint
++ Point startPoint
++ Point curPoint
++ void Init()
++ void Invalidate()
++ boolean onTouch(View,MotionEvent)
+- boolean SGN(float)
+- boolean ScalePt(double,float,float)
+- boolean Offset(float,float)
+- void OnMouseDown(float,float)
+- void OnMouseUp(float,float)
++ boolean OnOpenDocument(Bitmap)
++ boolean OnOpenRoi(String,boolean)
++ SelectedBlockIcon GetRoi(int,int)
++ boolean UpdateRoi(SelectedBlockIcon)
++ boolean UpdateRoiIcon(Bitmap,String,int)
+- void OnPaint()
+}
+class com.dryeye.app.CView.CurPoint {
+~ PointF fFirst
+~ PointF fLast
+~ void Clear()
+~ boolean Check(float,float)
+~ float dx()
+~ float dy()
+~ void Push(int,float,float)
+~ void Apply()
+}
+
+
+lib.common.MessageBox <|-- com.dryeye.app.wifi.SyncMsgBox
+lib.common.layout.LinearLayoutBorder <|-- lib.colorpicker.ColorPicker
+lib.common.OnEditorActionListener <|.. lib.common.AActivity
+com.dryeye.app.ParentFromMainAndViewActivity <|-- lib.common.AActivity
+lib.common.AppCompatSpinner <|-- lib.common.CComboBox
+lib.common.CComboBox +.. lib.common.CComboBox.ComboBoxAdapter
+lib.common.OnItemSelectedListener <|.. lib.common.CComboBox.ComboBoxAdapter
+lib.common.BaseAdapter <|-- lib.common.CComboBox.ComboBoxAdapter
+androidx.appcompat.app.AppCompatActivity <|-- lib.OrientActivity
+lib.common.Runnable <|.. lib.common.CThreadLoooper
+java.io.Closeable <|.. lib.common.CThreadLoooper
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.roi.FragmentROI
+androidx.fragment.app.Fragment <|-- com.dryeye.app.roi.FragmentROI
+com.dryeye.app.roi.FragmentROI +.. com.dryeye.app.roi.FragmentROI.MResult
+com.dryeye.app.roi.ActionCallback <|-- com.dryeye.app.roi.FragmentROI.MResult
+com.dryeye.app.roi.FragmentROI +.. com.dryeye.app.roi.FragmentROI.SelectedList
+com.dryeye.app.roi.Adapter <|-- com.dryeye.app.roi.FragmentROI.SelectedList
+com.dryeye.app.roi.FragmentROI.SelectedList +.. com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder
+com.dryeye.app.roi.ViewHolder <|-- com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder
+com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder +.. com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder.COnClick
+com.dryeye.app.roi.OnClickListener <|.. com.dryeye.app.roi.FragmentROI.SelectedList.SelectedHolder.COnClick
+android.app.Application <|-- com.dryeye.app.App
+java.io.Closeable <|.. lib.explorer.common.TaskDir
+lib.explorer.common.TaskDir +.. lib.explorer.common.TaskDir.CompletionService
+lib.explorer.common.ExecutorCompletionService <|-- lib.explorer.common.TaskDir.CompletionService
+java.io.Closeable <|.. com.dryeye.app.wifi.MDNSServerClient
+com.dryeye.app.wifi.Thread <|-- com.dryeye.app.wifi.MDNSServerClient
+lib.colorpicker.CtrlWnd <|-- lib.colorpicker.CSliderLum
+lib.common.CDialog <|-- com.dryeye.app.wifi.DlgSelectHost
+com.dryeye.app.wifi.DlgSelectHost +.. com.dryeye.app.wifi.DlgSelectHost.AddapterListScan
+com.dryeye.app.wifi.Adapter <|-- com.dryeye.app.wifi.DlgSelectHost.AddapterListScan
+com.dryeye.app.wifi.DlgSelectHost.AddapterListScan +.. com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.AdapterListWiFiHolder
+com.dryeye.app.wifi.ViewHolder <|-- com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.AdapterListWiFiHolder
+com.dryeye.app.wifi.DlgSelectHost.AddapterListScan +.. com.dryeye.app.wifi.DlgSelectHost.AddapterListScan.Comp
+lib.common.CDialog <|-- com.dryeye.app.card.CDateDlg
+android.widget.FrameLayout <|-- lib.common.layout.ProgressLayout
+lib.common.layout.ProgressLayout +.. lib.common.layout.ProgressLayout.CAnimatorListenerAdapter
+lib.common.layout.AnimatorListenerAdapter <|-- lib.common.layout.ProgressLayout.CAnimatorListenerAdapter
+lib.common.layout.ProgressLayout +.. lib.common.layout.ProgressLayout.AnimatedView
+lib.common.layout.View <|-- lib.common.layout.ProgressLayout.AnimatedView
+lib.common.CDialog <|-- com.dryeye.app.card.DlgNewTest
+com.dryeye.app.card.DlgNewTest +.. com.dryeye.app.card.DlgNewTest.CSetText
+com.dryeye.app.card.Runnable <|.. com.dryeye.app.card.DlgNewTest.CSetText
+lib.camera.CameraCalculatePreview +.. lib.camera.CameraCalculatePreview.CompareSizesByArea
+lib.camera.Comparator <|.. lib.camera.CameraCalculatePreview.CompareSizesByArea
+lib.common.IActionCalbackClient <|.. lib.common.EditableSpinner
+lib.common.AppCompatSpinner <|-- lib.common.EditableSpinner
+lib.common.EditableSpinner +.. lib.common.EditableSpinner.OnCloseKeyboard
+lib.common.OnEditorActionListener <|.. lib.common.EditableSpinner.OnCloseKeyboard
+lib.common.EditableSpinner +.. lib.common.EditableSpinner.ListAdapter
+lib.common.OnItemSelectedListener <|.. lib.common.EditableSpinner.ListAdapter
+lib.common.BaseAdapter <|-- lib.common.EditableSpinner.ListAdapter
+lib.common.AActivity <|-- com.dryeye.app.MainActivity
+lib.explorer.common.DirEntry +.. lib.explorer.common.DirEntry.Entry
+lib.common.AppCompatImageView <|-- lib.common.CheckRecycleImageView
+android.widget.ListView <|-- com.dryeye.app.card.CTreeDir
+com.dryeye.app.card.CTreeDir +.. com.dryeye.app.card.CTreeDir.ListBoxAdapter
+com.dryeye.app.card.OnItemClickListener <|.. com.dryeye.app.card.CTreeDir.ListBoxAdapter
+com.dryeye.app.card.ArrayAdapter <|-- com.dryeye.app.card.CTreeDir.ListBoxAdapter
+lib.common.IActionCalbackClient <|.. lib.common.button.CMenuButton
+lib.common.button.OnTouchListener <|.. lib.common.button.CMenuButton
+androidx.appcompat.widget.AppCompatImageButton <|-- lib.common.button.CMenuButton
+lib.common.button.CMenuButton +.. lib.common.button.CMenuButton.Call
+lib.common.button.OnClickListener <|.. lib.common.button.CMenuButton.Call
+lib.common.button.ActionCallback <|-- lib.common.button.CMenuButton.Call
+lib.common.button.CMenuButton <|-- lib.common.button.CMenuTogleButton
+lib.common.CDialog <|-- com.dryeye.app.DialogCameraInfo
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.card.FragmentCard
+androidx.fragment.app.Fragment <|-- com.dryeye.app.card.FragmentCard
+com.dryeye.app.card.FragmentCard +.. com.dryeye.app.card.FragmentCard.CheckVisibility
+com.dryeye.app.card.OnGlobalLayoutListener <|.. com.dryeye.app.card.FragmentCard.CheckVisibility
+android.widget.ExpandableListView <|-- com.dryeye.app.card.CExpandableListView
+lib.common.CDialog <|-- com.dryeye.app.card.DlgDeleteMerge
+lib.common.IActionCalbackClient <|.. lib.common.CEdit
+lib.common.IControlOnClick <|.. lib.common.CEdit
+androidx.appcompat.widget.AppCompatEditText <|-- lib.common.CEdit
+lib.common.CEdit +.. lib.common.CEdit.EditTextInputConnection
+lib.common.InputConnectionWrapper <|-- lib.common.CEdit.EditTextInputConnection
+lib.common.CEdit +.. lib.common.CEdit.CTextChanger
+lib.common.TextWatcher <|.. lib.common.CEdit.CTextChanger
+lib.common.ActionCallback <|-- lib.common.CEdit.CTextChanger
+lib.common.button.AppCompatButton <|-- lib.common.button.CTextButton
+lib.common.button.CTextButton +.. lib.common.button.CTextButton.ClickListener
+lib.common.button.OnClickListener <|.. lib.common.button.CTextButton.ClickListener
+lib.common.Callback <|.. lib.common.CWnd
+java.io.Closeable <|.. lib.common.CWnd
+android.view.SurfaceView <|-- lib.common.CWnd
+lib.common.OnClickListener <|.. lib.common.OnClickCalback
+lib.common.ActionCallback <|-- lib.common.OnClickCalback
+lib.explorer.common.IQuerySelectedPage +.. lib.explorer.common.IQuerySelectedPage.WaitState
+lib.explorer.common.TimerTask <|-- lib.explorer.common.IQuerySelectedPage.WaitState
+lib.common.IActionCalbackClient <|.. lib.common.layout.LayoutButton
+android.widget.LinearLayout <|-- lib.common.layout.LayoutButton
+lib.common.layout.LayoutButton +.. lib.common.layout.LayoutButton.COnClickButton
+lib.common.layout.OnClickListener <|.. lib.common.layout.LayoutButton.COnClickButton
+android.widget.ListView <|-- lib.common.CListBox
+lib.common.CListBox +.. lib.common.CListBox.ListBoxAdapter
+lib.common.OnItemClickListener <|.. lib.common.CListBox.ListBoxAdapter
+lib.common.ArrayAdapter <|-- lib.common.CListBox.ListBoxAdapter
+com.dryeye.app.card.OnEditorActionListener <|.. com.dryeye.app.card.FragmentExploreCards
+lib.explorer.common.IQuerySelectedPage <|.. com.dryeye.app.card.FragmentExploreCards
+lib.common.ISelectedElement <|.. com.dryeye.app.card.FragmentExploreCards
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.card.FragmentExploreCards
+androidx.fragment.app.Fragment <|-- com.dryeye.app.card.FragmentExploreCards
+lib.camera.SurfaceTextureListener <|.. lib.camera.CCameraView
+lib.camera.OnTouchListener <|.. lib.camera.CCameraView
+android.view.TextureView <|-- lib.camera.CCameraView
+lib.common.SimpleOnScaleGestureListener <|-- lib.common.ScaleListener
+lib.common.ScaleListener +.. lib.common.ScaleListener.SCALE
+android.inputmethodservice.KeyboardView <|-- lib.common.CKeyboardView
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CTouchListener
+lib.common.OnTouchListener <|.. lib.common.CKeyboardView.CTouchListener
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CClickListener
+lib.common.OnClickListener <|.. lib.common.CKeyboardView.CClickListener
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CFocusChangeListener
+lib.common.OnFocusChangeListener <|.. lib.common.CKeyboardView.CFocusChangeListener
+lib.common.CKeyboardView +.. lib.common.CKeyboardView.CKeyboardListner
+lib.common.OnKeyboardActionListener <|.. lib.common.CKeyboardView.CKeyboardListner
+lib.explorer.common.IQuerySelectedPage <|.. lib.explorer.ExplorerActivity
+lib.OrientActivity <|-- lib.explorer.ExplorerActivity
+java.io.Closeable <|.. lib.common.EventIdle
+lib.common.EventIdle +.. lib.common.EventIdle.ExitIdleException
+lib.common.RuntimeException <|-- lib.common.EventIdle.ExitIdleException
+lib.common.EventIdle +.. lib.common.EventIdle.WaitThread
+lib.common.Thread <|-- lib.common.EventIdle.WaitThread
+lib.common.EventIdle +.. lib.common.EventIdle.ExitHandle
+lib.common.Runnable <|.. lib.common.EventIdle.ExitHandle
+lib.common.ActionCallback <|-- lib.common.CTimer
+lib.common.CTimer +.. lib.common.CTimer.CTimerTask
+lib.common.TimerTask <|-- lib.common.CTimer.CTimerTask
+androidx.fragment.app.Fragment <|-- lib.common.CFragment
+android.widget.FrameLayout <|-- lib.common.layout.AnimatedLayout
+lib.common.layout.AnimatedLayout +.. lib.common.layout.AnimatedLayout.AnimatedListener
+lib.common.layout.AnimatorListener <|.. lib.common.layout.AnimatedLayout.AnimatedListener
+lib.utils.TListLong +.. lib.utils.TListLong.TListLongEntry
+lib.camera.OnImageAvailableListener <|.. lib.camera.CSaveFotoListner
+lib.common.CDialog <|-- com.dryeye.app.wifi.DlgLocalHostName
+lib.common.AActivity <|-- com.dryeye.app.MenuActivity
+com.dryeye.app.MenuActivity +.. com.dryeye.app.MenuActivity.COnClickButton
+com.dryeye.app.OnClickListener <|.. com.dryeye.app.MenuActivity.COnClickButton
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.card.FraggmentCardImages
+androidx.fragment.app.Fragment <|-- com.dryeye.app.card.FraggmentCardImages
+lib.utils.AGlobals +.. lib.utils.AGlobals.CasheFromExplore
+lib.utils.AGlobals +.. lib.utils.AGlobals.CActivityCallback
+lib.utils.ActivityLifecycleCallbacks <|.. lib.utils.AGlobals.CActivityCallback
+lib.camera.CaptureCallback <|-- lib.camera.CFotoCallback
+android.view.View <|-- lib.camera.ViewRect
+android.app.AlertDialog <|-- lib.common.CDialog
+lib.common.CDialog +.. lib.common.CDialog.CShowListener
+lib.common.OnShowListener <|.. lib.common.CDialog.CShowListener
+lib.common.CDialog +.. lib.common.CDialog.COnClick
+lib.common.OnClickListener <|.. lib.common.CDialog.COnClick
+java.io.Closeable <|.. lib.common.CObject
+java.util.concurrent.Semaphore <|-- lib.common.CriticalCounter
+lib.common.CDialog <|-- lib.colorpicker.ModalColorDialog
+lib.colorpicker.ModalColorDialog +.. lib.colorpicker.ModalColorDialog.CLongClickListener
+lib.colorpicker.OnLongClickListener <|.. lib.colorpicker.ModalColorDialog.CLongClickListener
+lib.common.ISelectedElement <|-- lib.common.IAdapter
+lib.common.grid.Cell <|-- lib.common.grid.CCell
+lib.camera.StateCallback <|-- lib.camera.CStateCamera
+lib.explorer.Adapter <|-- lib.explorer.AdapterExplorerView
+lib.explorer.AdapterExplorerView +.. lib.explorer.AdapterExplorerView.RViewHolder
+lib.explorer.ViewHolder <|-- lib.explorer.AdapterExplorerView.RViewHolder
+lib.explorer.AdapterExplorerView +.. lib.explorer.AdapterExplorerView.LoadThumbImage
+lib.explorer.ILoadingListener <|-- lib.explorer.AdapterExplorerView.LoadThumbImage
+lib.OrientActivity <|-- com.dryeye.app.ParentFromMainAndViewActivity
+android.widget.BaseExpandableListAdapter <|-- com.dryeye.app.card.CExpandableListAdapter
+com.dryeye.app.card.CExpandableListAdapter +.. com.dryeye.app.card.CExpandableListAdapter.Sel
+lib.common.layout.LinearLayoutBorder <|-- lib.common.grid.Grid
+android.print.PrintDocumentAdapter <|-- lib.print.PrintAndPreview
+lib.camera.CaptureCallback <|-- lib.camera.CPreviewCallback
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.camera.FragmentCamera
+androidx.fragment.app.Fragment <|-- com.dryeye.app.camera.FragmentCamera
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.ThreadCheckNetwork
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.WiFiUtils.ThreadCheckNetwork
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.ThreadCheckMonitor
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.WiFiUtils.ThreadCheckMonitor
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.ThreadScan
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.WiFiUtils.ThreadScan
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.CMonitor
+com.dryeye.app.wifi.Closeable <|.. com.dryeye.app.wifi.WiFiUtils.CMonitor
+com.dryeye.app.wifi.BroadcastReceiver <|-- com.dryeye.app.wifi.WiFiUtils.CMonitor
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.CScan
+com.dryeye.app.wifi.Closeable <|.. com.dryeye.app.wifi.WiFiUtils.CScan
+com.dryeye.app.wifi.BroadcastReceiver <|-- com.dryeye.app.wifi.WiFiUtils.CScan
+com.dryeye.app.wifi.WiFiUtils +.. com.dryeye.app.wifi.WiFiUtils.CNetwork
+com.dryeye.app.wifi.Closeable <|.. com.dryeye.app.wifi.WiFiUtils.CNetwork
+com.dryeye.app.wifi.NetworkCallback <|-- com.dryeye.app.wifi.WiFiUtils.CNetwork
+java.util.concurrent.Semaphore <|-- lib.common.CSemaphore
+android.widget.LinearLayout <|-- lib.common.layout.LinearLayoutBorder
+android.os.AsyncTask <|-- lib.explorer.DirLocal
+java.io.Closeable <|.. lib.camera.CCamera
+lib.camera.CCamera +.. lib.camera.CCamera.MapModeKey
+lib.colorpicker.OnTouchListener <|.. lib.colorpicker.CtrlWnd
+lib.colorpicker.AppCompatImageView <|-- lib.colorpicker.CtrlWnd
+com.dryeye.app.wifi.Runnable <|.. com.dryeye.app.wifi.SyncThread
+com.dryeye.app.wifi.SyncThread +.. com.dryeye.app.wifi.SyncThread.Profile
+lib.common.button.CMenuButton <|-- com.dryeye.app.timer.TimerButton
+lib.colorpicker.CtrlWnd <|-- lib.colorpicker.ColorPlane
+lib.common.AActivity <|-- com.dryeye.app.ViewActivity
+lib.common.CDialog <|-- com.dryeye.app.wifi.DlgOptions
+lib.common.IControlOnClick <|.. lib.common.button.CSpinButton
+lib.common.button.CMenuButton <|-- lib.common.button.CSpinButton
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.wifi.FragmentDownloadFile
+androidx.fragment.app.Fragment <|-- com.dryeye.app.wifi.FragmentDownloadFile
+com.dryeye.app.wifi.FragmentDownloadFile +.. com.dryeye.app.wifi.FragmentDownloadFile.DownloadThread
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.FragmentDownloadFile.DownloadThread
+android.os.Handler <|-- lib.common.CHandler
+lib.common.layout.AnimatedLayout <|-- lib.common.layout.HandLayout
+lib.common.CDialog <|-- com.dryeye.app.timer.TimerDlg
+lib.common.layout.LinearLayoutBorder <|-- lib.common.ImageSlider
+lib.common.ImageSlider +.. lib.common.ImageSlider.COnChangeSlide
+lib.common.OnPageChangeListener <|.. lib.common.ImageSlider.COnChangeSlide
+lib.common.ImageSlider +.. lib.common.ImageSlider.SlideAdapter
+lib.common.PagerAdapter <|-- lib.common.ImageSlider.SlideAdapter
+lib.common.ImageSlider +.. lib.common.ImageSlider.LoadThumbImage
+lib.common.ILoadingListener <|-- lib.common.ImageSlider.LoadThumbImage
+java.io.Closeable <|.. lib.common.CStdThread
+lib.common.Thread <|-- lib.common.CStdThread
+lib.OrientActivity <|-- lib.ExitProgramActivity
+lib.common.layout.OnLayoutChangeListener <|.. lib.common.layout.CScrollView
+android.widget.ScrollView <|-- lib.common.layout.CScrollView
+lib.common.grid.OnFocusChangeListener <|.. lib.common.grid.Cell
+java.io.Closeable <|.. lib.explorer.cashe.ImagesCache
+lib.explorer.cashe.ImagesCache +.. lib.explorer.cashe.ImagesCache.MemCache
+lib.explorer.cashe.ImagesCache.MemCache +.. lib.explorer.cashe.ImagesCache.MemCache.Entry
+lib.explorer.cashe.ImagesCache.MemCache +.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle
+lib.explorer.cashe.Closeable <|.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle
+lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle +.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.ImageTask
+lib.explorer.cashe.Callable <|.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.ImageTask
+lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle +.. lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.CompletionService
+lib.explorer.cashe.ExecutorCompletionService <|-- lib.explorer.cashe.ImagesCache.MemCache.ThreadRecycle.CompletionService
+lib.common.CDialog <|-- com.dryeye.app.DlgExit
+lib.common.CObject <|-- lib.common.CDrawableThread
+lib.common.CDialog <|-- com.dryeye.app.card.ListBoxDlg
+com.dryeye.app.card.Exception <|-- com.dryeye.app.card.CException
+android.widget.RadioGroup <|-- lib.common.grid.GridRow
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.wifi.FragmentSyncFile
+androidx.fragment.app.Fragment <|-- com.dryeye.app.wifi.FragmentSyncFile
+com.dryeye.app.wifi.FragmentSyncFile +.. com.dryeye.app.wifi.FragmentSyncFile.SendThread
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.FragmentSyncFile.SendThread
+lib.explorer.common.TaskDir <|-- lib.explorer.TaskReadDir
+lib.explorer.TaskReadDir +.. lib.explorer.TaskReadDir.ImageTask
+lib.explorer.Callable <|.. lib.explorer.TaskReadDir.ImageTask
+lib.explorer.FileLocal <|-- lib.explorer.TaskReadDir.ImageTask
+lib.common.IControlOnClick <|.. lib.common.layout.HandLayoutButton
+lib.common.button.CMenuButton <|-- lib.common.layout.HandLayoutButton
+lib.common.OnLongClickListener <|.. lib.common.OnLongClickCalback
+lib.common.ActionCallback <|-- lib.common.OnLongClickCalback
+lib.camera.StateCallback <|-- lib.camera.CCameraState
+lib.common.IResultFragmentDlg <|.. com.dryeye.app.wifi.FragmentSyncAll
+androidx.fragment.app.Fragment <|-- com.dryeye.app.wifi.FragmentSyncAll
+com.dryeye.app.wifi.FragmentSyncAll +.. com.dryeye.app.wifi.FragmentSyncAll.SendThread
+com.dryeye.app.wifi.CStdThread <|-- com.dryeye.app.wifi.FragmentSyncAll.SendThread
+lib.common.CObject <|-- lib.common.CThread
+lib.common.IActionCalbackClient <|.. lib.common.layout.CPanelDialog
+lib.common.layout.AnimatedLayout <|-- lib.common.layout.CPanelDialog
+lib.common.IActionCalbackClient <|.. lib.common.ActionCallback
+lib.common.Runnable <|.. lib.common.ActionCallback
+lib.utils.TreeDir +.. lib.utils.TreeDir.FileNode
+lib.utils.TreeDir +.. lib.utils.TreeDir.DirNodeVisible
+lib.utils.TreeDir +.. lib.utils.TreeDir.DirNode
+lib.utils.FileNode <|-- lib.utils.TreeDir.DirNode
+lib.utils.TreeDir +.. lib.utils.TreeDir.Tree
+lib.utils.TreeDir.Tree +.. lib.utils.TreeDir.Tree.Node
+android.widget.LinearLayout <|-- lib.common.layout.LinearLayoutShadow
+lib.common.AppCompatSeekBar <|-- lib.common.CSlider
+lib.common.CSlider +.. lib.common.CSlider.OnProgressChange
+lib.common.OnSeekBarChangeListener <|.. lib.common.CSlider.OnProgressChange
+lib.common.CSemaphore <|-- lib.common.CriticalSection
+com.dryeye.app.OnTouchListener <|.. com.dryeye.app.CView
+lib.common.CWnd <|-- com.dryeye.app.CView
+com.dryeye.app.CView +.. com.dryeye.app.CView.CurPoint
+@enduml

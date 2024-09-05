@@ -1,0 +1,119 @@
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  stdafx.cpp
+cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  _ffile.cpp
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(986,29): warning C4018: '>': signed/unsigned mismatch
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(983): message : while compiling class template member function 'void TmString<MArray<char>,3>::Format(const char *,...)'
+K:\AllergoscopeApp\AllergoscopeApp\_ffile.cpp(552): message : see reference to function template instantiation 'void TmString<MArray<char>,3>::Format(const char *,...)' being compiled
+  variable.cpp
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(986,29): warning C4018: '>': signed/unsigned mismatch
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(983): message : while compiling class template member function 'void TmString<MArray<char>,3>::Format(const char *,...)'
+K:\AllergoscopeApp\AllergoscopeApp\variable.cpp(877): message : see reference to function template instantiation 'void TmString<MArray<char>,3>::Format(const char *,...)' being compiled
+  TimerAndView.cpp
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(986,29): warning C4018: '>': signed/unsigned mismatch
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(983): message : while compiling class template member function 'void TmString<MArray<char>,65001>::Format(const char *,...)'
+K:\AllergoscopeApp\AllergoscopeApp\TimerAndView.cpp(524): message : see reference to function template instantiation 'void TmString<MArray<char>,65001>::Format(const char *,...)' being compiled
+  ShellZip.cpp
+  RWThread.cpp
+  RuningPolygon.cpp
+  NetServerThread.cpp
+  NetDir.cpp
+  MultiThread.cpp
+  MPThread.cpp
+  mfile.cpp
+  MDNSStruct.cpp
+K:\AllergoscopeApp\AllergoscopeApp\MDNSStruct.cpp(180,59): warning C4018: '>': signed/unsigned mismatch
+  MDNSReader.cpp
+  MDNS.cpp
+  MakePolyline.cpp
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(986,29): warning C4018: '>': signed/unsigned mismatch
+K:\AllergoscopeApp\AllergoscopeApp\mstring.h(983): message : while compiling class template member function 'void TmString<MArray<char>,3>::Format(const char *,...)'
+K:\AllergoscopeApp\AllergoscopeApp\MakePolyline.cpp(133): message : see reference to function template instantiation 'void TmString<MArray<char>,3>::Format(const char *,...)' being compiled
+  lzwstrmo.cpp
+  lzwstrmi.cpp
+  lzwdecom.cpp
+  lzwcomp.cpp
+K:\AllergoscopeApp\AllergoscopeApp\lzwcomp.cpp(109,18): warning C4244: 'initializing': conversion from 'short' to 'BYTE', possible loss of data
+  LocalSemaphore.cpp
+  Generating Code...
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<UnPackTable>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<int>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<Vector2F>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<IPOINT>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<GNode>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBTreeNode<int,Vector2F> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<HMapTreeNode<int,int> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<ItemMFifo<int> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<MListEntry<RBKeyNode<Vector2F> > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBKeyNode<Vector2F> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned int>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<in_addr>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<sockaddr_in>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned int>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<void *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<ItemMDeq<MDNSReader::SendData> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<_WIN32_FIND_DATAW>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<NetDir::FileNode *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<MListEntry<RBKeyNode<WTmString<MArray<wchar_t> > > > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBKeyNode<WTmString<MArray<wchar_t> > > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<HMapTreeNode<int,int> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<Vector2D>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<ItemMDeq<LineItem> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBKeyNode<unsigned long> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<MListEntry<RBKeyNode<unsigned long> > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBKeyNode<WTmString<MArray<wchar_t> > > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBKeyNode<TmString<MArray<char>,3> > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<NetServerThread *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<MListEntry<RBKeyNode<TmString<MArray<char>,3> > > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<MListEntry<RBKeyNode<WTmString<MArray<wchar_t> > > > *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<char>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<wchar_t>::SetLen': not all control paths return a value
+  Compiling...
+  BuilderVoron2D.cpp
+  AllergoscopeApp.cpp
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(316,21): error C2087: 'strTab': missing subscript
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(325,1): error C2117: 'VERSION_Info::strTab': array bounds overflow
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(316): message : see declaration of 'VERSION_Info::strTab'
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(316,9): error C2078: too many initializers
+K:\AllergoscopeApp\AllergoscopeApp\AllergoscopeApp.cpp(542,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  AboutBox.cpp
+  Generating Code...
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<GNode>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<Vector2F>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<Vector2D>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<int>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<RBTreeNode<int,Vector2D> *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<unsigned char *>::SetLen': not all control paths return a value
+K:\AllergoscopeApp\AllergoscopeApp\buffer.h(506): warning C4715: 'MBuffer<ItemMDeq<LineItem> *>::SetLen': not all control paths return a value

@@ -1,0 +1,143 @@
+class TrackerRect:RECT {
+	pen;
+	visible;
+	pos;
+	start;
+
+};
+//-----------------------------------------------------
+// Constructor for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::TrackerRect(void) = <|
+	.pen = instance FGColor(CLR_LIGHTGREEN, 2, FG_SOLID);
+	.visible = FALSE;
+	.start = FALSE;
+	.pos = instance POINT(0, 0);
+	self->SetRect(0, 0, 0, 0);
+|>;
+
+//-----------------------------------------------------
+// SetRect method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::SetRect(int, int, int, int) = <|
+param l, t, r, b;
+	.left = l;
+	.top = t;
+	.right = r;
+	.bottom = b;
+
+|>;     
+
+//-----------------------------------------------------
+// Start method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Start(void) = <|
+	.start = TRUE;
+|>;
+
+//-----------------------------------------------------
+// End method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::End(void) = <|
+	.start = FALSE;
+|>;
+
+//-----------------------------------------------------
+// SetPos method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::SetPos(int, int) = <|
+param x, y;
+	.pos = instance POINT(x, y);
+	self->SetRect(x, y, x, y);
+|>;
+
+//-----------------------------------------------------
+// Hide method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Hide(refer object MDC) = <|
+param mdc;
+	if (!.visible)
+		return;
+	.visible = FALSE;
+	self->Draw(mdc);
+|>;
+
+//-----------------------------------------------------
+// Show method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Show(refer object MDC) = <|
+param mdc;
+	if (.visible)
+		return;
+	.visible = TRUE;
+	self->Draw(mdc);
+|>;
+
+//-----------------------------------------------------
+// Overloaded Hide method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Hide(refer object MDC, boolean) = <|
+param mdc, flg;
+	if (!.visible)
+		return;
+	.visible = FALSE;
+	if (flg)
+		self->Draw(mdc, TRUE);
+	else
+		self->Draw(mdc);
+|>;
+
+//-----------------------------------------------------
+// Overloaded Show method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Show(refer object MDC, boolean) = <|
+param mdc, flg;
+	if (.visible)
+		return;
+	.visible = TRUE;
+	if (flg)
+		self->Draw(mdc, TRUE);
+	else
+		self->Draw(mdc);
+	
+|>;
+
+//-----------------------------------------------------
+// Draw method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Draw(refer object MDC) = <|
+param mdc;
+	mdc->OpenDC(TRUE);
+	self->Draw(mdc, TRUE);
+	mdc->CloseDC();
+|>;
+
+//-----------------------------------------------------
+// Overloaded Draw method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::Draw(refer object MDC, boolean) = <|
+param mdc, f;
+	if (f)
+		mdc->ColorRasterOp(R2_XORPEN); 
+	mdc->SelectObject(.pen);
+    mdc->Rect(self);    
+    mdc->ColorRasterOp(R2_COPYPEN); 
+
+	if (f)
+		mdc->UnSelectObject(.pen);
+|>;
+
+//-----------------------------------------------------
+// RubberBand method for TrackerRect class
+//-----------------------------------------------------
+new TrackerRect::RubberBand(refer object MDC, int, int) = <|
+param mdc, x, y;
+	if (!.start) return;
+	self->Hide(mdc);
+	.left = Min(x, .pos.x);
+	.right = Max(x, .pos.x);
+	.top = Min(y, .pos.y);
+	.bottom = Max(y, .pos.y);
+	self->Show(mdc);
+
+|>;

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:paddingRight="5dp"
+    android:paddingLeft="5dp">
+
+    <lib.common.button.CSpinButton
+        android:id="@+id/minus"
+        android:layout_width="@dimen/generic_button_height"
+        android:layout_height="@dimen/generic_button_height"
+        android:layout_gravity="center_vertical"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        app:color_up="@color/theme_dlg_text_color"
+        android:src="@drawable/minus" />
+
+    <lib.common.CEdit
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="3"
+        android:inputType="number"
+        android:maxEms="2"
+        android:minEms="2"
+        android:singleLine="true"
+        android:textColor="@color/theme_dlg_text_color"
+        android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+    <lib.common.button.CSpinButton
+        android:id="@+id/plus"
+        android:layout_width="@dimen/generic_button_height"
+        android:layout_height="@dimen/generic_button_height"
+        android:layout_gravity="center_vertical"
+        android:adjustViewBounds="true"
+        app:color_up="@color/theme_dlg_text_color"
+
+        android:background="@android:color/transparent"
+
+        android:scaleType="fitCenter"
+        android:src="@drawable/plus" />
+
+</LinearLayout>

@@ -1,0 +1,534 @@
+class MainMenu  : Form {
+	SelectDlg;
+	netDir;
+	Ds;
+global :
+	BalanceWB;
+};
+//MainMenu::BalanceWB = TRUE;
+MainMenu::BalanceWB = FALSE;
+
+//==========================================
+//
+//==========================================
+new MainMenu::MainMenu(void) = <|
+	.netDir = instance NetDir();
+	self->Form("MAIN_MENU");
+	self->Bind(self);
+	self->Open();
+	self->Center();
+	self->SetCaption(Printf("%s v.%s", GlobalProgramName, ProgramVersion));
+	self->Show();
+|>;
+//==========================================
+//
+//==========================================
+new MainMenu::Setup(void) = <|
+	self->Form::Setup();
+
+|>;
+//=============================================
+//
+//=============================================
+new MainMenu::OnClose(refer ...) = <|
+	end;
+|>;
+//=============================================
+//
+//=============================================
+new MainMenu::LoadROI(refer object BaseString, refer object Vector, refer object Vector, refer object Vector) = <|
+param Name, result, names, distr;
+	onerror {
+		result = <<>>;
+		names = << >>;
+		distr = << >>;
+		return "";
+	}
+	new res = "";
+	new ContourName = JustDirName(Name) @ JustName(Name) @ ".ctr";
+	new _ContourName = JustDirName(Name) @ JustName(Name) @ ".nam";
+	new f = instance File(ContourName);
+	new f1 = instance File(_ContourName);
+	if (!f->Open("rb"))
+		return "";
+	if (f1->Access(ACCESS_EXIST))
+		f1->Open("rt");
+	else
+		f1 = EMPTY;
+	new data = f->Read(f->GetLength());
+	new i = 0;
+	if (data->Mid(0, 5) == "CTR01" || data->Mid(0, 5) == "CTR02")
+	{
+		i += 5;
+		new N = 0;
+		data->StringToInt16(i, N);
+		i += 2;
+		new x = 0, y = 0;
+		
+		for (new j = 0; j < N; ++j)
+		{
+			new len = 0;
+			data->StringToInt32(i, len);
+			i += 4;
+			new roi = instance ROISet();
+			
+			for (new k = 0; k < len; ++k)
+			{
+				new pt = instance POINT();
+				data->StringToFloat(i, pt.x);
+				i += 4;
+				data->StringToFloat(i, pt.y);
+				i += 4;
+				roi.Points @= pt;
+			}
+/*
+			if (data->Mid(0, 5) == "CTR01")
+			{
+				new N = roi.Points;
+				trace "Points = ", N->Len(); 
+				new t = Clock();
+				roi->ToBezier();
+				trace " Bezier(",roi.Points->Len(), ")  = ",  Clock() - t,  " "; 
+				roi.Points = N;
+				new t = Clock();
+				roi->GetControlPoints(roi.Points);
+				trace "BS(",roi.Points->Len(), ")  = ",  Clock() - t,  CR; 
+			}
+*/
+			result @= roi;
+			new name = EMPTY;
+			if (f1 != EMPTY)
+				name = f1->Gets();
+			if (name == EMPTY)
+				name = Printf("%d", j);
+			names ,= name;
+		} 
+		f = instance File(JustDirName(ContourName) @ JustName(ContourName) @ ".res");
+		if (!f->Access(ACCESS_EXIST))
+			return "";
+		if (f->Open("rb"))
+		{
+			res = f->Gets();
+			new left = f->Gets();
+			if (left == EMPTY)
+				left = "";
+			new right = f->Gets();
+			if (right == EMPTY)
+			right = "";
+			res = right @ " " @ left;
+		}
+			
+		f = instance File(JustDirName(ContourName) @ JustName(ContourName) @ ".dst");
+		if (!f->Access(ACCESS_EXIST))
+				return "";
+		if (f->Open("rb"))
+			distr = f->Getv();
+	}
+	return res;
+|>;
+
+
+//===================================================
+//
+//===================================================
+new MainMenu::OnNew(refer ...) = <|
+	onerror {
+		self->Show();
+		return;
+	}
+	self->Hide();
+	new opp = instance NewCardDlg(self);
+	if (opp->Open() == IDOK)
+	{
+		new b =  Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << opp.ID >>);
+		if (b->Len() != 0)
+		{
+			MessageBox(W12_ATTESTION, W1_RECORD_EXIST, , MB_OK | MB_ICONSTOP, self);
+			rollback;
+		}
+		new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (ph->GetLastByte() != FD)
+			ph @= SFD;
+		new dstDir = instance DirW();
+		new name = opp.Familie @ "_" @ opp.Name @ "_" @  opp.ID;
+		new kk = ph @ name;
+		dstDir->Create(kk);
+		dstDir->ChangeDir();
+		new info = instance IniFile(kk @ "\\" @ "info.ini");
+	    info->WriteStrW("CARD", "ID", opp.ID);
+	    info->WriteStrW("CARD", "NAME", opp.Name);
+        info->WriteStrW("CARD", "FAMILY", opp.Familie);
+        info->WriteStrW("CARD", "DATE", opp.Date->Date::PrintDMY());
+		if (.netDir != EMPTY && .netDir.dbdir!= EMPTY)
+		{
+        	new node = .netDir.dbdir->ReloadFolder(name);
+        	.netDir.dbdir->AddPatient(node);
+        }
+	}
+	self->Show();
+|>;
+//===================================================
+//
+//===================================================
+new MainMenu::OnSelect(refer ...) = <|
+if (.netDir == EMPTY) return;
+	onerror {
+		.SelectDlg = EMPTY;
+		Pluk->FlushIdle();
+		self->Show();
+		self->Show();
+		return;
+	}
+	self->Hide();
+	.SelectDlg = instance SelectDlg(self);
+	.SelectDlg->Open();
+|>;
+//===================================================
+//
+//===================================================
+new MainMenu::CloseSelect(void) = <|
+	.SelectDlg = EMPTY;
+	Pluk->FlushIdle();
+	self->Show();
+|>;
+//===================================================
+//
+//===================================================
+new MainMenu::OnEdit(refer ...) = <|
+
+	onerror {
+		self->Show();
+		return;
+	}
+	self->Hide();
+	new opp = instance DlgListCards(self);
+	if (opp->Open() == IDOK)
+	{
+		new view = instance MainWnd(opp.currentList, opp.iSel,  self);
+	}
+	self->Show();
+|>;
+//===================================================
+//
+//===================================================
+new MainMenu::OnExportToExcel(refer ...) = <|
+	//new opp = instance DlgListSmartphone(self);
+	new opp = instance ExportDlg2(self);
+	opp->Open();
+	
+|>;
+
+//===================================================
+//
+//===================================================
+new MainMenu::OnOptions(refer ...) = <|
+	new opp = instance SettingDlg(self);
+	if (opp->Open() == IDOK)
+	{
+		AllergoEyeIni->WriteStr("DIR", "DATA", opp.Dir);
+		AllergoEyeIni->WriteStr("DIR", "GDT", opp.GDTDir);
+		AllergoEyeIni->WriteStr("Locale", "Lang", opp.Lang);
+		switch (opp.Lang)
+		{
+		case "English" :
+			PlukIni->WriteStr("Locale", "Code", "eng");
+			PlukIni->WriteStr("Locale", "DateDelimiter", "/");
+			break;
+		case "Deutsch":
+			PlukIni->WriteStr("Locale", "Code", "ger");
+			PlukIni->WriteStr("Locale", "DateDelimiter", ".");
+			break;
+		case "Spanish":
+			PlukIni->WriteStr("Locale", "Code", "esp");
+			PlukIni->WriteStr("Locale", "DateDelimiter", "/");
+			break;
+		case "French":
+			PlukIni->WriteStr("Locale", "Code", "fra");
+			PlukIni->WriteStr("Locale", "DateDelimiter", "/");
+			break;
+	case "Polish":
+			PlukIni->WriteStr("Locale", "Code", "pol");
+			PlukIni->WriteStr("Locale", "DateDelimiter", "/");
+			break;
+	
+		default :
+			PlukIni->WriteStr("Locale", "Code", "eng");
+			PlukIni->WriteStr("Locale", "DateDelimiter", "/");
+			break;
+		}
+		if (opp.OldLang != opp.Lang)
+		{
+			Pluk->CloseJob();
+			Pluk->Exec(ExeName, FALSE, FALSE);
+			end;
+		}
+	}
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::RebuildDB(void) = <|
+	new w = instance GWaitCursor();
+	Pluk->FlushIdle();
+	.netDir.dbdir->RebuildDB(self);
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::RebuildDB(refer object GWnd) = <|
+param p;
+	new w = instance GWaitCursor();
+	Pluk->FlushIdle();
+	.netDir.dbdir->RebuildDB(p);
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::CleardDB(void) = <|
+	new w = instance GWaitCursor();
+	Pluk->FlushIdle();
+	.netDir.dbdir->CleardDB(self);
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::CleardDB(refer object GWnd) = <|
+param p;
+	new w = instance GWaitCursor();
+	Pluk->FlushIdle();
+	.netDir.dbdir->CleardDB(p);
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::RecalculateAll(void) = <|
+//	self->RebuildDB();
+	new list = Odml2Exec("select im.Path from DBPicture as im", << >>);
+	new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (dir->GetLastByte() != FD)
+		dir @= SFD;
+	new prg = instance GProgressWnd(TRUE, "Calculate", self);
+	for (new i = 0; i < list->Len(); i += 30)
+	{
+		prg->SetProgress(i * 100 / list->Len());
+		prg->CheckCancel();
+		Pluk->FlushIdle();
+		new f = instance File(JustDirName(ExeName) @ "ae_exchange.tmp");
+		f->Open("wb");
+		for (new j = i; j < Min(i + 30, list->Len()); ++j)
+			f->Putv(dir @ list[j]);
+		f->Close();
+		Pluk->FlushIdle();
+		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), "ae", f.FileName, JustDirName(ExeName)), TRUE, FALSE);
+		Pluk->FlushIdle();
+	}
+//	self->RebuildDB();
+|>;
+//=================================================
+//
+//=================================================
+new MainMenu::RecalculateAE2Score(void) = <|
+	new tests = Odml2Exec("select a from DBDate as a", << >>);
+	
+	new Set = instance Vector(4);
+	for (new p = 0; p < tests->Len(); ++p)
+	{
+		tests[p].Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+		new offsetL = 0.0;
+		new offsetR = 0.0;
+		new AEScoreL = instance Vector(tests[p].Tests->Len());
+		new AEScoreR = instance Vector(tests[p].Tests->Len());
+		for (new i = 0; i < tests[p].Tests->Len(); ++i)
+		{
+			AEScoreL[i] = tests[p].Tests[i].AEScoreL;
+			AEScoreR[i] = tests[p].Tests[i].AEScoreR;
+		}
+
+		for (i = 0; i < tests[p].Tests->Len(); ++i)
+		{
+			new r = tests[p].Tests[i]->GetTestOrder();
+			if (r <= 0)
+			{
+				offsetL = AEScoreL[i] - AEScoreR[i];
+				offsetR = AEScoreR[i] - AEScoreL[i];
+			}
+			else
+				break;
+		}
+		for (i = 0; i < tests[p].Tests->Len(); ++i)
+		{
+			new r = tests[p].Tests[i]->GetTestOrder();
+			if (r > 0 && tests[p].Tests[i].OpScoreV != EMPTY)
+			{
+				new k = int(tests[p].Tests[i].OpScoreV[3]);
+				switch (GetSideEng(tests[p].Tests[i].Side))
+				{
+				case "left" :
+					Set[k] ,= (AEScoreL[i] - AEScoreR[i] - offsetL);
+					break;
+				case "right" :
+					Set[k] ,= (AEScoreR[i] - AEScoreL[i] - offsetR);
+					break;
+				}
+			}
+		}
+	}
+	for (new i = 0; i < Set->Len(); ++i)
+		Set[i] = instance Stat(Set[i]);
+	trace "OK", CR;
+	return Set;
+|>;
+/*
+global Score = main->RecalculateAE2Score();
+for (new i = 0; i < Score->Len(); ++i)
+{
+	for (new j = 0; j < Score[i].Data->Len(); ++j)
+		if (Score[i].Data[j] < 0.0)
+			Score[i].Data[j] = 0.0;
+	Score[i] = instance Stat(Score[i].Data);
+	trace Score[i], CR;
+}
+Score[1].Data->Remove(145);
+for (new i = 0; i < Score[1].Data->Len(); ++i)
+	trace i, " ", Score[1].Data[i], CR;
+*/
+//=================================================
+//
+//=================================================
+new MainMenu::ImportOpScore(void) = <|
+	new f = instance File(instance GOpenDialog("csv", "", "*.csv|*.csv", self)->Open());
+	f->Open("rb");
+	new op = f->ReadCSV();
+	new Milbe;
+	new count = 0;
+	for (new i = 0; i < op->Len(); ++i)
+	{
+		new rec = op[i];
+		if (rec->Len() < 4 || rec[3]->IsNumber() == FALSE)
+			continue;
+		new id = rec[3];
+		new p = Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << id >>);
+		if (p->Len() == 0)
+		{
+			trace rec, CR;
+			MessageBox(W1_ERROR, Printf("%s %s is not found!", rec[0], rec[2]), MB_ICONSTOP, self);
+		}
+		else
+		{
+			if (p[0].Date->Len() > 1)
+				p[0].Date->QSort(<|param key, elem; return key.Date <> elem.Date; |>);
+			if (rec[1] == EMPTY || rec[1] == "")
+				Milbe = EMPTY;
+			else
+			if (rec[1]->Find("Milbe f") != -1)
+				Milbe = "f";
+			else
+			if (rec[1]->Find("Milbe p") != -1)
+				Milbe = "p";
+			else
+				Milbe = EMPTY;
+				
+			for (new d = 0; d < p[0].Date->Len(); ++d)
+				p[0].Date[d].Tests->QSort(<|param key, elem; return key->GetTestOrder() <> elem->GetTestOrder(); |>);
+			new rep = int(rec[2]) - 1;
+			for (new j = 4; j < rec->Len(); ++j)
+				if (rec[j] != EMPTY && rec[j] != "")
+					rec[j] = float(rec[j]);
+			if (rep < p[0].Date->Len())
+			{
+				new Allergen = EMPTY;
+				new eye = EMPTY;
+				for (new k = 0; k < p[0].Date[rep].Tests->Len(); ++k)
+				{
+					new index = p[0].Date[rep].Tests[k]->GetTestOrder();
+					switch (Milbe)
+					{
+					case "f" :
+						if (index > 0 && p[0].Date[rep].Tests[k].Allergen->ToUpper()->Find("FARINAE") == -1)
+							continue;
+						break;
+					case "p" :
+						if (index > 0 && p[0].Date[rep].Tests[k].Allergen->ToUpper()->Find("PTERONYSSINUS") == -1)
+							continue;
+						break;
+					default :
+						break;
+					}
+					
+					if (p[0].Date[rep].Tests[k].Pictures->Len() == 0)
+					{
+						trace rec, CR;
+						MessageBox(W1_ERROR, Printf("%s %s %s has no images!", rec[0], rec[1], p[0].Date[rep].Tests[k].Path), MB_ICONSTOP, self);
+						continue;
+					}
+					switch (index)
+					{
+					case -1:
+						p[0].Date[rep].Tests[k].OpScore = rec[8];
+						p[0].Date[rep].Tests[k].OpScoreV = rec->Mid(4, 4);
+						break;
+					case 0 :
+						p[0].Date[rep].Tests[k].OpScore = rec[8];
+						p[0].Date[rep].Tests[k].OpScoreV = rec->Mid(4, 4);
+						break;
+					default:
+						if (Allergen == EMPTY || Allergen == p[0].Date[rep].Tests[k].Allergen)
+						{
+							Allergen = p[0].Date[rep].Tests[k].Allergen;
+							eye = p[0].Date[rep].Tests[k].Side;
+							index -= 2;
+							if (rec->Len() <= 8 + 5 * index)
+							{
+								p[0].Date[rep].Tests[k].OpScore = EMPTY;
+								p[0].Date[rep].Tests[k].OpScoreV = EMPTY;
+								MessageBox(W1_ERROR, Printf("There is no score for %s", p[0].Date[rep].Tests[k].Path), MB_ICONSTOP, self);
+							}
+							else
+							{
+								p[0].Date[rep].Tests[k].OpScore = rec[8 + 5 * index];
+								p[0].Date[rep].Tests[k].OpScoreV = rec->Mid(4 + 5 * index, 4);
+							}
+						}
+						break;
+					}
+					if (p[0].Date[rep].Tests[k].OpScoreV != EMPTY && p[0].Date[rep].Tests[k].OpScoreV->Find(EMPTY) != -1)
+					{
+						trace p[0].Date[rep].Tests[k], CR;
+						MessageBox(W1_ERROR, Printf("%s %s %s OpScore is not complete!", rec[0], rec[3], p[0].Date[rep].Path), MB_ICONSTOP, self);
+						p[0].Date[rep].Tests[k].OpScoreV = EMPTY;
+						p[0].Date[rep].Tests[k].OpScore = EMPTY;
+					}
+					
+					p[0].Date[rep].Tests[k]->CalculateScore();
+					p[0].Date[rep].Tests[k]->Save();
+					if (p[0].Date[rep].Tests[k].OpScoreV != EMPTY)
+					{
+						new root = AllergoEyeIni->ReadStr("DIR", "DATA");
+						if (root->GetLastByte() == FD)
+							root = root->Left(root->Len() - 1); 
+						new name = root @ p[0].Date[rep].Tests[k].Path @ SFD @ "opscore.txt";
+						new f = instance File(name);
+						f->Open("wb");
+						f->Printf("itching, irritation, tears, redness\r\n");
+						f->Printf("%d, %d, %d, %d\r\n", [p[0].Date[rep].Tests[k].OpScoreV]);
+						f->Close();
+					}
+				}
+				if (Allergen == EMPTY)
+				{
+					trace rec, CR;
+					MessageBox(W1_ERROR, Printf("%s %s %s Allergen is not found!", rec[0], rec[3], p[0].Date[rep].Path), MB_ICONSTOP, self);
+				}
+				else
+					trace Printf("%03d, Allergen = %s, Eye = %s, OpScore = %g, AEScoreR = %g, AEScore = %g\r\n", ++count, Allergen, eye, p[0].Date[rep]->GetOpScore(), p[0].Date[rep]->GetAEScore()); 
+			} 
+		}
+	}
+	trace "OK", CR;
+|>;
+//===================================================
+//
+//===================================================
+new MainMenu::OnExit(refer ...) = <|
+	end;
+|>;

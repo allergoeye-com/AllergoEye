@@ -1,0 +1,617 @@
+class RoiWnd : Form, FormTriggers {
+	Index;
+	Data;
+	Dir;
+	Parent;
+	Title;
+	file;
+	fAutoSave;
+	IndexJpg;
+	dirNode;
+	iColumn;
+	
+	
+
+};
+//-------------------------------------------------------------
+//
+//-------------------------------------------------------------
+new RoiWnd::OnPath(refer...)=<|
+	new dstDir = instance ShellDir(self);
+	new dir = .Dir;
+	new n = .Dir->Len();
+	if (n >= 1 && (.Dir->Right(1) == "/" || .Dir->Right(1) == "\\"))
+		dir = .Dir->Left(n - 1);
+	dstDir->SetPath(dir);
+	dstDir->SetCaption("Select source");
+	if (dstDir->Open())
+	{
+		.Dir = dstDir->GetPath();
+		if (.Dir->Right(1) != "/" && .Dir->Right(1) != "\\")
+		.Dir @= FD;
+		AllergoEyeIni->WriteStrW("DIR", "DATA", .Dir);
+		self->OnChangeDir();
+		self->UpdateForm();
+	}
+|>;
+//-------------------------------------------------------------
+//
+//-------------------------------------------------------------
+new RoiWnd::OnChangeDir(void)=<|
+self->ChangeDir();
+	self->UpdateForm();
+	
+|>;
+//-------------------------------------------------------------
+//
+//-------------------------------------------------------------
+new RoiWnd::ChangeDir(void)=<|
+.file = EMPTY;
+.Index = EMPTY;
+	.Data = <<>>;
+	.IndexJpg = EMPTY;
+	.Parent->Reset();
+
+	.dirNode = instance TreeDir(.Dir, <<".jpg", ".mtf">>);
+	new jpg = .dirNode->Root()->GetFileList(<<".jpg">>, TRUE);
+//	new fileList = @.Parent.List;
+	new mtf = .dirNode->Root()->GetFileList(<<".mtf">>, TRUE);
+	jpg->QSort({|param key, elem; return key->Name() <> elem->Name(); |});
+	if (mtf != EMPTY)
+	for (new i = 0, l = mtf->Len(); i < l; ++i)
+	{
+		new j;
+		if ((j = jpg->BFind(mtf[i], {|param key, elem; return key->Name() <> elem->Name(); |})) != -1)
+		{
+			jpg[j] <- mtf[i];
+		}
+	}
+	.Parent.List <- jpg;
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::RoiWnd(refer object GWnd) = <|
+param parent;
+.fAutoSave = TRUE;
+	.Parent = &parent;
+	.Dir = AllergoEyeIni->ReadStrW("DIR", "DATA", "");
+	if (.Dir != EMPTY && .Dir != "")
+		self->ChangeDir();
+	.Title = "";
+	self->Form("ROI_TOOL", parent);
+	self->Bind(self);
+	self->EnableWString(TRUE);
+	self->Open();
+	self->Show();
+		
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnSelectJPG(refer ...) = <|
+
+	new fi;
+	fi = .file; 
+	.Parent->EnableEdit(FALSE, EMPTY);
+	if (.fAutoSave && .file != EMPTY && .Parent.List[.IndexJpg] != fi)
+	{
+		
+		new f = FALSE;
+		onerror {
+			f = TRUE;
+		};
+		if (!f)
+		{
+			self->Save(fi);
+			
+		}
+	}
+	self->SelectJPG(.IndexJpg);
+	
+ 
+|>;
+//=========================================================
+//
+//=========================================================
+
+new RoiWnd::SelectJPG(int) = <|
+param i;
+new fileList = @.Parent.List;
+	if (i >= fileList->Len())
+		return;
+	.IndexJpg = i;
+	i = 0;
+	if (.file != EMPTY)
+	{
+		new l = .file.roi->Len();
+		for (; i < l; ++i)
+		{
+			.file.roi[i].Selected = FALSE;
+			.file.roi[i]->Edit(FALSE);
+		}
+	}
+	if (.IndexJpg >= fileList->Len())
+	.IndexJpg = fileList->Len() - 1;
+		if (fileList[.IndexJpg].roi->Len() == 0)
+			self->LoadROI(fileList[.IndexJpg]);
+	self->SetRoi(fileList[.IndexJpg]);
+		self->UpdateForm(".Data");
+		self->UpdateForm(".Index");
+
+		.Parent->OnSelectFile(.IndexJpg);	
+
+|>;
+//=============================================================
+//
+//=============================================================
+new RoiWnd::SetRoi(any) = <|
+param file;
+	if (file == EMPTY ||  file.roi->Len() == 0)
+	{
+		.file = file;
+		.Data = EMPTY;
+		.Index = EMPTY;
+	}
+	else
+	{
+		.Index = EMPTY;
+		.file = file;
+		.Data = instance Vector(.file.roi->Len());
+		for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+		{
+			new b = @.file.roi[i];
+			.Data[i] = << .file.names[i], &b , b.fModefied>>;
+			.file.roi[i]->Edit(FALSE, self);
+			.file.roi[i].Selected = FALSE;
+		}
+
+	}
+	self->UpdateColor();
+
+	.Parent->OnSelectRoi(.Index);
+
+
+|>;
+new RoiWnd::UpdateColor(void) = <|
+if (.file == EMPTY) return;
+		new cr = LiistColor();
+		new ch = GetRoiNames();
+		for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+		{
+			onerror {
+			.file.roi[i].roiColor = CLR_YELLOW;
+			continue;
+			}
+				new ni = ch->Find(.file.names[i]);
+				.file.roi[i].roiColor = cr[ni];
+		}
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnEdit(void) = <|
+	if (.Index != EMPTY)
+	{
+
+		new s = .file.roi[.Index]->IsEdit();
+		if (s)
+			for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+				.file.roi[i]->Edit(FALSE);
+
+		.Parent->EnableEdit(!s, .Index);
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnDelete(void) = <|
+	if (.file != EMPTY && .Index != EMPTY && .file.roi->Len() > .Index)
+	{
+new fileList = @.Parent.List;
+
+	.file.roi[.Index]->Edit(FALSE);
+		.file.roi[.Index].Selected = FALSE;
+		.Parent->AddUndo("DeleteROI", <<.file.roi[.Index], .file.names[.Index]>>, .Index);
+		.file.roi->Remove(.Index);
+		.file.names->Remove(.Index);
+		new i = .Index;
+		if (.file.roi->Len() == 0)
+			.Index = EMPTY;
+		self->SetRoi(.file);
+		if (.file.roi->Len() > 0)
+		{
+			if (i >= .file.roi->Len())
+				.Index = i - 1;
+			else
+			if (.file.roi->Len() > 0)
+				.Index = i;
+		}
+		if (.Index != EMPTY)
+		.file.roi[.Index].Selected = TRUE;
+		.file.result = "M";
+		self->UpdateForm(".Parent.List");
+
+		self->UpdateForm(".Index");
+		self->UpdateForm(".Data");
+		.Parent->OnUpdateViews();
+		self->Update();
+		.Parent->OnSelectRoi(.Index);
+	}
+|>;
+
+//=========================================================
+//
+//=========================================================
+new RoiWnd::SelectRoi(int) = <|
+param I;
+	if (.Index == I) return;
+	.Parent->EnableEdit(FALSE, EMPTY);
+	for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+	{
+			.file.roi[i]->Edit(FALSE);
+			.file.roi[i].Selected = FALSE;
+	}
+	if (.file.roi->Len() > I)
+	{
+		.Index = I;
+		.file.roi[.Index].Selected = TRUE;
+	}
+	else
+		.Parent->EnableEdit(FALSE, EMPTY);
+	self->UpdateForm(".Index");
+	self->UpdateForm(".Data");
+	.Parent->OnUpdateViews();
+	self->Update();
+	.Parent->OnSelectRoi(.Index);
+|>;
+	
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnModefied(void) = <|
+self->OnUpdateROI2();
+
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::CheckSelectROI(void) = <|
+	.Parent->OnSelectRoi(.Index);
+|>;
+
+
+
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnUpdateROI(void) = <|
+new fileList = @.Parent.List;
+		.Index = EMPTY;
+		.file = fileList[.IndexJpg];
+		.Data = instance Vector(.file.roi->Len());
+		new m = FALSE; 
+		for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+		{
+			new b = @.file.roi[i];
+			if (b.fModefied)
+				m = TRUE;
+			.Data[i] = << .file.names[i], &b, b.fModefied>>;
+			.file.roi[i]->Edit(FALSE);
+			.file.roi[i].Selected = FALSE;
+		}
+		self->UpdateColor();
+		.file.result = m ? "M" : "";
+	self->OnModefied();
+
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnUpdateROI2(void) = <|
+new fileList = @.Parent.List;
+
+	.file = fileList[.IndexJpg];
+	
+	.Data = instance Vector(.file.roi->Len());
+	new modef = FALSE;
+	for (new i = 0, l = .file.roi->Len(); i < l; ++i)
+	{
+		
+		new b = @.file.roi[i];
+		if (b.fModefied)
+			modef = TRUE;	
+		.Data[i] = << .file.names[i], &b, b.fModefied>>;
+	}
+	self->UpdateColor();
+
+	.file.result = modef ? "M" : "";
+	self->UpdateForm(".Parent.List");
+
+	self->UpdateForm(".Data");
+	self->UpdateForm(".Index");
+|>;
+
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnSelectROI(refer ...) = <|
+param data, par;
+	new Table = instance GTable(ID_ROI_LIST, self);
+	new pos = Table->GetNotifyPos();
+	if (pos == EMPTY) return;
+	.Index = pos[0];
+	.file.roi[.Index].Selected = !.file.roi[.Index].Selected;
+	 
+	new i = 0, l = .file.roi->Len();
+	.Parent->EnableEdit(FALSE, EMPTY);
+
+	for (; i < l; ++i)
+	{
+		if (.Index != i)
+		{
+		
+			.file.roi[i].Selected = FALSE;
+			.file.roi[i]->Edit(FALSE);
+		}
+	}
+	if (!.file.roi[.Index].Selected)
+	{
+		.file.roi[.Index]->Edit(FALSE);
+		.Index = -1;
+		self->UpdateForm(".Index");
+	}
+	.Parent->OnSelectRoi(.Index);
+//	.file.roi[.Index].Selected = TRUE;
+	.Parent->OnUpdateViews();
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new RoiWnd::OnEditContourName(refer ...) = <|
+param data, par;
+	new Table = instance GTable(ID_ROI_LIST, self);
+	new pos = Table->GetNotifyPos();
+	if (pos == EMPTY || pos[0] == -1) return;
+		.Index = pos[0];
+	.Parent->AddUndo("RenameROI", <<.file.names[.Index], .Data[.Index][0]>>, .Index);
+	new ch = GetRoiNames();
+	new cr = LiistColor();
+
+	.file.names[.Index] = .Data[.Index][0];
+	new i = ch->Find(.file.names[.Index]);
+	.file.roi[.Index].roiColor = cr[i];
+	.Parent->OnUpdateViews();
+	self->UpdateForm(".Data");
+
+|>;
+//-----------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------
+new RoiWnd::LoadROI(pointer object FileNode)  = <|
+param fileNode;
+	onerror {
+		fileNode.roi = <<>>;
+		fileNode.names = << >>;
+		return "";
+	}
+	new vName = GetRoiNames();
+	new vColor = LiistColor();
+	new Name = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	if (Name->GetLastByte() != FD)
+		Name @= SFD;
+	Name @= fileNode->GetWinPath();
+	new ContourName = JustDirName(Name) @ JustName(Name) @ ".roi";
+	new f = instance File(ContourName);
+	if (!f->Access(ACCESS_EXIST) || !f->Open("rb"))
+		return "";
+	fileNode.roi = <<>>;
+	fileNode.names = << >>;
+	
+	new data = f->Read(f->GetLength());
+	new i = 0;
+	new type = 0;
+	if (data->Mid(0, 6) == "PCTR01")
+	{
+		i += 6;
+		new N = 0;
+		data->StringToInt32(i, N);
+		i += 4;
+		new x = 0, y = 0;
+		new len = 0;
+		new type = 0;
+		for (new j = 0; j < N; ++j)
+		{
+			data->StringToInt16(i, len);
+			i += 2;
+			data->StringToInt16(i, type);
+			i += 2;
+			new roi = instance ROISet();
+			roi.roiType = type;
+			fileNode.names @= vName[len];
+			roi.roiColor = vColor[len];
+
+			data->StringToInt32(i, len);
+			i += 4;
+			for (new k = 0; k < len; ++k)
+			{
+				new pt = instance POINT();
+				data->StringToFloat(i, pt.x);
+				i += 4;
+				data->StringToFloat(i, pt.y);
+				i += 4;
+				roi.Points @= pt;
+			}
+			fileNode.roi @= roi;
+		} 
+	
+	}
+|>;
+//-----------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------
+new RoiWnd::SaveROI(pointer object FileNode)  = <|
+param fileNode;
+	if (fileNode.roi == EMPTY || fileNode.roi->Len() == 0) return FALSE;
+	new vName = GetRoiNames();
+	new Name = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	if (Name->GetLastByte() != FD)
+		Name @= SFD;
+	Name @= fileNode->GetWinPath();
+	new ContourName = JustDirName(Name) @ JustName(Name) @ ".roi";
+	new f = instance File(ContourName);
+	if (!f->Open("wb"))
+		return "";
+	new data = "PCTR01";
+	new i = 0;
+	{
+		i += 6;
+		new N = fileNode.roi->Len();
+		data->Int32ToString(i, N);
+		i += 4;
+		new x = 0, y = 0;
+		new type, len = 0;
+		type = 0;
+		for (new j = 0; j < N; ++j)
+		{
+			new roi = @fileNode.roi[j];
+		
+			new index = vName->Find(fileNode.names[j]);
+			if (index == -1)
+			index = 0;
+			data->Int16ToString(i, index);
+			i += 2;
+			data->Int16ToString(i, roi.roiType);
+			i += 2;
+			
+			data->Int32ToString(i, roi.Points->Len());
+			i += 4;
+			
+			new pt = @roi.Points;
+			len = pt->Len();
+			data->SetLen(i + len * 8);
+			for (new k = 0; k < len; ++k)
+			{
+				data->FloatToString(i, pt[k].x);
+				i += 4;
+				data->FloatToString(i, pt[k].y);
+				i += 4;
+			}
+			roi.fModefied = FALSE;
+
+		}
+		f->Write(data);
+	
+	}
+	f->Close();
+	return TRUE;
+|>;
+//-----------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------
+new RoiWnd::SaveMTF(pointer object FileNode)  = <|
+param fileNode;
+	new FileName = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	if (FileName->GetLastByte() != FD)
+		FileName @= SFD;
+	FileName @= fileNode->GetWinPath();
+	FileName = JustDirName(FileName) @ JustName(FileName) @ ".jpg";
+	
+	new vName = GetRoiNames();
+	new N = vName->Len();
+	new Image = MathImage::LoadImageSet(FileName);
+	Image->SetLen(N + 3); 
+	new image = @Image[0];
+	new Width = image->Width();
+	new Height = image->Height();
+	for (new i = 0; i < N; ++i)
+		Image[3 + i] = instance MathImage(Width, Height);
+    new tmp =  instance MathImage(Width, Height);
+
+	for (new j = 0; j < fileNode.roi->Len(); ++j)
+	{
+		new index = vName->Find(fileNode.names[j]);
+		if (index != -1)
+		{
+			new pt = fileNode.roi[j].Points;
+			for (new k = 0; k < pt->Len(); ++k)
+			 	pt[k].y = Height - pt[k].y;
+			 if (	fileNode.roi[j].roiType == ROI_CURVE)
+			 {
+				new contour =  instance BetaContour(pt);
+				new mask = image->GetSplineMask(contour, TRUE);
+				tmp->Set(1);
+				mask = mask & tmp;
+				Image[index + 3] |= mask;
+			}
+			else
+			{
+				tmp->Set(0);
+				tmp->SetBar(int(pt[0].x), int(pt[0].y), int(pt[2].x), int(pt[2].y), 1);
+				Image[index + 3] |= tmp;
+			}
+		}
+	}
+
+	instance MathImage(1, 1)->SaveMTFrame(JustDirName(FileName) @ JustName(FileName) @ ".mtf", Image, TRUE);
+	fileNode.name = JustName(FileName) @ ".mtf";
+	fileNode.result = "";
+
+|>;
+//-----------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------
+new RoiWnd::OnSave(void) = <|
+	for (new i = 0, l = .Parent.List->Len(); i < l; ++i)
+	{
+		if (.Parent.List[i].result == "M")
+		{
+			self->SaveMTF(.Parent.List[i]);
+			self->SaveROI(.Parent.List[i]);
+			
+		}
+	}
+	self->UpdateForm(".Parent.List");
+	self->OnUpdateROI2();
+|>;
+
+//-----------------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------------------------
+new RoiWnd::Save(pointer object FileNode) = <|
+param file;
+	if (file.result == "M")
+	{
+		self->SaveMTF(file);
+		self->SaveROI(file);
+		self->UpdateForm(".Parent.List");
+	}
+	
+|>;
+new RoiWnd::OnColumn(...)  = <|
+
+	new id;
+	new fi = .file;
+	if (.iColumn == 0)
+	.Parent.List->QSort( {| param key, elem; return key->Name() <> elem->Name(); |});
+	if (.iColumn == 1)
+		.Parent.List->QSort( {| param key, elem; return elem.result <>key.result; |});
+
+	if (.iColumn == 2)
+		.Parent.List->QSort( {| param key, elem; return elem->Ext() <>key->Ext(); |});
+	if (fi != EMPTY)
+	for (new i = 0, l = .Parent.List->Len(); i <  l; ++i)
+	{
+		if (.Parent.List[i] == fi)
+		{
+			.IndexJpg = i;
+			.file = fi;
+			break;
+		}
+			
+	}
+	self->UpdateForm();
+
+|>;

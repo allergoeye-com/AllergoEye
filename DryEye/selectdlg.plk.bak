@@ -1,0 +1,3198 @@
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+class AEdit : GEdit {
+	parent;
+	id;
+};
+new AEdit::AEdit(int, refer object GWnd, int) = <|
+param id, wnd, ind;
+	.parent = &wnd;
+	.id = ind;
+	self->GEdit (id, wnd);
+	
+|>;
+new AEdit::OnKeyUp(int) = <|
+param a;
+	self->GEdit::OnKeyUp(a);
+	.parent->OnEdit(.id, self->GetText());
+|>;
+
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+//========================================================
+class SelectDlg  : Form , FormTriggers {
+	Parent;
+	SelectRecords;
+	IndexSelect;
+	IndexSubRecords;
+	SubRecords;
+	AllRecord;
+	IndexAll;
+	Record;
+	ListSubRecord;
+	Graph;
+	waitCursor;
+	EditFrom;
+	EditTo;
+	Date;
+	TherapyIndex;
+	CAPIndex;
+	IndexDate;
+	last_oID;
+	textSearch;
+	
+	View;
+	SelectDirNode;
+
+	ListCard;
+	Dir;
+	dirNode;
+	TextSearch;
+	
+	List;
+	Index;
+	DirClient;
+	iColumn;
+
+	fFind;
+	eEdit;
+	DateFrom;
+	DateTo;
+	eBoxID;
+	eBoxFam;
+	
+	LastString;
+	IndexBuild;
+	fOpen;
+	iTimerWaitClient;
+	fTimerEnable;
+	filterList;
+	NoOpRecord;
+	IsTreated;
+	FailedContours;
+	TimerBusy;
+global:
+	EditBusy;
+	OBJ;
+	DBOBJ;
+	SUB_DBOBJ;
+	SUB_OBJ;
+
+	COLOR;
+	SUB_FLG;
+	SUB_PARENT;
+	DATE_SUB;
+};
+event WND_TIMER, SelectDlg::OnTimer;
+event WND_SIZE, SelectDlg::OnSize;
+event WND_UPDATE, SelectDlg::OnUpdate;
+event WND_MOUSEWHEEL, SelectDlg::OnMouseWheel;
+event WND_USER + ID_RESPONCE, 	SelectDlg::onResponce;
+global Str1 = "Select smartphone";
+global DEF_WORDSCALE= 2.835;
+global size_mm = 3.0;
+SelectDlg::DBOBJ = 0;
+SelectDlg::SUB_DBOBJ = 0;
+
+SelectDlg::COLOR = 2;
+SelectDlg::OBJ = 1;
+SelectDlg::SUB_OBJ = 1;
+SelectDlg::SUB_FLG = 0;
+SelectDlg::SUB_PARENT = 2;
+SelectDlg::DATE_SUB = 3;
+SelectDlg::EditBusy = FALSE;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::SelectDlg(refer object GWnd ) = <|
+param parent;
+	.Parent = &parent;
+	.iColumn = 0;
+	.EditBusy = FALSE;
+	.TimerBusy = FALSE;
+	.eEdit = <<"", "", "", "", "", "" >>;
+	.EditFrom = "";
+	.EditTo = "";
+	.TextSearch = "";
+	.NoOpRecord = FALSE;
+	.IsTreated = FALSE;
+	.FailedContours = FALSE;
+	new tst = TRUE;
+
+	onerror {
+		tst = FALSE;
+	}
+
+	if (tst)
+	{
+		RunAllergoscopeApp();
+	}
+	.iTimerWaitClient = <<>>;
+	.LastString = "<file-area></file-area>";
+	.fOpen = FALSE;
+
+	.fTimerEnable = FALSE;
+	.DirClient = <<>>;
+	.Date = <<>>;
+	.SelectRecords = <<>>;
+	.List = <<  >>;
+	.IndexSelect = <<>>;
+	.fFind = FALSE;
+	.AllRecord = <<>>;
+	
+
+	.Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (.Dir->GetLastByte() != FD)
+		.Dir @= SFD;
+	self->InitDir();
+	main.netDir->SetProxy(&self);
+	self->Form( "DLG_CARD_TOOLS", parent );
+	self->AllowEvent( WND_SIZE );
+	self->AllowEvent(WND_UPDATE);
+	self->AllowEvent(WND_MOUSEWHEEL);
+|>;
+//=============================================
+//
+//=============================================
+new SelectDlg::OnMouseWheel(int) = <|
+param zDelta;
+
+	if (.ListSubRecord->OnMouseWheel(zDelta))
+		return TRUE;
+	return FALSE;
+
+|>;
+//=============================================
+//
+//=============================================
+new SelectDlg::Cleanup(void) = <|
+	main.netDir.dbdir->SetQuery("", "","", "", "", "", "", FALSE, , FALSE, , FALSE);
+	.Parent->CloseSelect();
+|>;
+//==========================================
+//
+//==========================================
+new SelectDlg::UpdateSize(void) = <|
+	if (.ListSubRecord != EMPTY) // && .fOpen == FALSE)
+	{
+		new pos = self->GetItemPos(ID_VIEW);
+		new size = self->GetItemSize(ID_VIEW);
+		if (.ListSubRecord->GetPos() != << pos[0] + 2 , pos[1]  + 2 >>)
+			.ListSubRecord->SetPos(pos[0] + 2 , pos[1]  + 2);
+		if (.ListSubRecord->GetSize() != << size[0] - 4, size[1] - 4 >>)
+			.ListSubRecord->SetSize(size[0] - 4, size[1] - 4);
+		if (.fOpen == FALSE)
+			self->EnableItem(ID_VIEW, FALSE);
+ 	//	.ListSubRecord->Invalidate(FALSE);
+	//	.ListSubRecord->SetFocus();
+		if (.fOpen == FALSE)
+		{
+			.fOpen = TRUE;
+			self->SetTimer(1000, 10000);
+			self->SetTimer(100, 3000);
+			self->AllowEvent(WND_TIMER);
+		}
+		pos = self->GetItemPos(ID_GRAPH);
+		size = self->GetItemSize(ID_GRAPH);
+		.Graph->SetPos(pos[0] + 2 , pos[1]  + 2);
+		.Graph->SetSize(size[0] - 4, size[1] - 4);
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetGraphicImage(void) = <|
+	return .Graph->GetBmp();
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetGraphicImage(refer object Rect) = <|
+param rect;
+	return .Graph->GetBmp(rect);
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetGraphicOpScoreImage(refer object Date, refer object Vector, refer object Rect) = <|
+param StartDate, Dates, rect;
+	
+	.Graph->Clear();
+	.Graph->Invalidate(FALSE);
+	.Graph->SetOpGraph(StartDate, Dates);
+	new bmp = .Graph->GetBmp(rect);
+	.Graph->Clear();
+	if (.IndexDate >= 0)
+		.Graph->SetGraph(*&(.Date[.IndexDate][0]));
+	return bmp;
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetGraphicOpSynScoreImage(refer object Date, refer object Vector, refer object Rect) = <|
+param StartDate, Dates, rect;
+	
+	.Graph->Clear();
+	.Graph->Invalidate(FALSE);
+	.Graph->SetOpSynGraph(StartDate, Dates);
+	new bmp = .Graph->GetBmp(rect);
+	.Graph->Clear();
+	if (.IndexDate >= 0)
+		.Graph->SetGraph(*&(.Date[.IndexDate][0]));
+	return bmp;
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::GetGraphicAEScoreImage(refer object Date, refer object Vector, refer object Rect) = <|
+param StartDate, Dates, rect;
+	
+	.Graph->Clear();
+	.Graph->Invalidate(FALSE);
+	.Graph->SetAEGraph(StartDate, Dates);
+	new bmp = .Graph->GetBmp(rect);
+	.Graph->Clear();
+	if (.IndexDate >= 0)
+		.Graph->SetGraph(*&(.Date[.IndexDate][0]));
+	return bmp;
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnSize(...) = <|
+param code, width, height;
+
+	if (code != SIZE_MINIMIZED)
+	{
+		self->UpdateSize();		
+	}
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new SelectDlg::Setup( void ) =
+<|
+	.EditBusy = FALSE;
+	//new date = main.netDir.dbdir->GetMinMaxDate();
+//.DateFrom = date[0];
+ //	.DateTo = date[1];
+	self->Form::Setup();
+	self->Bind(self);
+	self->UpdateForm();
+	self->EnableItem(ID_ADD, FALSE);
+	self->EnableItem(ID_REMOVE, FALSE);
+ 	self->EnableItem(ID_EXCEL, FALSE);
+	self->EnableItem(ID_REPORT, FALSE);	
+	self->EnableItem(BTN_EDIT, FALSE);
+	self->EnableItem(ID_BUILD, FALSE);
+	self->EnableItem(ID_SYNC, FALSE);
+
+ 	.ListSubRecord = instance BmpListView(TRUE, self);
+ 	.Graph = instance ViewGraphWnd(self);
+	.eBoxID = instance AEdit(ID_PATIENT_ID, self, 0);
+	.eBoxFam = instance AEdit( ID_PATIENT_LASTNAME, self, 1);
+ 	
+	self->Maximize();
+|>;
+
+//=============================================
+//
+//=============================================
+new SelectDlg::OnUpdate(void) = <|
+	onerror {
+		new mdc = instance MDC(self);
+		mdc->OpenDC();
+		mdc->CloseDC();
+		return;
+	}
+	if (!.fOpen	)
+		self->UpdateSize();		
+	
+	new mdc = instance MDC(self);
+	mdc->OpenDC();
+	mdc->CloseDC();
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::~SelectDlg( void ) =
+<|
+	.EditBusy = FALSE;
+	main.netDir->SetProxy(EMPTY);
+	main.netDir.dbdir->Reset();
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnNewPatient(refer ...) = <|
+	new opp = instance NewCardDlg(self);
+	if (opp->Open() == IDOK)
+	{
+		new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (ph->GetLastByte() != FD)
+			ph @= SFD;
+		new dstDir = instance DirW();
+		new name = opp.Familie @ "_" @ opp.Name @ "_" @  opp.ID;
+		new kk = ph @ name;
+		dstDir->Create(kk);
+		dstDir->ChangeDir();
+		new info = instance IniFile(kk @ "\\" @ "info.ini");
+	    info->WriteStrW("CARD", "ID", opp.ID);
+	    info->WriteStrW("CARD", "NAME", opp.Name);
+        info->WriteStrW("CARD", "FAMILY", opp.Familie);
+        info->WriteStrW("CARD", "DATE", opp.Date->Date::Print());
+		if (main.netDir != EMPTY && main.netDir.dbdir!= EMPTY)
+		{
+        	new node = main.netDir.dbdir->ReloadFolder(name);
+        	main.netDir.dbdir->AddPatient(node);
+        }
+		self->FillQuery();
+		new b = .IndexAll;
+		self->InitDir();
+		.IndexAll = b;
+		self->UpdateLists();
+		main.netDir->SetProxy(&self);
+        self->UpdateForm();
+	}
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnSelectList(refer ...) = <|
+
+	if (.SelectRecords[.Index]->Len() == 0)
+		.IndexSelect[.Index] = EMPTY;
+
+	self->UpdateForm(".SelectRecords[.Index]");
+	self->EnableItem(ID_REMOVE, .SelectRecords != EMPTY && .SelectRecords[.Index] != EMPTY && .SelectRecords[.Index]->Len() > 0);
+	self->UpdateLists();
+	
+|>;
+
+//===================================================================
+//
+//===================================================================
+new SelectDlg::ClearSelect(int) = <|
+param Index;
+	if (.SelectRecords[Index]->Len() > 0)
+	{
+		for (new i = 0, l = .SelectRecords[Index]->Len(); i <  l; ++i)
+		{
+		
+			new obj = .SelectRecords[Index][i][.OBJ];
+			if (typeof(*obj) !=  "Dump")
+				obj->Select(Index, FALSE);
+		}
+		.SelectRecords[Index] = <<>>;
+	}
+|>;
+
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnResponce(refer any) = <|
+onerror {
+	if (.View != EMPTY)
+		.View->PostEvent(WND_USER + ID_RESPONCE, 0, FALSE);
+	else
+			self->EnableSync(TRUE);
+	
+		return;
+	};
+	if (main.netDir.server == EMPTY) return;
+	new n = main.netDir.server.result;
+	main.netDir->Close();
+	main.netDir.iTimerWaitServer = Clock();
+	if (.View != EMPTY)
+		.View->PostEvent(WND_USER + ID_RESPONCE, 0, n != EMPTY && n[0] == "OK");
+	else
+	{
+		
+	
+		if (n == EMPTY || n[0] == "ERROR")
+		{
+		self->EnableSync(TRUE);
+			.waitCursor = EMPTY;
+		
+			MessageBox("Warning !", "send data error", MB_OK | MB_ICONSTOP, self);
+			
+		}	
+		
+	}
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnClickAll(refer ...) = <|
+param data, par;
+
+	if (par.NotifyCode == "right click")
+	{
+		new popup = instance GMenu("POPUP_MENU");
+		new mouse = self->GetCursorPos();
+		new pos = self->GetCursorPos();
+
+		switch (CurLocale.Code)
+		{
+		case "eng" :
+			popup->InsertItem(-1, ID_RENAME_CARD, W4_RENAME);
+			popup->InsertItem(-1, ID_DELETE_CARD, W1_DELETE);
+			break;
+		case "ger" :
+			popup->InsertItem(-1, ID_RENAME_CARD, W4_RENAME);
+			popup->InsertItem(-1, ID_DELETE_CARD, W1_DELETE);
+			break;
+		default :
+			popup->InsertItem(-1, ID_RENAME_CARD, W4_RENAME);
+			popup->InsertItem(-1, ID_DELETE_CARD, W1_DELETE);
+			break;
+		}
+		popup->Popup(mouse[0], mouse[1], *(par.Form));
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnOk(refer ...) = <|
+	self->UpdateForm();
+	if (.List->Len() == 0 || .Index == EMPTY) return;
+	
+	self->Form::Close(IDOK);
+|>;
+
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnReceive(refer object PacketMDns) = <|
+param packetMDns;
+	onerror {
+		.fFind = FALSE;
+		return;
+	}
+	if (.fFind)
+		return;
+	.fFind = TRUE;
+
+	if (packetMDns.isValid)
+		self->OnFindClient(packetMDns, packetMDns.ip);
+	.fFind = FALSE;
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnClickSubRecord(refer ...) = <|
+param data, par;
+	if (par.NotifyCode == "right click")
+	{
+		self->UpdateForm(".IndexSubRecords");
+		new popup = instance GMenu("POPUP_MENU");
+		new mouse = self->GetCursorPos();
+		new pos = self->GetCursorPos();
+		switch (CurLocale.Code)
+		{
+		case "eng" :
+			popup->InsertItem(-1, ID_RENAME_TEST, W4_RENAME);
+			popup->InsertItem(-1, ID_DELETE_TEST, W1_DELETE);
+			break;
+		case "ger" :
+			popup->InsertItem(-1, ID_RENAME_TEST, W4_RENAME);
+			popup->InsertItem(-1, ID_DELETE_TEST, W1_DELETE);
+			break;
+		default :
+			popup->InsertItem(-1, ID_RENAME_TEST, W4_RENAME);
+			popup->InsertItem(-1, ID_DELETE_TEST, W1_DELETE);
+			break;
+		}
+		popup->Popup(mouse[0], mouse[1], *(par.Form));
+		
+	}
+|>;
+//=============================================
+//
+//=============================================
+new SelectDlg::DelDir(refer object Dir) = <|
+param dir;
+	dir->Read();
+    for (new i = 0, l = dir.Files->Len(); i < l; ++i)
+    {
+    	new file = instance File(dir.DirName @ dir.Files[i][0]);
+    	file->Remove();
+    }
+    dir->Remove();
+
+
+|>;
+
+
+//=========================================================
+//
+//=========================================================
+new SelectDlg::UpdateForm(void) = <|
+
+	onerror {
+	return;
+	};
+		self->Form::UpdateForm();
+
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnEdit(refer ...) = <|
+	if (.ListSubRecord != EMPTY)
+	{
+		new currentList = .ListSubRecord->GetListRecords();
+		if (currentList->Len() > 0)
+		{
+			onerror {
+				.EditBusy = FALSE;
+				self->Show();
+				return;
+			};
+			.EditBusy = TRUE;
+			self->Hide();
+			.View = instance MainWnd(currentList, 0,  self);
+			new str = Printf("%s %s ", .AllRecord[.IndexAll][0].FirstName, .AllRecord[.IndexAll][0].LastName);
+			.View->SetCaption(str);
+			.View->Open();
+//			self->Show();
+			.View = EMPTY;
+			.EditBusy = FALSE;
+//			self->OnUpdate();
+			.ListSubRecord->CheckDump();
+			self->Show();
+		}
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnBuild(refer any) = <|
+param file;
+	onerror {
+		main.netDir->Close();
+		return FALSE;
+	};
+	
+	new dir = instance TreeDir();
+	new ptr = <<>>;
+	file->GetPointersPath(ptr);
+//	new str = dir->MakeXmlFromPoints(ptr);
+//!!!!!!!!!!!!!!!!!!!!! 2021-12-18 !!!!!!!!!!!!!!!!!!!!
+	new Name = dir->GetImageList(ptr);
+	new FileName = JustDirName(ExeName) @ "AEExchange" @ SFD @ "ae_exchange.tmp";
+	new f = instance File(FileName);
+	f->Open("wb");
+	for (new k = 0; k < Name->Len(); ++k)
+		f->Putv(Name[k]);
+	f->Close();
+	new ae_nn = AllergoEyeIni->ReadStr("NAME", "NN");
+	if (file.roi->Len() > 0)
+		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
+	else
+		Pluk->Exec(Printf("%snn-test.exe %s %s /l%snn-test.log", JustDirName(ExeName), ae_nn, FileName, JustDirName(ExeName)), TRUE, FALSE);
+
+	Pluk->FlushIdle();
+//	self->onResponce(1, TRUE);
+//!!!!!!!!!!!!!!!!!!!!! 2021-12-18 !!!!!!!!!!!!!!!!!!!!
+//	main.netDir->Close();
+//	main.netDir.server = instance ToServer("WRITE", "RECALC", main.netDir.serverAddress, str->ANSIToUTF8(), &self);
+/*	trace main.netDir.server, CR;
+	Pluk->FlushIdle();
+	Pluk->Delay(0.5);
+	Pluk->FlushIdle();
+	trace main.netDir.server, CR;*/
+//	return main.netDir.server != EMPTY;
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnCalculate(refer ...) = <|
+	onerror {
+		.waitCursor = EMPTY;
+		return;
+	};
+	self->EnableSync(FALSE);
+	self->EnableItem(ID_BUILD, FALSE);
+	self->EnableItem(ID_EXCEL, FALSE);
+	self->EnableItem(BTN_EDIT, FALSE);
+	self->EnableItem(ID_REPORT, FALSE);
+	.IndexBuild = -1;
+	.View = &self;
+	.waitCursor = instance GWaitCursor();
+	self->onResponce();
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::onResponce(refer ...) = <|
+	if (.IndexBuild != EMPTY)
+	{
+		new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (Dir->GetLastByte() != FD)
+			Dir @= SFD;
+		new list = .ListSubRecord->GetListRecords();
+		if (.IndexBuild > -1)
+		{
+			new dir = Dir @ list[.IndexBuild]->GetWinPath();
+	
+			new v = <<>>;
+			new names = <<>>;
+			new distr = << >>;
+			list[.IndexBuild].result = main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+			list[.IndexBuild].res_distr <- distr;
+			if (v->Len() > 0)
+			{
+				list[.IndexBuild].roi <- v;
+				list[.IndexBuild].names <- names;
+			}
+	
+			.ListSubRecord->OnUpdate();
+			new PerCent = instance WString("%");
+			new Pict = Odml2Exec("select p from DBPicture as p where p.Path like ?", <<PerCent @ instance WString(list[.IndexBuild].name) >>);
+			if (Pict->Len() > 0)
+			{
+				onerror {
+					goto cont;
+				}
+				new root = AllergoEyeIni->ReadStr("DIR", "DATA");
+				new Name = JustName(Pict[0].Path);
+				new dirName = root @ JustDirName(Pict[0].Path);
+				new f1 = instance File(dirName @ Name @ ".res");
+				Pict[0]->ReadScore(f1);
+				f1 = instance File(dirName @ Name @ ".dst");
+				Pict[0]->ReadDistr(f1);
+				Pict[0]->Save();
+				new Test = Odml2Exec("select p from DBTest as p where p.Pictures[i].oID = ?", <<Pict[0].oID>>);
+				Test[0]->CalculateScore();
+				Test[0]->Save();
+			}
+cont :
+			onerror {
+				.waitCursor	= EMPTY;
+				rollback;
+			}
+		}
+		main.netDir->SetProxy(EMPTY);
+		for (new i = .IndexBuild + 1; i < list->Len(); ++i)
+		{
+			.IndexBuild = i;
+			trace .IndexBuild, CR;
+			self->OnBuild(list[i]);
+		}
+		new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+			.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+		.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+		main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+		self->ReloadListSubRecord();
+		main.netDir->SetProxy(&self);
+		.IndexBuild = EMPTY;
+		.View = EMPTY;	
+		self->EnableItem(ID_BUILD, FALSE);
+		self->EnableSync(TRUE);
+		self->EnableItem(ID_REPORT, TRUE);
+	 	self->EnableItem(ID_EXCEL, TRUE);
+	
+		self->EnableItem(BTN_EDIT, TRUE);
+	}
+	.waitCursor	= EMPTY;
+
+|>;
+new SelectDlg::ReloadListSubRecord(void) = <|
+	new currentList = .ListSubRecord->GetListRecords();
+	.ListSubRecord->Clear();
+	for (new i = 0, l = currentList->Len(); i < l; ++i)
+	{
+		new dir = .Dir @ currentList[i]->GetWinPath();
+		if (currentList[i].parent.childs->Find(JustName(dir) @ ".ctr", 0,  <| param key, elem; return key == elem.name; |>) != -1)
+		{
+			new v = <<>>;
+			new names = << >>;
+			new distr = << >>;
+			currentList[i].result =main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+			currentList[i].res_distr <- distr;
+			
+			if (v->Len() > 0)
+			{
+				currentList[i].roi <- v;
+				currentList[i].names <- names;
+			}
+		}
+		
+		new Image = LoadImageWithBlur(dir);
+		if (MainMenu::BalanceWB)
+			DoBalanceWB(&Image);
+
+		new LUT = instance SimpleLUT();
+		LUT.Automatic = FALSE;
+		LUT.Min = 0;
+		LUT.Max = 255;
+		new Params = instance Vector(3);
+		Params = << << Image[0], 255, 0, 0, LUT >>, << Image[1], 0, 255, 0, LUT >>, << Image[2], 0, 0, 255, LUT >> >>;
+		new bmp =  instance MBmp(Get3BytesBits(Params), Image[0]->Width(), Image[0]->Height());
+		.ListSubRecord->AddBmp(bmp, currentList[i]);
+	}
+	.ListSubRecord->RecalcLayout();
+	.ListSubRecord->Invalidate(TRUE);
+ 	self->EnableItem(ID_EXCEL, .ListSubRecord->IsNumRecords());
+ 	self->EnableItem(ID_REPORT, .ListSubRecord->IsNumRecords());
+ 	self->EnableItem(BTN_EDIT, .ListSubRecord->IsNumRecords());
+ 	self->EnableBuildButton();
+|>;
+
+//=========================================`=======
+//
+//=================================================
+new SelectDlg::EnableBuildButton(void) = <|
+
+	if (.ListSubRecord != EMPTY)
+	{
+		new currentList = .ListSubRecord->GetListRecords();
+		if (currentList->Len() > 0)
+		{
+		//	for (new i = 0, l = currentList->Len(); i < l; ++i)
+		//		if (currentList[i].roi->Len() == 0)
+				{
+			 		self->EnableItem(ID_BUILD, TRUE);
+					return;
+				}
+		}
+	}
+ 	self->EnableItem(ID_BUILD, FALSE);
+|>;
+
+//=================================================
+//
+//=================================================
+new SelectDlg::OnClickDate(refer ...) = <|
+param data, par;
+
+	if (.IndexAll != EMPTY && .IndexAll > -1)
+	{
+		if (par.NotifyCode == "right click")
+		{
+			new popup = instance GMenu("POPUP_MENU");
+			new mouse = self->GetCursorPos();
+			new pos = self->GetCursorPos();
+	
+			switch (CurLocale.Code)
+			{
+			case "eng" :
+				popup->InsertItem(-1, ID_DELETE_DATE, W1_DELETE);
+				break;
+			case "ger" :
+				popup->InsertItem(-1, ID_DELETE_DATE, W1_DELETE);
+				break;
+			default :
+				popup->InsertItem(-1, ID_DELETE_DATE, W1_DELETE);
+				break;
+			}
+			popup->Popup(mouse[0], mouse[1], *(par.Form));
+		}
+	}
+
+|>;
+
+
+//=================================================
+//
+//=================================================
+new SelectDlg::ResetSubRecords(void) = <|
+	.SubRecords = <<>>;
+	.IndexSubRecords = EMPTY;
+|>;
+
+//=================================================
+//
+//=================================================
+new SelectDlg::SelectDate(refer object Vector) = <|
+param pos;
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::CheckDir( void) = <|
+	new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+	new dir = instance DirW(ph);
+	dir->Read("upd*.lg");
+	new save_IndexSubRecords = .IndexSubRecords;
+	new Upd = FALSE;
+	for (new i = 0; i < dir->GetNumbFiles(); ++i)
+	{
+		onerror {
+			continue;
+		}
+		new f = instance File(dir.DirName @ dir->FileName(i));
+		f->Open("rb");
+		new w = instance WString();
+		w.Data = f->Read(-1);
+		f->Close();
+		f->Remove();
+		w->ToCString();
+		Upd = TRUE;
+		self->Reload(w, i == dir->GetNumbFiles() - 1);
+	}
+	if (Upd)
+	{
+		self->UpdateLists();
+		if (save_IndexSubRecords != EMPTY)
+		{
+			.IndexSubRecords = save_IndexSubRecords;
+			self->UpdateForm("self->PrintOpScoreTable()");
+			self->UpdateForm(".SubRecords[.IndexSubRecords][0]->PrintMeanScore()");
+			self->UpdateForm(".IndexSubRecords");
+			Pluk->FlushIdle();
+			self->ShowSubRecord(.SubRecords[.IndexSubRecords][.SUB_OBJ]);
+		}
+	}
+|>;	
+//================================================
+//
+//================================================
+new SelectDlg::OnTimer( int, ... ) = <|
+param timerNo;
+	if (.EditBusy == TRUE)
+		return;
+	if (.TimerBusy == TRUE)
+		return;
+	.TimerBusy = TRUE;
+	if (timerNo == 100)
+	{
+		onerror {
+			.TimerBusy = FALSE;
+			return;
+		}
+		
+		self->CheckDir();
+		new GDTDir = AllergoEyeIni->ReadStr("DIR", "GDT", "");
+		if (GDTDir == "")
+		{
+			.TimerBusy = FALSE;
+			return;
+		}
+		new dir = instance DirW(GDTDir);
+		dir->Read("ISY2AEye*.gdt");
+		new gdt = << >>;
+		new N = .AllRecord->Len();
+		for (new i = 0; i < dir->GetNumbFiles(); ++i)
+		{
+			onerror {
+				continue;
+			}
+			new f = instance File(dir.DirName @ dir->FileName(i));
+			f->Open("rb");
+			gdt ,= f->Read(-1);
+			f->Close();
+			f->Remove();
+		}
+		for (i = 0; i < gdt->Len(); ++i)
+		{
+			new st = gdt[i]->Tokenize("\r\n");
+			new Date;
+			new Name;
+			new Familie;
+			new ID;
+
+			for (new j = 0; j < st->Len(); ++j)
+			{
+				new id = st[j]->Mid(3, 4);
+				switch (id)
+				{
+				case "3000":
+					ID = 	st[j]->Mid(7, st[j]->Len() - 7);
+					break;
+				case "3102":
+					Name = 	st[j]->Mid(7, st[j]->Len() - 7);
+					break;
+				case "3101":
+					Familie = 	st[j]->Mid(7, st[j]->Len() - 7);
+					break;
+				case "3103":
+					Date = st[j]->Mid(7, st[j]->Len() - 7);
+					Date->Insert("/", 2);
+					Date->Insert("/", 5);
+					break;
+				default:
+					break;
+				}
+			}
+			if (Date != EMPTY && Name != EMPTY && Familie != EMPTY && ID != EMPTY)
+			{
+				new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+				if (ph->GetLastByte() != FD)
+					ph @= SFD;
+				new kk = ph @ Familie  @ "_" @ Name @ "_" @  ID;
+				new dstDir = instance DirW(kk);
+				if (dstDir->GetAttributes() == -1)
+				{
+					dstDir->Create();
+					dstDir->ChangeDir();
+					new info = instance IniFile(kk @ "\\" @ "info.ini");
+					info->WriteStrW("CARD", "ID", ID);
+					info->WriteStrW("CARD", "NAME", Name);
+					info->WriteStrW("CARD", "FAMILY", Familie);
+					info->WriteStrW("CARD", "DATE", Date);
+					//self->InitDir();
+					self->Reload("<file-area><folders><folder><name>" @ Familie  @ "_" @ Name @ "_" @  ID @ "</name></folder></folders></file-area>");
+				}
+			}
+		}
+	}
+	else
+	if (main.netDir.server == EMPTY && timerNo == 1000)
+	{
+		for (new i = 0, l = .iTimerWaitClient->Len(); i < l; ++i)
+		{
+			if (Clock() - .iTimerWaitClient[i] > 20.0)
+			{
+				.iTimerWaitClient->Remove(i);
+				if (i < .IndexSelect->Len())
+				{
+					.IndexSelect->Remove(i);
+					.SelectRecords->Remove(i);
+					self->UpdateForm(".SelectRecords[.Index]");
+				}
+				.List->Remove(i);
+				.Index = EMPTY;
+				self->UpdateForm(".List");
+				if (.IndexSelect->Len() == 0)
+					self->EnableSync(FALSE);
+				self->UpdateLists();
+				.TimerBusy = FALSE;
+				return;
+			}
+		}
+		if (Clock() - main.netDir.iTimerWaitServer > 20)
+		{
+			main.netDir->Restart();
+			main.netDir.iTimerWaitServer = Clock();
+		}
+	}
+	.TimerBusy = FALSE;
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::EnableSync(boolean) = <|
+param b;
+	
+	self->EnableItem(ID_SYNC, b);
+	if (!b)
+	{
+		if (.fTimerEnable)
+		{
+			self->ForbidEvent(WND_TIMER);
+			self->ReleaseTimer(1000);
+			.fTimerEnable = FALSE;
+		}
+	}
+	else
+	{
+		if (!.fTimerEnable && .iTimerWaitClient->Len() > 0)
+		{
+		.fTimerEnable = TRUE;
+			for (new i = 0, l = .iTimerWaitClient->Len(); i < l; ++i)
+				.iTimerWaitClient[i] = Clock();
+				
+			self->SetTimer(1000, 10000);
+			self->AllowEvent(WND_TIMER);
+		}
+	}
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::UpdateBtnOnLoadReport(void) = <|
+	if (.IndexAll != EMPTY && .IndexAll> -1)
+	{
+		if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+			.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+		new n = .AllRecord[.IndexAll][.OBJ]->GetFileList(<<"srpj">>, FALSE);
+		self->EnableItem(ID_LOAD_REPORT, n != EMPTY && n->Len() > 0);
+		
+	}
+	else
+		self->EnableItem(ID_LOAD_REPORT, FALSE);
+
+|>;
+
+//================================================
+//
+//================================================
+new SelectDlg::InitDir(void) = <|
+	new b;
+	b = main.netDir.dbdir->GetListPatient();
+	if (GetDim(.filterList) > 0)
+	{
+		for (new i = b->Len() - 1; i >= 0; --i)
+			if (.filterList->BFind(b[i].PatientIDStr) == -1)
+				b->Remove(i);
+	}
+	.AllRecord->SetLen(b->Len());
+	for (new i = 0, j = 0; i < b->Len(); ++i)
+	{
+		if (.IsTreated == TRUE && (b[i].Therapy->Len() == 0))
+			continue;
+
+		.AllRecord[j] = << EMPTY,  EMPTY, CLR_BLACK >>;
+		if (.NoOpRecord == TRUE)
+		{
+			for (new k = b[i].Date->Len() - 1; k >= 0; --k)
+			{
+				if (b[i].Date[k].Tests->Find(EMPTY, 0, <|param key, elem; return key == elem.OpScoreV;|>) == -1)
+					b[i].Date->Remove(k);
+			}
+		}
+		.AllRecord[j][.DBOBJ] <- b[i];
+		++j;
+	}
+	.AllRecord->SetLen(j);
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::SetFilterList(void) = <|
+	.filterList = EMPTY;
+	new FName = instance GOpenDialog("csv", "", "*.csv|*.csv", self)->Open();
+	if (FName != EMPTY)
+	{
+		new f = instance File(FName);
+		f->Open("rb");
+		new op = f->ReadCSV();
+		f->Close();
+		.filterList = << >>;
+		for (new i = 0; i < op->Len(); ++i)
+		{
+			new rec = op[i];
+			if (rec[0] == EMPTY)
+				continue;
+			.filterList ,= rec[0];
+		}
+		if (.filterList->Len() == 0)
+			.filterList = EMPTY;
+		else
+			.filterList->QSort();
+	}
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnSelectAll(refer ...) = <|
+parest bb;
+	onerror {	return; };
+
+	if (bb->Len() > 0)
+		.last_oID = EMPTY;
+ 	.TherapyIndex = EMPTY;
+	self->EnableItem(ID_EXCEL, FALSE);
+ 	self->EnableItem(BTN_EDIT, FALSE);
+ 	self->EnableItem(ID_REPORT, FALSE);	
+ 	self->EnableItem(ID_BUILD, FALSE);
+	.ListSubRecord->Clear();
+	.ListSubRecord->Invalidate(TRUE);
+	.Graph->Clear();
+	.Graph->Invalidate(TRUE);
+	new l = 0;
+	new f = EMPTY;
+	if (.IndexAll != EMPTY)
+	{
+		if (typeof(.AllRecord[.IndexAll][.OBJ]) != "pointer")
+			.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+	
+		
+		new b = @.AllRecord[.IndexAll][.DBOBJ].Date;
+		.Date->SetLen(b->Len());
+		new _d = <<>>;
+		.AllRecord[.IndexAll][.OBJ]->GetDirList(_d);
+		new d = << >>;
+		l = b->Len();
+		for (new i = 0; i < l; ++i)
+		{
+			new index = _d->Find(b[i].Path, 0, <|param key, elem; return key == elem->GetPath();|>);
+			if (index >= 0)
+				d ,= _d[index];
+		}
+		for (i = 0, l = b->Len(); i < l; ++i)
+		{
+			if (.last_oID == EMPTY || .last_oID[1] == EMPTY)
+			{
+				if (f == EMPTY && d[i]->IsSelected(0))
+					f = i;
+			}
+			else
+			if (.last_oID != EMPTY && .last_oID[1]  == b[i].oID)
+				f = i;
+			.Date[i] = << b[i],  d[i], i>>;
+		}
+	}
+	if (f == EMPTY)
+		f = 0;
+	.IndexDate = f;
+	.SubRecords = <<>>;
+	.IndexSubRecords = EMPTY;
+	new n = 0;
+	if (l > 0)
+	{
+		if (f != EMPTY)
+		{
+			n = self->SelectDate(<<f, 1>>, FALSE);
+			self->ShowSelectedSubRecords();
+			.ListSubRecord->SetFocus();
+		}
+	}
+	self->UpdateForm(".Date");
+	if (l > 0)
+		self->UpdateForm(".IndexDate");
+	if (.IndexSubRecords == EMPTY && .SubRecords->Len() > 0)
+		 .IndexSubRecords = 0;
+	if (GetDim(.SubRecords) <= 0)
+		 .IndexSubRecords = EMPTY;
+	self->UpdateForm(".SubRecords#");
+	self->SetItem(<< ID_EDIT_OPSCORE, self->GetEditScoreTxt() >>);
+	self->UpdateForm("self->PrintOpScoreTable()");
+	self->UpdateForm(".IndexSubRecords");
+	self->UpdateForm(".Date[.IndexDate]#");
+	self->UpdateForm(".AllRecord[.IndexAll][0].Therapy");
+	self->UpdateForm(".AllRecord[.IndexAll][0].CAP#");
+	if (.IndexSubRecords != EMPTY)
+	{
+		self->UpdateForm(".SubRecords[.IndexSubRecords][0]->PrintMeanScore()");
+		self->ShowSubRecord(.SubRecords[.IndexSubRecords][.SUB_OBJ]);
+	}
+	.ListSubRecord->Invalidate(TRUE);
+	self->UpdateBtnOnLoadReport();
+	self->EnableItem(ID_ADD, self->EnableAddSelect());
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnSelectDate(refer ...) = <|
+param d, par;
+	.last_oID = EMPTY;
+	if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+		.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+
+	if (.IndexAll >= 0)
+	{
+		new Table = instance GTable(ID_DATE, self);
+		new pos = Table->GetNotifyPos();
+
+		new isDblClik = pos != EMPTY && pos[1] == 0 && par.NotifyCode == "double click";
+
+		if (!isDblClik && .ListSubRecord->Len() > 0 && .SubRecords->Len() > 0 && pos[0] == .SubRecords[0][2]) return;
+	
+		onerror {
+			return;	
+		};
+		new save_IndexSubRecords = .IndexSubRecords;
+		if (isDblClik)
+			.ListSubRecord->Clear();
+		self->SelectDate2(pos, isDblClik);
+		
+	 	self->UpdateForm(".SubRecords#");
+		self->SetItem(<< ID_EDIT_OPSCORE, self->GetEditScoreTxt() >>);
+		self->UpdateForm("self->PrintOpScoreTable()");
+		self->UpdateForm(".Date");
+		self->UpdateForm(".Date[.IndexDate]#");
+		self->EnableItem(ID_ADD, self->EnableAddSelect());
+		self->ShowSelectedSubRecords();
+		if (.SubRecords != EMPTY && .SubRecords->Len()  >= 0)
+		{
+			if (save_IndexSubRecords >= .SubRecords->Len())
+				.IndexSubRecords = 0;
+			else
+				.IndexSubRecords = save_IndexSubRecords;
+			if (.IndexSubRecords == EMPTY)
+				.IndexSubRecords = 0;
+			self->ShowSubRecord(.SubRecords[.IndexSubRecords][.SUB_OBJ]);
+		}
+		else
+			.IndexSubRecords = EMPTY;
+		self->UpdateForm(".IndexSubRecords");
+	}
+|>;
+
+//=========================================================
+//
+//=========================================================
+new SelectDlg::PreSelectDate(refer object Vector, boolean) = <|
+param pos, flg1;
+
+	new b;
+	b = @.Date[.IndexDate][.SUB_DBOBJ].Tests;
+	.SubRecords->SetLen(b->Len());
+	new _d = <<>>;
+	.Date[.IndexDate][.SUB_OBJ]->GetDirList(_d);
+	new d = << >>;
+	for (new i = 0, l = b->Len(); i < l; ++i)
+	{
+		new index = _d->Find(b[i].Path, 0, <|param key, elem; return key == elem->GetPath();|>);
+		d ,= _d[index];
+	}
+	
+	i = 0, l = b->Len();
+	if (pos[0] != -1)
+	{
+		for (; i < l; ++i)
+		{
+			new j = b->Find(d[i].name, 0, {|param key, elem; return elem.Path->Find(key) != -1; |});
+			if (j >= 0)
+				.SubRecords[i] = << b[j], d[i], pos[0]>>;
+			else
+				return;
+		}
+	}
+	.SubRecords->QSort({|param key, elem;
+				new r = key[0].Allergen <> elem[0].Allergen;
+				if (r != 0)
+					return r;
+				return key[0]->GetTestOrder() <> elem[0]->GetTestOrder();
+	
+			|});
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::SelectDate2(refer object Vector, boolean) = <|
+param pos, flg1;
+	self->PreSelectDate(pos, flg1);
+	new fUnselect = FALSE;
+	if ((flg1 && .IndexAll != EMPTY && .IndexAll > -1))
+	{
+		new flg2 = .Date[pos[0]][.SUB_OBJ]->IsSelected(pos[0]);
+		if (pos[1] == 0 || !flg2)
+		{
+			if (flg2)
+			{
+				self->UnselectSubRecords(pos[0]);
+				fUnselect = TRUE;
+			}
+			.Date[pos[0]][.SUB_OBJ]->Select(pos[0], !flg2);
+		}
+		
+	}
+if (!fUnselect && flg1)
+		if (GetDim(.IndexSubRecords) <= 0 && GetDim(.SubRecords) > 0)
+		{
+			for (new i = 0, l  = .SubRecords->Len(); i < l; ++i)
+				.SubRecords[i][1]->Select(pos[0], TRUE);
+			self->OnSelectSubRecord(.SubRecords[0][.SUB_OBJ], TRUE);
+	
+		}
+
+	if (.IndexDate >= 0)
+	{
+		.Graph->Clear();
+		.Graph->Invalidate(TRUE);
+		.Graph->SetGraph(*&(.Date[.IndexDate][0]));
+		.Graph->Invalidate(TRUE);
+	}
+	else
+	{
+		.Graph->Clear();
+		.Graph->Invalidate(TRUE);
+	}
+	return fUnselect;
+
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::SelectDate(refer object Vector, boolean) = <|
+param pos, flg1;
+	self->PreSelectDate(pos, flg1);
+
+	new fUnselect = FALSE;
+	if ((flg1 || .IndexAll != EMPTY && .IndexAll > -1))
+	{
+		new flg2 = .Date[pos[0]][.SUB_OBJ]->IsSelected(pos[0]);
+		if (pos[1] == 0 || !flg2)
+		{
+			if (flg2)
+			{
+				self->UnselectSubRecords(pos[0]);
+				fUnselect = TRUE;
+			}
+			.Date[pos[0]][.SUB_OBJ]->Select(pos[0], !flg2);
+		}
+		
+	}
+	if (!fUnselect)
+		if (GetDim(.IndexSubRecords) <= 0 && GetDim(.SubRecords) > 0)
+		{
+			for (new i = 0, l  = .SubRecords->Len(); i < l; ++i)
+				.SubRecords[i][1]->Select(pos[0], TRUE);
+			self->OnSelectSubRecord(.SubRecords[0][.SUB_OBJ], TRUE);
+	
+		}
+
+
+	if (.IndexDate >= 0)
+	{
+		.Graph->Clear();
+		.Graph->SetGraph(*&(.Date[.IndexDate][0]));
+	}
+	else
+	{
+		.Graph->Clear();
+		.Graph->Invalidate(TRUE);
+	}
+	
+
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnSelectSubRecord(refer ...) = <|
+param data, par;
+	.last_oID = EMPTY;
+	new Table = instance GTable(ID_TREE, self);
+	new pos = Table->GetNotifyPos();
+	if (pos[0] < 0 || pos[1] < 0)
+	{
+		return;
+	}
+		if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+		.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+
+	onerror {
+		return;
+	};
+	new flg = .SubRecords[pos[0]][.SUB_OBJ]->IsSelected(.IndexDate);
+	
+	//-------ALEX-----------------------------------------
+	new isDblClik = pos[1] == 0 && par.NotifyCode == "double click";
+	if (isDblClik)
+	{
+		flg = !flg;
+		.SubRecords[pos[0]][1]->Select(.IndexDate, flg);
+		//------------------------------------------------
+		self->UpdateForm(".SubRecords#");
+		self->SetItem(<< ID_EDIT_OPSCORE, self->GetEditScoreTxt() >>);
+		self->UpdateForm("self->PrintOpScoreTable()");
+
+		self->UpdateForm(".Date");
+	//	
+	
+		self->EnableItem(ID_ADD, self->EnableAddSelect());
+	}
+	self->ShowSubRecord(.SubRecords[pos[0]][.SUB_OBJ]);
+	self->UpdateForm("self->PrintOpScoreTable()");
+	self->UpdateForm(".SubRecords[.IndexSubRecords][0]->PrintMeanScore()");
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::ShowSubRecord(pointer object DirNode) = <|
+param m;
+	new currentList = m->GetFileList(<<".jpg", ".tif">>);
+	new fUpdate =FALSE;
+	for (new i = 0, l = currentList->Len(); i < l; ++i)
+	{
+			if (!.ListSubRecord->IsSelect(currentList[i]))
+			{
+				 fUpdate = TRUE;
+				 break;
+			}
+	}
+	if (fUpdate || currentList->Len() == 0)
+	self->OnSelectSubRecord(m, TRUE);
+
+
+|>;	
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnSelectSubRecord(pointer object DirNode, boolean) = <|
+param m, fSelect;
+	new currentList = m->GetFileList(<<".jpg", ".tif">>);
+	new fLoop = TRUE;
+	if (!GetKeyState(VK_SHIFT))
+	{
+		.ListSubRecord->Clear();
+//		.Graph->Clear();
+//		.Graph->Invalidate(TRUE);
+		if (!fSelect)
+			fLoop = FALSE;
+	}
+	if (fLoop)
+	{
+		for (new i = 0, l = currentList->Len(); i < l; ++i)
+		{
+			if (fSelect)
+			{
+				if (!.ListSubRecord->IsSelect(currentList[i]))
+				{
+					new dir = .Dir @ currentList[i]->GetWinPath();
+					if (currentList[i].parent.childs->Find(JustName(dir) @ ".ctr", 0,  <| param key, elem; return key == elem.name; |>) != -1)
+					{
+						new v = <<>>;
+						new names = << >>;
+						new distr = << >>;
+						currentList[i].result =main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+						currentList[i].res_distr <- distr;
+						
+						if (v->Len() > 0)
+						{
+							currentList[i].roi <- v;
+							currentList[i].names <- names;
+						}
+					}
+					
+//					new bmp = instance MBmp();
+//					bmp->LoadImage(dir);
+
+//					new Image = MathImage::LoadImageSet(dir);
+					new Image = LoadImageWithBlur(dir);
+					if (MainMenu::BalanceWB)
+						DoBalanceWB(&Image);
+
+					new LUT = instance SimpleLUT();
+					LUT.Automatic = FALSE;
+					LUT.Min = 0;
+					LUT.Max = 255;
+					new Params = instance Vector(3);
+					Params = << << Image[0], 255, 0, 0, LUT >>, << Image[1], 0, 255, 0, LUT >>, << Image[2], 0, 0, 255, LUT >> >>;
+					new bmp =  instance MBmp(Get3BytesBits(Params), Image[0]->Width(), Image[0]->Height());
+					.ListSubRecord->AddBmp(bmp, currentList[i]);
+				}
+			}
+			else
+			{
+				.ListSubRecord->Remove(currentList[i]);
+			}
+		}
+	}
+	.ListSubRecord->RecalcLayout();
+	.ListSubRecord->Invalidate(TRUE);
+ 	self->EnableItem(ID_EXCEL, .ListSubRecord->IsNumRecords());
+ 	self->EnableItem(ID_REPORT, .ListSubRecord->IsNumRecords());
+ 	self->EnableItem(BTN_EDIT, .ListSubRecord->IsNumRecords());
+ 	self->EnableBuildButton();
+ 	onerror {
+ 		return;
+ 	}
+/* 	if (!fSelect)
+ 	{
+		.Graph->Clear();
+		.Graph->Invalidate(TRUE);
+	}
+	else
+//		.Graph->SetGraph(*&.SubRecords[.IndexSubRecords][0]);
+		.Graph->SetGraph(*&.Date[.IndexDate][0], .IndexSubRecords);
+*/
+|>;	
+//=================================================
+//
+//=================================================
+new SelectDlg::ShowSelectedSubRecords(void) = <|
+
+	//for (new i = 0, l = .Date->Len(); i < l; ++i)
+	{
+		.IndexSubRecords = EMPTY;
+		new J;
+		if (.Date[.IndexDate][.SUB_OBJ]->IsSelected(0))
+		{
+		
+			if (!GetKeyState(VK_SHIFT))
+			{
+				.ListSubRecord->Clear();
+	//			.Graph->Clear();
+	//			.Graph->Invalidate(TRUE);
+			}
+
+			for (new j = 0, dl = .SubRecords->Len(); j < dl; ++j)
+			{
+				if (.SubRecords[j][.SUB_OBJ]->IsSelected(0))
+				{
+						J = j;
+				
+				}
+				if (.last_oID != EMPTY && .last_oID[2]  == .SubRecords[j][.SUB_DBOBJ].oID)
+					.IndexSubRecords = j;
+			}
+			if (.IndexSubRecords == EMPTY) .IndexSubRecords = J;
+			if (.IndexSubRecords != EMPTY)
+				self->OnSelectSubRecord(.SubRecords[.IndexSubRecords][.SUB_OBJ], TRUE);
+			else
+			{
+		//		.ListSubRecord->Clear();
+//				.ListSubRecord->Invalidate(FALSE);
+			}
+	
+		}
+		else
+		{
+			.ListSubRecord->Clear();
+			.ListSubRecord->Invalidate(TRUE);
+	//		.Graph->Clear();
+	//		.Graph->Invalidate(TRUE);
+		}	
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::UnselectSubRecords(int) = <|
+param i;
+		if (.Date[i][.SUB_OBJ]->IsSelected(i))
+		{
+			new _d = <<>>;
+			.Date[i][.SUB_OBJ]->GetDirList(_d);
+			new b;
+			b = @.Date[i][.SUB_DBOBJ].Tests;
+			new d = << >>;
+			for (new k = 0, l = b->Len(); k < l; ++k)
+			{
+				new index = _d->Find(b[k].Path, 0, <|param key, elem; return key == elem->GetPath();|>);
+				d ,= _d[index];
+			}
+			for (new j = 0, dl = d->Len(); j < dl; ++j)
+			{
+				if (d[j]->IsSelected(i))
+				{
+					self->OnSelectSubRecord(d[j], FALSE);
+					while (d[j]->IsSelected(i))
+						d[j]->Select(i, FALSE);
+				}
+				
+			}
+			
+		}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnEdit(int, object BaseString) = <|
+param id, str;
+	onerror {
+		return;
+	}
+	if (!self->FillQuery())
+		return;
+	self->ClearAllLists();
+	.last_oID = EMPTY;
+//	.IndexAll = EMPTY;
+	self->InitDir();
+	self->UpdateLists();
+
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::FillQuery(void) = <|
+
+	self->UpdateForm(".EditFrom");
+	self->UpdateForm(".EditTo");
+	.eEdit = <<"", "", "", "", "", "", "" >>;
+	new txt = .eBoxID->GetText();
+	.eEdit[0] = txt != EMPTY ? txt : "";
+	txt = .eBoxFam->GetText();
+	 .eEdit[1] = txt != EMPTY ? txt : "";
+	 if (.EditFrom != EMPTY && .EditFrom->Len() > 0)
+	 {
+		onerror { 
+		.eEdit[2] = "";
+		MessageBox("Warning !", "Date 'from' error", MB_OK | MB_ICONSTOP, self);
+			return;
+		};
+		.eEdit[2] = instance Date(.EditFrom);
+	 	.eEdit[2] = .EditFrom;
+	 }
+	 if (.EditTo->Len() > 0)
+	 {
+		onerror {
+		.eEdit[3] = "";
+			MessageBox("Warning !", "Date 'to' error", MB_OK | MB_ICONSTOP, self);
+			return;
+		};
+		.eEdit[3] = instance Date(.EditTo);
+	 	.eEdit[3] = .EditTo;
+	 }
+ 	 .eEdit[3] = .EditTo;
+	new combo = instance GComboBox(ID_TEST_ALERGEN, self);
+	txt = GetAllergenEng(combo->GetText());
+	.eEdit[4] = txt != EMPTY ? txt : "";;
+	combo = instance GComboBox(ID_TEST_DIL, self);
+	txt = combo->GetText();
+	.eEdit[5] = txt != EMPTY ? txt : "";
+
+	combo = instance GComboBox(ID_MED_LIST, self);
+	txt = combo->GetText();
+	.eEdit[6] = txt != EMPTY ? GetDilitionEng(txt) : "";
+
+	main.netDir.dbdir->SetQuery(.eEdit[0], .eEdit[1],.eEdit[2], .eEdit[3], .eEdit[4], .eEdit[5], .eEdit[6], .NoOpRecord == TRUE, .FailedContours == TRUE, .IsTreated == TRUE);
+	return TRUE;
+
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::OnColumn(...) = <|
+parest par;
+self->ClearAllLists();
+	main.netDir.dbdir->SetOrder(.iColumn);
+	self->FillQuery();
+	self->InitDir();
+	self->UpdateLists();
+|>;
+new SelectDlg::OnColumnTest(...) = <|
+parest par;
+	new flg = FALSE;
+	for (new j = 0, dl = .SubRecords->Len(); j < dl; ++j)
+	{
+		if (!.SubRecords[j][.SUB_OBJ]->IsSelected(.IndexDate))
+		{
+			flg = TRUE;
+			break;
+		
+		}
+	}
+	for (j = 0; j < dl; ++j)
+	{
+		
+		.SubRecords[j][1]->Select(.IndexDate, flg);
+		
+	}	
+		self->UpdateForm(".SubRecords#");
+		self->SetItem(<< ID_EDIT_OPSCORE, self->GetEditScoreTxt() >>);
+		self->UpdateForm("self->PrintOpScoreTable()");
+		self->UpdateForm(".Date");
+		self->OnSelectSubRecord(.SubRecords[0][.SUB_OBJ], flg);
+		self->EnableItem(ID_ADD, self->EnableAddSelect());
+
+|>;
+
+//=================================================
+//
+//=================================================
+new SelectDlg::ClearAllLists(void) = <|
+
+	.last_oID = EMPTY;
+	if (.IndexAll != EMPTY)
+	{
+		.last_oID = <<EMPTY, EMPTY, EMPTY>>;	
+		.last_oID[0] = .AllRecord->Len() > .IndexAll ? .AllRecord[.IndexAll][.DBOBJ].oID : EMPTY;
+		if (.IndexDate != EMPTY)
+		{
+			.last_oID[1] = .Date->Len() > .IndexDate ? .Date[.IndexDate][.SUB_DBOBJ].oID : EMPTY;
+			if (.IndexSubRecords != EMPTY)
+				.last_oID[2] = .SubRecords->Len() > .IndexSubRecords ? .SubRecords[.IndexSubRecords][.SUB_DBOBJ].oID : EMPTY;
+		}
+		 
+	}
+/*	if (StopOnClear == TRUE)
+		stop;*/
+		
+	.ListSubRecord->Clear();
+	.ListSubRecord->Invalidate(TRUE);
+	.Graph->Clear();
+	.Graph->Invalidate(TRUE);
+	.Date = <<>>;
+	.IndexAll = EMPTY;
+	.SubRecords = <<>>;
+	.IndexSubRecords = EMPTY;
+	.IndexDate = EMPTY;
+
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnDateFrom(...) = <|
+parest par;
+ 	 .EditFrom = .DateFrom->Date::Print();
+	self->UpdateForm(".EditFrom");
+ 	 
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnDateTo(...) = <|
+parest par;
+ 	 .EditTo = .DateTo->Date::Print();
+	self->UpdateForm(".EditTo");
+|>;
+
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnSearch(...) = <|
+//	self->SetFilterList();
+	if (!self->FillQuery())
+		return;
+
+	self->ClearAllLists();
+	self->InitDir();
+	self->UpdateLists();
+	self->UpdateForm();
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::UpdateLists(void) = <|
+	new i;
+	if (.last_oID != EMPTY && .last_oID[0] != EMPTY)
+	{
+		i = .AllRecord->Find(.last_oID[0], 0, {|param key, elem; return key == elem[0].oID; |});
+		if (i < 0)
+			i = EMPTY;
+	}
+		
+	self->UpdateForm(".AllRecord");
+	self->UpdateForm(".IndexAll");
+	self->UpdateForm(".Date");
+	self->UpdateForm(".SubRecords");
+	self->UpdateForm("Printf#");
+	if (i != EMPTY)
+	{
+		.IndexAll = i;
+		self->UpdateForm(".IndexAll");
+		self->OnSelectAll();
+	}
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnClearSort(...) = <|
+	.filterList = EMPTY;
+	.eEdit = <<"", "", "", "", "", "" >>;
+	.EditTo = "";
+	.EditFrom = "";
+	.eBoxFam->SetText("");
+	.eBoxID->SetText("");
+	.NoOpRecord = FALSE;
+	.FailedContours = FALSE;
+	new combo = instance GComboBox(ID_TEST_ALERGEN, self);
+	combo->SetText("");
+	combo = instance GComboBox(ID_TEST_DIL, self);
+	combo->SetText("");
+	self->UpdateForm(".EditFrom");
+	self->UpdateForm(".EditTo");
+	self->UpdateForm(".NoOpRecord");
+	self->UpdateForm(".FailedContours");
+	self->OnSearch();
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::OnFindClient(refer object PacketMDns, refer object BaseString) = <|
+param pack, ip;
+	new index;
+	if (main.netDir.server != EMPTY)
+		return;
+	if (pack.Records->Len() > 0 && pack.Records[0] == mdnsClient)
+	{
+		if ((index = .List->Find(ip, 0, <| param key, elem; return elem->Len() > 1 && key == elem[2]; |> )) == -1)
+		{
+			.List @= << << pack.Name , " | ",  ip >> >>;
+			.iTimerWaitClient @= Clock();
+			if (.List->Len() == 1)
+				.Index = 0;
+			new i = .SelectRecords->Len();
+			.SelectRecords->SetLen(.List->Len());
+			.IndexSelect->SetLen(.List->Len());
+			.DirClient->SetLen(.List->Len());
+			.DirClient[i] = pack;
+			.DirClient[i].Records[1] = "<file-area></file-area>";
+			.SelectRecords[i] = <<>>;
+		
+			self->UpdateForm(".List");
+			self->UpdateForm(".Index");
+			self->EnableSync(TRUE);
+
+	
+		}
+		else
+		if (.List->Find(pack.Name, 0, <| param key, elem; return key == elem[0]; |> ) == -1)
+		{
+			.iTimerWaitClient[index] = Clock();
+			.List[index] = << pack.Name , " | ",  ip >>;
+			self->UpdateForm(".List");
+		}
+		else
+
+		{
+			.iTimerWaitClient[index] = Clock();
+			if (.List[index][0] != pack.Name)
+			{
+				.List[index][0] = pack.Name;
+				self->UpdateForm(".List");
+				self->UpdateForm(".Index");
+			}
+			else
+	
+			if(.DirClient[index].Records[1] != pack.Records[1] || .DirClient[index].Records[2] != pack.Records[2])
+			{
+				if (pack.Records[1]->Find("<file-area>") != -1)
+				{
+					if (index == .Index)			
+						self->EnableSync(TRUE);
+				if (.DirClient[index].Records[1]->Find("<file-area>") == -1)
+					.DirClient[index].Records[1] = .LastString; //"<file-area></file-area>";
+				//self->UpdateColors(index, FALSE);
+					.DirClient[index] <- pack;
+				self->InitSelectRecords2(index, .DirClient[index].Records[1]) ;
+					//self->UpdateColors(index, TRUE);
+					.LastString = .DirClient[index].Records[1];
+	
+					self->UpdateForm(".AllRecord");
+				}
+				else
+				{
+//					trace pack.Records[1], CR;
+					.DirClient[index] <- pack;
+				}
+			}
+		}
+
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::InitSelectRecords2(int, refer object BaseString) = <|
+param index, xml;
+	onerror {
+		return;
+	};
+	new pars = instance ParsXml(.DirClient[index].Records[1]);
+	.DirClient[index].dir = instance TreeDir(pars);
+	self->initSelectRecords2(index);
+|>;
+
+//=================================================
+//
+//=================================================
+new SelectDlg::initSelectRecords2(int) = <|
+param index;	
+	new b, ss = <<>>;
+	main.netDir.dbdir->ListPatient2(.DirClient[index].dir, ss);
+	.SelectRecords[index] = instance Vector(ss->Len());
+	new sel = @.SelectRecords[index] ;
+	for (new i = 0; i < ss->Len(); ++i)
+	{
+		new ss1 = ss[i];
+		new l1 = ss1[1]->Len();
+		for (new jj = 0; jj < ss1[1]->Len(); ++jj)
+			ss1[1][jj] = instance WString(ss1[1][jj]);
+		new b1 = Odml2Exec(ss1[0], ss1[1]);
+		b = <<>>;
+		if (b1->Len() == 0)
+		{
+			for (new j = 0; j <  ss1[2]->Len(); ++j)
+			{
+				for (new kk = 0; kk < ss1[2][j][1]->Len(); ++kk)
+					ss1[2][j][1][kk] = instance WString(ss1[2][j][1][kk]);
+				b1 = Odml2Exec(ss1[2][j][0], ss1[2][j][1]);
+				if (b1->Len() > 0)
+				{
+					if (typeof(b1[0]) == "Vector")
+						b <- b1[0];
+					else
+						b <- b1;
+				}
+				else
+					break;
+					
+			}
+			
+		}
+		else
+		if (typeof(b1[0]) == "Vector")
+			b <- b1[0];
+		else
+			b <- b1;
+		if (b != EMPTY && b->Len() > 0)
+		{
+			new j = main.netDir.dbdir->GetIndex(b[0].oID);
+			new obj1 = main.netDir.dbdir->AddDirTree(b[0]);
+			new obj = obj1->Get(ss1[1][b->Len() - 1]);
+			
+			if (b->Len() > 0)
+				b->SetLen(ss1[2]->Len());
+			sel[i] = <<b,  obj != EMPTY ? ss1[1][b->Len() - 1] : EMPTY, self->MakeShowTest(ss1[1][l1 - 1]), ss[i][1][l1 - 1]>>;
+			sel[i][0] <- b;
+			if (j != EMPTY)
+			{
+				if (typeof(.AllRecord[j][.OBJ]) != "pointer")
+					.AllRecord[j][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[j][.DBOBJ]);
+				.AllRecord[j][.COLOR] = CLR_LIGHTRED;
+				self->UpdateForm(".AllRecord[j]");
+			}
+			if (obj != EMPTY)	
+				obj->Select(index + 2, TRUE);
+		
+		}
+		else
+		{
+			new bb = instance Vector( ss1[2]->Len());
+			bb[0] = main.netDir.dbdir->MakeDBPatient(ss1[1][0]);
+			sel[i] = <<bb, EMPTY, self->MakeShowTest(ss1[1][l1 - 1]),  ss[i][1][l1 - 1]>> ;
+		}
+		 
+	}
+//	self->UpdateForm(".SelectRecords[index]");
+	.SelectRecords[index]->QSort({|param key, elem; return key[0][0].oID  <> elem[0][0].oID;|});
+	self->UpdateForm(".SelectRecords[.Index]");
+	self->UpdateForm(".AllRecord");
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::InitSelectRecords1(int, refer object BaseString) = <|
+param index, xml;
+	new pars = instance ParsXml(.DirClient[index].Records[1]);
+	new tree = instance TreeDir(pars);
+	new ss = <<>>;
+	main.netDir.dbdir->ListPatient1(tree, ss);
+	.SelectRecords[index] = instance Vector(ss->Len());
+	new sel = @.SelectRecords[index] ;
+	for (new i = 0; i < ss->Len(); ++i)
+	{
+		new ss1 = @ss[i];
+		new nQuery = ss1->Len();
+		new current = ss1[nQuery - 1];
+		new patient = ss1[0];
+		new l1 = current[1]->Len();
+
+		for (new kk = 0; kk < l1; ++kk)
+			current[1][kk] = instance WString(current[1][kk]);
+			
+		new b = Odml2Exec(current[0], current[1]);
+		if (b->Len() == 0)
+		{
+			new l2 = patient[1]->Len();
+			for (new kk = 0; kk < l2; ++kk)
+				patient[1][kk] = instance WString(patient[1][kk]);
+			b = Odml2Exec(patient[0], patient[1]);
+			if (b->Len() > 0)
+				current = patient;
+		}
+
+		if (b->Len() > 0)
+		{
+			new j = main.netDir.dbdir->GetIndex(b[0].oID);
+			new obj1 = main.netDir.dbdir->AddDirTree(b[0]);
+			new obj = obj1->Get(current[1][l1 - 1]);
+			sel[i] = <<b[0],  obj, self->MakeShowTest(current[1][l1 - 1])>>;
+			if (j != EMPTY)
+			{
+				if (typeof(.AllRecord[j][.OBJ]) != "pointer")
+					.AllRecord[j][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[j][.DBOBJ]);
+				.AllRecord[j][.COLOR] = CLR_LIGHTRED;
+				self->UpdateForm(".AllRecord[j]");
+			}
+		}
+		else
+		{
+			sel[i] = <<main.netDir.dbdir->MakeDBPatient(patient[1][0]), EMPTY, self->MakeShowTest(current[1][l1 - 1])>> ;
+		}
+		 
+	}
+	self->UpdateForm(".SelectRecords[.Index]");
+	
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::MakeShowTest(refer object BaseString) = <|
+param test;
+new str;
+	new v = test->Tokenize("/");
+	if (v->Len() > 1)
+	{
+		new test_date = v[1]->Tokenize("-");
+		if (test_date->Len() >= 3)
+		str = Printf("%s/%s/%s", test_date[2], test_date[1], test_date[0]);
+	}
+	if (v->Len() > 2)
+	{
+		new names = v[2]->Tokenize("_");
+		if (names->Len() > 2)
+		{
+			names[0] = GetAllergenLocal(names[0]);
+			names[1] = GetDilutionLocal(names[1]);
+			names[2] = GetSideLocal(names[2]);
+			if (names->Len() == 4)
+				names[3] = GetIncubationLocal(names[3]);
+	//		v[2]->ReplaceAll("_", "/");
+			str @= "  " @ names->SynStr("/");
+		}
+	}
+	return str;
+	
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnSelectRecords(refer ...) = <|
+
+	//self->EnableItem(ID_REMOVE, .IndexSelect[.Index] != EMPTY && .IndexSelect->Len() > .Index && .SelectRecords[.Index][.IndexSelect[.Index]][.OBJ] != EMPTY);
+	new v = @.SelectRecords[.Index][.IndexSelect[.Index]];
+	if (v[0][0].oID == EMPTY)
+		return; 
+	self->EnableItem(ID_REMOVE, v[0][v[0]->Len() - 1] != EMPTY);
+	new j = main.netDir.dbdir->GetIndex(v[0][0].oID);
+	if (j != EMPTY)
+	{
+		onerror {
+			main.netDir.dbdir->Reset();
+			self->InitDir();
+			self->UpdateLists();
+			self->initSelectRecords2(.Index);
+			v = @.SelectRecords[.Index][.IndexSelect[.Index]];
+			j = main.netDir.dbdir->GetIndex(v[0][0].oID);
+			if (j  == EMPTY ||  v[1] == EMPTY)
+				return;
+		}
+		if (typeof(.AllRecord[j][.OBJ]) != "pointer")
+			.AllRecord[j][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[j][.DBOBJ]);
+		.last_oID = <<v[0][0].oID, EMPTY, EMPTY>>;
+		for (new i = 1; i < v[0]->Len(); ++i)
+		.last_oID[i] = v[0][i];
+		v = .AllRecord[j][.OBJ]->Get(v[1]);
+		if (v != EMPTY && .IndexDate != EMPTY && !v->IsSelected(.IndexDate))
+			v->Select(.IndexDate, TRUE);
+		.IndexAll = j;
+		self->UpdateForm(".IndexAll");
+		self->OnSelectAll();				
+	}
+	else
+	{
+		.last_oID = EMPTY;
+		.IndexAll = EMPTY;
+		self->ClearAllLists();
+		self->UpdateLists();
+	}	
+			
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::EnableAddSelect(void) = <|
+	onerror {
+		return FALSE;
+	}
+	if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+		.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+	
+	if (.IndexDate != EMPTY && .Index != EMPTY && .IndexSelect->Len() > .Index && .IndexAll != EMPTY)
+	{
+			new d = <<>>;
+			.AllRecord[.IndexAll][.OBJ]->GetListSelectedPaths(.IndexDate, d);
+			for (new i = 0; i < d->Len(); ++i)
+			{
+				if (.DirClient[.Index].dir->Get(d[i]) == EMPTY)
+					return TRUE;
+			}
+	}
+	return FALSE;
+|>;
+
+//================================================
+//
+//================================================
+new SelectDlg::GetColor2(...) = <|
+parest par;
+new ret = CLR_BLACK; 
+	if (.Index != EMPTY && par[0] != EMPTY)
+	{
+
+		new i = .SelectRecords[.Index]->Find(<<.AllRecord[.IndexAll][.DBOBJ].oID, par[0].oID>>, 0, {|param key, elem; return elem[0]->Len() > 1 && key[0]  == elem[0][0].oID && key[1]  == elem[0][1];|});
+		if (i != -1)
+			ret = CLR_LIGHTBLUE;
+		
+
+	}
+	return ret;
+
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::GetColor3(...) = <|
+parest par;
+new ret = CLR_BLACK; 
+	if (.Index != EMPTY && par[0] != EMPTY)
+	{
+
+		new i = .SelectRecords[.Index]->Find(<<.AllRecord[.IndexAll][.DBOBJ].oID, par[0].oID>>, 0, {|param key, elem; return elem[0]->Len() > 2 && key[0]  == elem[0][0].oID && key[1]  == elem[0][2];|});
+		if (i != -1)
+			ret = CLR_LIGHTBLUE;
+		
+
+	}
+	return ret;
+
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::GetColor1(refer ...) = <|
+parest par;
+new ret = CLR_BLACK; 
+	if (.Index != EMPTY && par[0] != EMPTY)
+	{
+
+		new i = .SelectRecords[.Index]->BFind(par[0][0].oID, {|param key, elem; return key  <> elem[0][0].oID;|});
+		if (i != -1)
+			ret = CLR_LIGHTBLUE;
+		
+
+	}
+	return ret;
+
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::OnAddPatient(refer ...) = <|
+	new opp = instance NewCardDlg(self);
+	if (opp->Open() == IDOK)
+	{
+		new b =  Odml2Exec("select p from DBPatient as p where p.PatientIDStr = ?", << opp.ID >>);
+		if (b->Len() != 0)
+		{
+			MessageBox(W12_ATTESTION, W1_RECORD_EXIST, , MB_OK | MB_ICONSTOP, self);
+			rollback;
+		}
+		new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (ph->GetLastByte() != FD)
+			ph @= SFD;
+		new dstDir = instance DirW();
+		new name = opp.Familie @ "_" @ opp.Name @ "_" @  opp.ID;
+		new kk = ph @ name;
+		dstDir->Create(kk);
+		dstDir->ChangeDir();
+		new info = instance IniFile(kk @ SFD @ "info.ini");
+	    info->WriteStrW("CARD", "ID", opp.ID);
+	    info->WriteStrW("CARD", "NAME", opp.Name);
+        info->WriteStrW("CARD", "FAMILY", opp.Familie);
+        info->WriteStrW("CARD", "DATE", opp.Date->Date::PrintDMY());
+		if (main.netDir != EMPTY && main.netDir.dbdir!= EMPTY)
+		{
+        	new node = main.netDir.dbdir->ReloadFolder(name);
+        	main.netDir.dbdir->AddPatient(node);
+        }
+	}
+	self->UpdateForm();
+|>;
+//================================================
+//
+//================================================
+new SelectDlg::OnAdd(refer ...) = <|
+parest par;
+	new d = <<>>;
+	.AllRecord[.IndexAll][.OBJ]->GetListSelectedPaths(.IndexDate, d);
+	new fAdded = FALSE;
+	for (new i = 0; i < d->Len(); ++i)
+	{
+			if (.DirClient[.Index].dir->Get(d[i]) == EMPTY)
+			{
+				fAdded = TRUE;
+				.DirClient[.Index].dir->AddDir(d[i]);
+			}
+	}
+	if (fAdded)  
+		self->initSelectRecords2(.Index);
+	self->EnableItem(ID_ADD, FALSE);
+	self->UpdateLists();
+
+
+|>;
+//===================================================================
+//
+//===================================================================
+new SelectDlg::OnRemove(refer ...) = <|
+	if (.IndexSelect[.Index] != EMPTY && .SelectRecords[.Index]->Len() > .IndexSelect[.Index])
+	{
+		new dir = instance TreeDir();
+		for (new i = 0, l = .SelectRecords[.Index]->Len(); l > i; ++i)
+			if (i != .IndexSelect[.Index])
+				dir->AddDir(.SelectRecords[.Index][i][3]);
+		.DirClient[.Index].dir <- dir;
+		if (.IndexSelect[.Index] == l - 1)
+			--.IndexSelect[.Index];
+		if (.IndexSelect[.Index]  < 0)
+			.IndexSelect[.Index] = EMPTY;
+		self->UpdateForm(".IndexSelect[.Index]");	
+		self->initSelectRecords2(.Index);
+		self->UpdateLists();
+		
+		if (.IndexSelect[.Index]  >= 0 )
+		{
+			new v = @.SelectRecords[.Index][.IndexSelect[.Index]];
+			self->EnableItem(ID_REMOVE, v[0][v[0]->Len() - 1] != EMPTY);
+		}
+		else
+		self->EnableItem(ID_REMOVE, FALSE);
+		
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnSync(refer ...) = <|
+	.View = EMPTY;
+	new fRet = FALSE;
+	if (main.netDir.server == EMPTY && main.netDir.serverAddress != EMPTY)
+	{
+		onerror {
+		self->EnableSync(TRUE);
+		return;
+	
+		};
+		self->EnableSync(FALSE);
+		new data = <<>>;
+		new i = 0;
+		new l = .List->Len();
+		
+		
+		for (; i < l; ++i)
+		{
+			new str = .DirClient[i].dir->MakeXml(<<>>);
+			data @=  << <<.List[i][0]->ANSIToUTF8(),  str->ANSIToUTF16() >> >>;
+		
+		}
+		main.netDir.server = instance ToServer("WRITE", "SENDTO", main.netDir.serverAddress, data, &self);
+	}
+	return main.netDir.server != EMPTY;
+	
+|>;
+//=========================================================
+//
+//=========================================================
+new SelectDlg::Reload(refer object BaseString) = <|
+param str;
+	return self->Reload(str, TRUE);
+|>;
+//=========================================================
+//
+//global StopOnClear = FALSE;
+//=========================================================
+new SelectDlg::Reload(refer object BaseString, boolean) = <|
+param str, UpdateList;
+	onerror {
+	
+		.TextSearch = "";
+		self->FillQuery();
+		self->ClearAllLists();
+		self->InitDir();
+		self->UpdateLists();
+		main.netDir->SetProxy(&self);
+		return;
+	};
+	if (.TextSearch == str)
+		return;
+	main.netDir->SetProxy(EMPTY);
+	.TextSearch = str;
+	new pars = instance ParsXml(str);
+	new tree = instance TreeDir(pars);
+	
+	for (new i = 0; i < tree.root.childs->Len(); ++i)
+	{
+		new child = main.netDir.dbdir->ReloadFolder(instance WString("/") @ instance WString(tree.root.childs[i].name));
+		if (child != EMPTY)
+			main.netDir.dbdir->AddPatient(child);
+	} 
+	self->FillQuery();
+	new b = .IndexAll;
+	if (UpdateList)
+	{
+		self->ClearAllLists();
+//		StopOnClear = TRUE;
+	}
+	self->InitDir();
+	.IndexAll = b;
+	self->UpdateLists();
+	main.netDir->SetProxy(&self);
+|>;
+//=============================================
+//
+//=============================================
+new SelectDlg::OnCommand(int, int) = <|
+param id, notifyCode;
+new editBusy = .EditBusy;
+	onerror {
+	.last_oID = EMPTY;
+		main.netDir->SetProxy(&self);
+		self->ClearAllLists();
+		main.netDir.dbdir->Reset();
+		self->InitDir();
+		self->UpdateLists();
+		.EditBusy = editBusy;
+		return;
+	
+	};
+	.EditBusy = TRUE;
+	new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (ph->GetLastByte() != FD)
+		ph @= SFD;
+	
+	if (id == ID_RENAME_TEST)
+	{
+
+		new dlg;
+		if (.SubRecords[.IndexSubRecords][.SUB_OBJ].name != EMPTY)
+		{
+			new n = .SubRecords[.IndexSubRecords][.SUB_OBJ].name;
+			n->ReplaceAll("-", ":");
+			dlg = instance DlgNewTest(n, self);
+		}
+		else
+			dlg = instance DlgNewTest(self);
+		if (dlg->Open() == IDOK)
+		{
+			dlg.newtest->ReplaceAll(":", "-");
+			main.netDir->SetProxy(EMPTY);
+			new old = .SubRecords[.IndexSubRecords][.SUB_OBJ].name;
+			new dir = instance DirW(ph @ .SubRecords[.IndexSubRecords][.SUB_OBJ]->GetWinPath());
+			.SubRecords[.IndexSubRecords][.SUB_OBJ].name = dlg.newtest;
+			new relpath = .SubRecords[.IndexSubRecords][.SUB_OBJ]->GetWinPath();
+			new newph = ph @ relpath;
+			new dstDir = instance DirW(newph);
+			new isNewDir = FALSE; 
+			if (dstDir->GetAttributes()  != -1 || (isNewDir = dstDir->Create(newph)))
+			{
+				new Index = .SubRecords->Find(dlg.newtest, 0, <| param key, elem; return key == elem[SelectDlg::SUB_OBJ].name; |> );
+				.SubRecords[.IndexSubRecords][.SUB_OBJ].name = old;
+				dir = instance DirW(ph @ .SubRecords[.IndexSubRecords][.SUB_OBJ]->GetWinPath());
+
+			
+				.SubRecords[.IndexSubRecords][.SUB_OBJ].name = dlg.newtest;
+				new date = @.Date[.IndexDate][.SUB_OBJ];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				new dlg2 = instance DlgCopyDir(self);
+				if (dlg2->Open() == IDOK)
+				{
+					if (dlg2.result[0])
+					{
+						dir->CopyTo(newph);
+						self->DelDir(dir);
+						Index = .IndexSubRecords;
+					}
+					else
+					{
+						if ( isNewDir)
+						{
+				
+							new olddir = instance DirW(newph);
+							self->DelDir(olddir);
+						}
+						goto exit_on_cmd;
+					}
+					if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+						.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+
+					.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+					main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+					self->ClearAllLists();
+				
+					.last_oID[2] = EMPTY;
+//					//main.netDir.dbdir->Reset();
+					
+					self->InitDir();
+					self->UpdateLists();
+					main.netDir->SetProxy(&self);
+				}
+				else
+				{
+					if ( isNewDir)
+					{
+						new olddir = instance DirW(newph);
+						self->DelDir(olddir);
+					}
+					.SubRecords[.IndexSubRecords][.SUB_OBJ].name = old;
+				}
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+				dir->CopyTo(newph);
+				self->DelDir(dir);
+				Index = .IndexSubRecords;
+				if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+					.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+
+				.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+				main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+				self->ClearAllLists();
+			
+			//	.last_oID[2] = EMPTY;
+			//	self->InitDir();
+			//	self->UpdateLists();
+				self->SelectDir(relpath);
+				main.netDir->SetProxy(&self);
+			}	
+			self->UpdateForm(".SubRecords");
+			main.netDir.busy = FALSE;
+
+	
+		}
+	}
+	else
+	if (id == ID_SET_CAP)
+	{
+		
+		if (.IndexAll < 0 || .AllRecord[.IndexAll][.DBOBJ] == EMPTY)
+			goto exit_on_cmd;
+		new dlg = instance GLinesDialogW(self);
+		dlg->SetCaption(W1_ADD_SCORE);
+		dlg->SetPars( << 
+			<< 101, W1_CAP_TXT, "0" >>,
+			<< 102, "Allergen", GetAllergenList(), GetAllergenList()[0] >>
+			>>);
+		if (dlg->Open() != IDOK)
+			goto exit_on_cmd;
+		new dbcap = instance DBCAP();
+		dbcap.CAP = int(dlg->GetPar(101));
+		dbcap.Allergen = GetAllergenEng(dlg->GetPar(102));
+		new index = .AllRecord[.IndexAll][.DBOBJ].CAP->Find(dbcap.Allergen, 0, <|param key, elem; return key == GetAllergenEng(elem.Allergen); |>);
+		if (index >= 0)
+		{
+			.AllRecord[.IndexAll][.DBOBJ].CAP[index].CAP = dbcap.CAP;
+			.AllRecord[.IndexAll][.DBOBJ].CAP[index]->Save();
+		}
+		else
+			.AllRecord[.IndexAll][.DBOBJ]->AppendCAP(dbcap);
+		.AllRecord[.IndexAll][.DBOBJ]->Save();
+		new rootDir = AllergoEyeIni->ReadStrW("DIR", "DATA");
+		new f = instance File(rootDir @ .AllRecord[.IndexAll][.DBOBJ].Path @ SFD @ "cap.txt");
+		f->Open("wb");
+		new p = @.AllRecord[.IndexAll][.DBOBJ];
+		for (new j = 0; j < p.CAP->Len(); ++j)
+		{
+			f->Write(Printf("%d, %s\r\n", p.CAP[j].CAP, GetAllergenEng(p.CAP[j].Allergen)));
+		}
+		f->Close();
+		self->UpdateForm();
+	}
+	else
+	if (id == ID_RENAME_CARD)
+	{
+		if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+			.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+
+		.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+		
+		new dlg = instance NewCardDlg(.AllRecord[.IndexAll][.OBJ], self);
+		
+		if (dlg->Open() == IDOK)
+		{
+			new kk = instance WString(dlg.Familie @ "_" @ dlg.Name @ "_" @ dlg.ID);
+			if (.AllRecord[.IndexAll][.OBJ].name != kk)
+			{
+				main.netDir->SetProxy(EMPTY);
+				.AllRecord[.IndexAll][.DBOBJ]->Delete();
+				
+				new dir = instance DirW(ph @ .AllRecord[.IndexAll][.OBJ]->GetWinPath());
+				.AllRecord[.IndexAll][.OBJ].name = kk;
+				new newph = ph @ .AllRecord[.IndexAll][.OBJ]->GetWinPath();
+				trace dir->Rename(dir.DirName, newph), CR;
+				main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+				self->ClearAllLists();
+				.last_oID[2] = EMPTY;
+				self->InitDir();
+				self->UpdateLists();
+				main.netDir->SetProxy(&self);
+			}
+		}
+	}
+	else
+	if (id == ID_DELETE_CARD)
+	{
+		if (MessageBox(W12_ATTESTION, W12_CONFIRM, MB_ICONQUESTION | MB_YESNO, self) == IDYES)
+		{
+			main.netDir->SetProxy(EMPTY);
+			new dir = instance DirW(ph @ .AllRecord[.IndexAll][.OBJ]->GetWinPath());
+			dir->Clear();
+			dir->Remove();
+			.AllRecord[.IndexAll][.DBOBJ]->Delete();
+			.AllRecord->Remove(.IndexAll);
+			--.IndexAll;
+			if (.IndexAll < 0)
+				.IndexAll = 0;
+			self->ClearAllLists();
+			.last_oID[2] = EMPTY;
+			self->InitDir();
+			self->UpdateLists();
+			main.netDir->SetProxy(&self);
+		}
+	}
+	else
+	if (id == ID_DELETE_DATE)
+	{
+		if (MessageBox(W12_ATTESTION, W12_CONFIRM, MB_ICONQUESTION | MB_YESNO, self) == IDYES)
+		{
+			main.netDir->SetProxy(EMPTY);
+			new dir = instance DirW(ph @ .Date[.IndexDate][.SUB_OBJ]->GetWinPath());
+			dir->Clear();
+			dir->Remove();
+			if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+				.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+			.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+			main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+			self->ClearAllLists();
+			.last_oID[2] = EMPTY;
+			self->InitDir();
+			self->UpdateLists();
+			main.netDir->SetProxy(&self);
+		}
+	}
+	else
+	if (id == ID_DELETE_TEST)
+	{
+		if (MessageBox(W12_ATTESTION, W12_CONFIRM, MB_ICONQUESTION | MB_YESNO, self) == IDYES)
+		{
+			new dir = instance DirW(ph @ .SubRecords[.IndexSubRecords][.SUB_OBJ]->GetWinPath());
+			dir->Clear();
+			dir->Remove();
+			if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+				.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+			.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+			main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+			self->ClearAllLists();
+			.last_oID[2] = EMPTY;
+			self->InitDir();
+			self->UpdateLists();
+			main.netDir->SetProxy(&self);
+		}
+	}
+	else
+	if (id == ID_ADD_THERAPY)
+	{
+		self->OnAddTherapy();
+	}
+	else
+	if (id == ID_DELETE_THERAPY)
+	{
+		self->OnDeleteTherapy();
+	}
+	else
+	if (id == ID_ADD_CAP)
+	{
+		self->OnAddCAP();
+	}
+	else
+	if (id == ID_DELETE_CAP)
+	{
+		self->OnDeleteCAP();
+	}
+	self->Form::OnCommand(id, notifyCode);
+exit_on_cmd:	
+	.EditBusy = editBusy;
+|>;
+//--------------------------------------------------
+//
+//--------------------------------------------------
+new SelectDlg::OnRemovePiture(refer object BaseString) = <|
+param name;
+
+	new PerCent = instance WString("%");
+	new pict = Odml2Exec("select p from DBPicture as p where p.Path like ?", <<PerCent @ instance WString(name)>>);
+	if (pict->Len() > 0)
+	{
+		new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+		main.netDir->SetProxy(EMPTY);
+//		pict->Remove();
+//		.AllRecord[.IndexAll][.DBOBJ]->Save();
+		.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+		main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+		main.netDir->SetProxy(&self);
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnSetFilterList(refer ...) = <|
+	if (.filterList != EMPTY)
+		.filterList = EMPTY;
+	else
+		self->SetFilterList();
+	self->ClearAllLists();
+	.last_oID = EMPTY;
+	.IndexAll = EMPTY;
+	self->InitDir();
+	self->UpdateLists();
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnMenuTherapy(refer ...) = <|
+param data, par;
+
+	if (.IndexAll >= 0)
+	{
+		if (par.NotifyCode == "right click")
+		{
+			new popup = instance GMenu("POPUP_MENU");
+			new mouse = self->GetCursorPos();
+			new pos = self->GetCursorPos();
+			popup->InsertItem(-1, ID_ADD_THERAPY, W1_ADD_THERAPY);
+			if (.TherapyIndex >= 0)
+				popup->InsertItem(-1, ID_DELETE_THERAPY, W1_DELETE_THERAPY);
+			popup->Popup(mouse[0], mouse[1], *(par.Form));
+		}
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnMenuCAP(refer ...) = <|
+param data, par;
+
+	if (.IndexAll >= 0)
+	{
+		if (par.NotifyCode == "right click")
+		{
+			new popup = instance GMenu("POPUP_MENU");
+			new mouse = self->GetCursorPos();
+			new pos = self->GetCursorPos();
+			popup->InsertItem(-1, ID_ADD_CAP, W1_ADD_CAP);
+			if (.CAPIndex >= 0)
+				popup->InsertItem(-1, ID_DELETE_CAP, W1_DELETE_CAP);
+			popup->Popup(mouse[0], mouse[1], *(par.Form));
+		}
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnAddNewTest(refer ...) = <|
+	
+	if (.IndexAll != EMPTY && .IndexAll > -1)
+	{
+		if (FALSE)
+		{
+			new dlg = instance DlgNewTest(self);
+			if (dlg->Open() == IDOK)
+			{
+				dlg.newtest->ReplaceAll(":", "-");
+			 	new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+				if (ph->GetLastByte() != FD)
+					ph @= SFD;
+				new date = instance Date();
+				new v = date->GetDateAsVector();
+				if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+					.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+				new path = .AllRecord[.IndexAll][.OBJ].name @ "\\";
+				new str = Print(v[2]);
+				str @= "-";
+				date = Print(v[1]);
+				if (date->Len() == 1)
+					str @= "0";
+				str @= date;
+				str @= "-";
+				date = Print(v[0]);
+				if (date->Len() == 1)
+					str @= "0";
+				str @= date;
+				
+				new kk = path @ str;
+				new dr = .AllRecord[.IndexAll][.OBJ]->FindFolder(str);
+				if (dr == EMPTY)
+				{
+					new dir = instance DirW();
+					dir->Create(ph @ kk);
+				}
+				kk @= "\\";
+				kk @= dlg.newtest;
+				
+				new dir = instance DirW();
+				dir->Create(ph @ kk);
+				if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+					.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+	
+				.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  << >>, FALSE);
+				main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+				self->ClearAllLists();
+				self->SelectDir("\\" @ kk);
+				
+			}
+		}
+		else
+		{
+			new dlg = instance DlgNewTest2(self);
+			if (dlg->Open() == IDOK)
+			{
+			
+				new newtest = dlg.newtest;
+				for (new i = 0; i < newtest->Len(); ++i)
+				{
+				
+					newtest[i]->ReplaceAll(":", "-");
+				 	new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+					if (ph->GetLastByte() != FD)
+						ph @= SFD;
+					new date = instance Date();
+					new v = date->GetDateAsVector();
+					if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+						.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+					new path = .AllRecord[.IndexAll][.OBJ].name @ "\\";
+					new str = Print(v[2]);
+					str @= "-";
+					date = Print(v[1]);
+					if (date->Len() == 1)
+						str @= "0";
+					str @= date;
+					str @= "-";
+					date = Print(v[0]);
+					if (date->Len() == 1)
+						str @= "0";
+					str @= date;
+					
+					new kk = path @ str;
+					new dr = .AllRecord[.IndexAll][.OBJ]->FindFolder(str);
+					if (dr == EMPTY)
+					{
+						new dir = instance DirW();
+						dir->Create(ph @ kk);
+					}
+					kk @= "\\";
+					kk @= newtest[i];
+					
+					new dir = instance DirW();
+					dir->Create(ph @ kk);
+					if (.AllRecord[.IndexAll][.OBJ] == EMPTY)
+						.AllRecord[.IndexAll][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[.IndexAll][.DBOBJ]);
+	
+					.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  << >>, FALSE);
+					main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+					self->ClearAllLists();
+					self->SelectDir("\\" @ kk);
+				}
+				
+			}
+		}
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnUpdateWB(refer ...) = <|
+	self->OnSelectSubRecord(.SubRecords[.IndexSubRecords][.SUB_OBJ], TRUE);
+//	.ListSubRecord->Invalidate(TRUE);
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnEditOpScore(refer ...) = <|
+	if (.SubRecords != EMPTY && .IndexSubRecords != EMPTY && .SubRecords[.IndexSubRecords][.SUB_DBOBJ] != EMPTY)
+	{
+		new score = .SubRecords[.IndexSubRecords][.SUB_DBOBJ].OpScoreV;
+		if (score == EMPTY)
+			score = << 0, 0, 0, 0 >>;
+		new op = instance DlgOpScore(score, self);
+		if (op->Open() == IDOK)
+		{
+			if (.SubRecords[.IndexSubRecords][.SUB_DBOBJ].OpScoreV != op.Score)
+			{
+				.SubRecords[.IndexSubRecords][.SUB_DBOBJ].OpScoreV = op.Score;
+				.SubRecords[.IndexSubRecords][.SUB_DBOBJ].OpScore = op.Score[0] + op.Score[1] + op.Score[2] + op.Score[3];
+				.SubRecords[.IndexSubRecords][.SUB_DBOBJ]->UpdateAtomFields();
+				new root = AllergoEyeIni->ReadStr("DIR", "DATA");
+				new name = root @ .SubRecords[.IndexSubRecords][.SUB_DBOBJ].Path @ SFD @ "opscore.txt";
+				new f = instance File(name);
+				f->Open("wb");
+				f->Printf("itching, irritation, tears, redness\r\n");
+				f->Printf("%d, %d, %d, %d\r\n", [op.Score]);
+				f->Close();
+				self->UpdateForm(".SubRecords[.IndexSubRecords][0]->PrintMeanScore()");
+				self->SetItem(<< ID_EDIT_OPSCORE, self->GetEditScoreTxt() >>);
+				self->UpdateForm("self->PrintOpScoreTable()");
+			}
+		}
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::GetEditScoreTxt(void) = <|
+	onerror {
+		return;
+	}
+	if (.IndexSubRecords >= 0 && GetDim(.SubRecords) > .IndexSubRecords && GetDim(.SubRecords[.IndexSubRecords]) > 0)
+		return W1_EDIT_SCORE;
+	else
+		return W1_ADD_SCORE;
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnAddCAP(refer ...) = <|
+	onerror {
+		return;
+	}
+	if (.IndexAll < 0 || .AllRecord[.IndexAll][.DBOBJ] == EMPTY)
+		return;
+	new dlg = instance GLinesDialogW(self);
+	dlg->SetCaption(W1_ADD_SCORE);
+	dlg->SetPars( << 
+		<< 101, W1_CAP_TXT, "0" >>,
+		<< 102, "Allergen", GetAllergenList(), GetAllergenList()[0] >>
+		>>);
+	if (dlg->Open() != IDOK)
+		return;
+	new dbcap = instance DBCAP();
+	dbcap.CAP = int(dlg->GetPar(101));
+	dbcap.Allergen = GetAllergenEng(dlg->GetPar(102));
+	new index = .AllRecord[.IndexAll][.DBOBJ].CAP->Find(dbcap.Allergen, 0, <|param key, elem; return key == GetAllergenEng(elem.Allergen); |>);
+	if (index >= 0)
+	{
+		.AllRecord[.IndexAll][.DBOBJ].CAP[index].CAP = dbcap.CAP;
+		.AllRecord[.IndexAll][.DBOBJ].CAP[index]->Save();
+	}
+	else
+		.AllRecord[.IndexAll][.DBOBJ]->AppendCAP(dbcap);
+	.AllRecord[.IndexAll][.DBOBJ]->Save();
+	new rootDir = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	new f = instance File(rootDir @ .AllRecord[.IndexAll][.DBOBJ].Path @ SFD @ "cap.txt");
+	f->Open("wb");
+	new p = @.AllRecord[.IndexAll][.DBOBJ];
+	for (new j = 0; j < p.CAP->Len(); ++j)
+	{
+		f->Write(Printf("%d, %s\r\n", p.CAP[j].CAP, GetAllergenEng(p.CAP[j].Allergen)));
+	}
+	f->Close();
+	self->UpdateForm(".AllRecord[.IndexAll][0].CAP");
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnDeleteCAP(refer ...) = <|
+	onerror {
+		return;
+	}
+	if (.IndexAll >= 0 && .CAPIndex >= 0)
+	{
+		.AllRecord[.IndexAll][.DBOBJ]->DeleteCAP(.CAPIndex);
+		.CAPIndex = EMPTY;
+		new rootDir = AllergoEyeIni->ReadStrW("DIR", "DATA");
+		new f = instance File(rootDir @ .AllRecord[.IndexAll][.DBOBJ].Path @ SFD @ "cap.txt");
+		new p = @.AllRecord[.IndexAll][.DBOBJ];
+		if (p.CAP->Len() > 0)
+		{
+			f->Open("wb");
+			for (new j = 0; j < p.CAP->Len(); ++j)
+			{
+				f->Write(Printf("%d, %s\r\n", p.CAP[j].CAP, GetAllergenEng(p.CAP[j].Allergen)));
+			}
+			f->Close();
+		}
+		else
+			f->Remove();
+		self->UpdateForm(".AllRecord[.IndexAll][0].CAP");
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnAddTherapy(refer ...) = <|
+	new tp = instance DBTherapy();
+	tp.StartDate = instance Date();
+	new dlg = instance AddTherapy(tp, self);
+	if (dlg->Open() == IDOK)
+	{
+		tp = dlg.Therapy;
+		new d = tp.StartDate()->PrintDMY()->Tokenize("/.");
+		new y = int(d[2]);
+		if (y < 1000)
+			y = y % 100;
+		if (y < 100)
+			y += 2000;
+		else
+		{
+			if (y > 20000)
+				y = 2000 + y % 1000;
+		}
+		tp.StartDate = instance Date(int(d[0]), int(d[1]), y);
+		tp.Allergen = GetAllergenEng(tp.Allergen);
+		.AllRecord[.IndexAll][0]->AppendTherapy(tp);
+		new rootDir = AllergoEyeIni->ReadStrW("DIR", "DATA");
+		new f = instance File(rootDir @ .AllRecord[.IndexAll][0].Path @ SFD @ "therapy.txt");
+		f->Open("wb");
+		f->Write("\xff\xfe");
+		for (new k = 0; k < .AllRecord[.IndexAll][0].Therapy->Len(); ++k)
+		{
+			new txt = instance WString(.AllRecord[.IndexAll][0].Therapy[k].StartDate->Date::PrintDMY());
+			txt @= ", ";
+			f->Write(txt.Data, txt.Data->Len() - 1);
+			txt = instance WString(.AllRecord[.IndexAll][0].Therapy[k].Allergen);
+			txt @= ", ";
+			f->Write(txt.Data, txt.Data->Len() - 1);
+			txt = instance WString(.AllRecord[.IndexAll][0].Therapy[k].Medication);
+			txt @= CR;
+			f->Write(txt.Data, txt.Data->Len() - 1);
+		}
+	}
+	self->UpdateForm(".AllRecord[.IndexAll][0].Therapy");
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnDeleteTherapy(refer ...) = <|
+	if (.IndexAll >= 0 && .TherapyIndex >= 0)
+		.AllRecord[.IndexAll][.DBOBJ]->DeleteTherapy(.TherapyIndex);
+	else
+		return;
+	.TherapyIndex = EMPTY;
+	new res = @.AllRecord[.IndexAll][.DBOBJ];
+	new rootDir = AllergoEyeIni->ReadStrW("DIR", "DATA");
+	new f = instance File(rootDir @ res.Path @ SFD @ "therapy.txt");
+	if (res.Therapy->Len() > 0)
+	{
+		f->Open("wb");
+		f->Write("\xff\xfe");
+		for (new k = 0; k < res.Therapy->Len(); ++k)
+		{
+			new txt = instance WString(res.Therapy[k].StartDate->Date::PrintDMY());
+			txt @= ", ";
+			f->Write(txt.Data, txt.Data->Len() - 1);
+			txt = instance WString(res.Therapy[k].Allergen);
+			txt @= ", ";
+			f->Write(txt.Data, txt.Data->Len() - 1);
+			txt = instance WString(res.Therapy[k].Medication);
+			txt @= CR;
+			f->Write(txt.Data, txt.Data->Len() - 1);
+		}
+	}
+	else
+		f->Remove();
+	self->UpdateForm(".AllRecord[.IndexAll][0].Therapy");
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::PrintOpScoreTable(void) = <|
+	onerror {
+		return;
+	}
+	if (.IndexSubRecords >= 0 && GetDim(.SubRecords) > .IndexSubRecords && GetDim(.SubRecords[.IndexSubRecords]) > 0)
+		return <<GetTableTitle(), .SubRecords[.IndexSubRecords][0]->PrintOpScore() >>;
+	else
+		return <<GetTableTitle() >>;
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnSelectTherapy(refer ...) = <|
+	new b = @.AllRecord[.IndexAll][0].Date;
+	.Date->SetLen(b->Len());
+	new allergen = .AllRecord[.IndexAll][0].Therapy[.TherapyIndex].Allergen;
+	new _d = <<>>;
+	.AllRecord[.IndexAll][.OBJ]->GetDirList(_d);
+	new d = << >>;
+	for (new i = 0; i < b->Len(); ++i)
+	{
+		new index = _d->Find(b[i].Path, 0, <|param key, elem; return key == elem->GetPath();|>);
+		d ,= _d[index];
+	}
+	new f = EMPTY;
+	new j = 0;
+	for (i = 0;  i < b->Len(); ++i)
+	{
+		if (b[i].Allergen == allergen)
+		{
+			if (.last_oID == EMPTY || .last_oID[1] == EMPTY)
+			{
+				if (f == EMPTY && d[i]->IsSelected(0))
+					f = i;
+			}
+			else
+			if (.last_oID != EMPTY && .last_oID[1]  == b[i].oID)
+				f = i;
+		
+			.Date[j] = << b[i], d[i], j>>;
+			++j;
+		}
+	}
+	.Date->SetLen(j);
+	.IndexDate = f;
+	.SubRecords = <<>>;
+	.IndexSubRecords = EMPTY;
+	new n = 0;
+	if (.Date->Len() > 0)
+	{
+		if (f != EMPTY)
+		{
+			n = self->SelectDate(<<f, 1>>, FALSE);
+			self->ShowSelectedSubRecords();
+			.ListSubRecord->SetFocus();
+		}
+	}
+
+	self->UpdateForm(".Date");
+	if (.Date->Len() > 0)
+		self->UpdateForm(".IndexDate");
+	self->UpdateForm(".SubRecords#");
+	self->SetItem(<< ID_EDIT_OPSCORE, self->GetEditScoreTxt() >>);
+	self->UpdateForm("self->PrintOpScoreTable()");
+	self->UpdateForm(".IndexSubRecords");
+	self->UpdateForm(".Date[.IndexDate]#");
+	self->UpdateForm(".AllRecord[.IndexAll][0].Therapy");
+	self->UpdateForm(".AllRecord[.IndexAll][0].CAP#");
+	.ListSubRecord->Invalidate(TRUE);
+	self->UpdateBtnOnLoadReport();
+	self->EnableItem(ID_ADD, self->EnableAddSelect());
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::RecalculateSelected(void) = <|
+	new list = << >>;
+	for (new i = 0; i < .AllRecord->Len(); ++i)
+	{
+		for (new j = 0; j < .AllRecord[i][0].Date->Len(); ++j)
+		{
+			for (new k = 0; k < .AllRecord[i][0].Date[j].Tests->Len(); ++k)
+			{
+				for (new m = 0; m < .AllRecord[i][0].Date[j].Tests[k].Pictures->Len(); ++m)
+					list ,= .AllRecord[i][0].Date[j].Tests[k].Pictures[m].Path;
+			}
+		}
+	}
+	new dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+	if (dir->GetLastByte() != FD)
+		dir @= SFD;
+	new prg = instance GProgressWnd(TRUE, "Calculate", self);
+	for (i = 0; i < list->Len(); i += 30)
+	{
+		prg->SetProgress(i * 100 / list->Len());
+		prg->CheckCancel();
+		Pluk->FlushIdle();
+		new f = instance File(JustDirName(ExeName) @ "AEExchange" @ SFD @ "ae_exchange.tmp");
+		f->Open("wb");
+		for (new j = i; j < Min(i + 30, list->Len()); ++j)
+			f->Putv(dir @ list[j]);
+		f->Close();
+		Pluk->FlushIdle();
+		Pluk->Exec(Printf("%snn-test.exe %s %s /recalc /l%snn-test.log", JustDirName(ExeName), "ae", f.FileName, JustDirName(ExeName)), TRUE, FALSE);
+		Pluk->FlushIdle();
+	}
+|>;
+//=================================================
+//
+//=================================================
+new SelectDlg::OnHelp(refer ...) = <|
+	switch (CurLocale.Code)
+	{
+	case "ger" :
+		Pluk->OpenDoc("allergoeye_ger.pdf");
+		break;
+	case "eng" :
+		Pluk->OpenDoc("allergoeye_eng.pdf");
+		break;
+	case "esp" :
+		Pluk->OpenDoc("allergoeye_eng.pdf");
+		break;
+	case "fra" :
+		Pluk->OpenDoc("allergoeye_eng.pdf");
+		break;
+	default:
+		Pluk->OpenDoc("allergoeye_eng.pdf");
+		break;
+	}
+|>;
+
+new SelectDlg::SelectDir(refer object BaseString) = <|
+param path;
+	new b, ss = <<>>;
+	new tree = instance TreeDir();
+	tree->Root()->AddDir(path);
+	main.netDir.dbdir->ListPatient2(tree, ss);
+	new sel = instance Vector(ss->Len());
+	if (ss->Len() > 0)
+	{
+		new ss1 = ss[0];
+		new l1 = ss1[1]->Len();
+		if (ss1[1]->Len() > 0)
+			ss1[1][0] = instance WString(ss1[1][0]);
+		new v = Odml2Exec(ss1[0], ss1[1]);
+		if (v->Len() == 0 || v[0][0].oID == EMPTY)
+			return; 
+		new j = main.netDir.dbdir->GetIndex(v[0][0].oID);
+		if (j != EMPTY)
+		{
+			onerror {
+				main.netDir.dbdir->Reset();
+				self->InitDir();
+				self->UpdateLists();
+				return;
+			}
+			if (typeof(.AllRecord[j][.OBJ]) != "pointer")
+				.AllRecord[j][.OBJ] = main.netDir.dbdir->AddDirTree(.AllRecord[j][.DBOBJ]);
+			.last_oID = <<v[0][0].oID, EMPTY, EMPTY>>;
+			for (new i = 1; i < v[0]->Len(); ++i)
+				.last_oID[i] = v[0][i];
+			.IndexAll = j;
+			self->InitDir();
+			self->UpdateLists();
+			if (.SubRecords != EMPTY)
+			{
+				for (new j = 0, dl = .SubRecords->Len(); j < dl; ++j)
+				{
+					if (.last_oID != EMPTY && .last_oID[2]  == .SubRecords[j][.SUB_DBOBJ].oID)
+						.IndexSubRecords = j;
+				}
+				self->UpdateForm(".IndexSubRecords");
+			}
+			
+		}
+	}
+|>;
+//==========================================
+//
+//==========================================
+new TextGraphic::DrawLine(refer object MDC, refer object TFunc, refer object FGColor, refer object Vector, refer object Vector, boolean, boolean, int, int) = <|
+param Mdc, Curve, CurveColor, Arr, Marker, DrawErrorBar, LogErrorBar, CurveIndex, Size;
+
+	new res = self->Graphic::DrawLine(Mdc, Curve, CurveColor, Arr, Marker, DrawErrorBar, LogErrorBar, CurveIndex, Size);
+	if (res != EMPTY && res->Len() > 0 && CurveColor->GetColor() == CLR_LIGHTRED)
+	{
+		new crc  = Mdc->GetClipRect();
+		Mdc->UnClip();
+		Mdc->SetMFont(Mdc->GetFontName(), 12, 1);
+		Mdc->SetTextColor(255, 0, 0);
+		Mdc->SetBkMode(BK_OPAQUE);
+		for (new k = 0, i = 0; i < Curve.Y->Len(); ++i)
+		{
+			new n = 0;
+			new str = "0";
+			if (Curve.Y[i] > 0)
+			{
+				str = Printf("%d", int(Curve.Y[i]));
+				n = 4;
+				if (i > 0 && Curve.Y[i - 1] > 0)
+						--k;
+			}
+			else
+			{
+				str = Printf("%d", int(Curve.Y[i]));
+				if (i > 0 && Curve.Y[i - 1] > 0)
+					--k;	
+				n = 3;
+			}
+			new rc = Mdc->GetStringRect(str);
+			new v =  res->Mid(k, n);
+			k += n;
+			new x = v[1][0] + ((v[2][0] - v[1][0]) - rc->Width())/2;
+			//new rc = Mdc->GetStringRect(str);
+			new y =   v[1][1] - rc->Height() - 3;
+			Mdc->OutText(x, y, str);
+			
+		}
+		trace Curve.X, CR;
+		Mdc->ResetMFont();
+		Mdc->SetTextColor(0, 0, 0);
+		Mdc->ClipRect(crc);
+	}
+|>;

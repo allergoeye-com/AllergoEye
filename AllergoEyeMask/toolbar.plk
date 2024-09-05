@@ -1,0 +1,118 @@
+class ToolBar : Form {
+		Parent;
+		Result;
+
+	};
+
+//===================================================
+//
+//===================================================
+new ToolBar::ToolBar(refer object GWnd) = <|
+param Parent;
+	.Result = "";
+	.Parent = &Parent;
+	self->Form("DLG_EDIT_CONTOUR_MENU", Parent);
+	self->Bind(self);
+	self->Open();
+	self->AdjustSize();
+	self->Show();
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::SetResult(refer object BaseString) = <|
+param res;
+	.Result = res;
+	self->UpdateForm();
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::AdjustSize(void) = <|
+	onerror {
+		return;
+	}
+	new size = .Parent->GetClientSize();
+
+	new tb_size = self->GetSize();
+	self->SetPos(0, 0);
+	self->SetSize(size[0], tb_size[1]);
+|>;
+
+//===================================================
+//
+//===================================================
+new ToolBar::OnExit(refer ...) = <|
+	self->GetParent()->OnClose();
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::OnDelete(refer ...) = <|
+	self->GetParent()->OnDelete();
+	
+|>;
+
+//===================================================
+//
+//===================================================
+new ToolBar::OnEdit(refer ...) = <|
+	self->GetParent()->OnEdit();
+	
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::OnSave(refer ...) = <|
+	self->GetParent()->OnSave();
+	
+|>;
+
+//===================================================
+//
+//===================================================
+new ToolBar::EnableEdit(boolean) = <|
+param b;
+self->EnableItem(ID_EDIT, b);	
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::EnableDelete(boolean) = <|
+param b;
+self->EnableItem(ID_DELETE, b);	
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::OnNewROI(refer ...) = <|
+	self->GetParent()->OnNewROI();
+	self->EnableItem(ID_DELETE, TRUE);	
+
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::OnNewROIRect(refer ...) = <|
+	self->GetParent()->OnNewROIRect();
+	self->EnableItem(ID_DELETE, TRUE);	
+
+|>;
+new ToolBar::OnOptions(refer ...) = <|
+	new b = instance SelectColorPlane(self);
+	b->Open();
+	.Parent->OnUpdateROI();
+	.Parent->OnUpdateViews();
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::OnUndo(refer ...) = <|
+	self->GetParent()->OnUndo();
+|>;
+//===================================================
+//
+//===================================================
+new ToolBar::OnRedo(refer ...) = <|
+	self->GetParent()->OnRedo();
+|>;

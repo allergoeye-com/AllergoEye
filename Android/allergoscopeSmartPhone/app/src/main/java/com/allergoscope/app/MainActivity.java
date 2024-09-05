@@ -38,6 +38,7 @@ public class MainActivity extends AActivity {
     Bitmap tmp_bmp = null;
     static SharedPreferences prefs = null;
     static public boolean fClearCache = false;
+    ArrayList<Bitmap> tmp_arr_bmp = null;
     static public String ReadIni(String name)
     {
         if (prefs == null)
@@ -231,7 +232,7 @@ public class MainActivity extends AActivity {
         menuMainMenu.put("back", new ActionCallback(this, "OnBack"));
         menuMainMenu.put("menu", new ActionCallback(this, "OnLoadMenu"));
         menuMainMenu.put("newcard", new ActionCallback(this, "OnNewCard", MenuActivity.class, String.class));
-        menuMainMenu.put("camera", new ActionCallback(this, "OnNewCard", Bitmap.class));
+        menuMainMenu.put("camera", new ActionCallback(this, "OnNewCard", ArrayList.class));
         AGlobals.onResumed = new ActionCallback(this, "OnResume", Activity.class);
 
     }
@@ -242,6 +243,14 @@ public class MainActivity extends AActivity {
             ((ViewActivity)vc).LoadBitmap(tmp_bmp);
             tmp_bmp = null;
         }
+        else
+        if (tmp_arr_bmp != null && vc instanceof ViewActivity)
+        {
+            ((ViewActivity)vc).LoadBitmap(tmp_arr_bmp);
+            tmp_arr_bmp = null;
+        }
+
+
     }
     public void OnNewCard(MenuActivity a, String b)
     {
@@ -263,7 +272,24 @@ public class MainActivity extends AActivity {
 
         }
     }
-    //----------------------------------------------------
+    public void OnNewCard(ArrayList<Bitmap> bmp)
+    {
+        tmp_arr_bmp = bmp;
+        if (tmp_arr_bmp != null && AGlobals.currentActivity != null)
+        {
+            if (!(AGlobals.currentActivity instanceof ViewActivity))
+            {
+                Intent intent = new Intent(this, ViewActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                // startActivityForResult(intent, 200);
+                StartView(intent);
+            }
+            else
+                OnResume(AGlobals.currentActivity);
+
+        }
+    }
+        //----------------------------------------------------
     //
     //----------------------------------------------------
     public void OnLoadMenu()

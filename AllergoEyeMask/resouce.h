@@ -1,0 +1,29 @@
+#define ID_FRAME 101
+#define ID_ROI_LIST 102
+#define ID_DELETE_ROI 103
+#define ID_NEW_ROI 104
+#define ID_LIST_JPG 105
+#define ID_EDIT_ROI 106
+#define ID_DELETE_POINT_ROI 107
+#define ID_ADD_POINT_ROI 108
+#define ID_END_ROI 109
+#define ID_DELETE_POINT_NEW_ROI 110
+#define ID_END_NEW_ROI 111
+#define ID_CANCEL_NEW_ROI 112
+#define ID_DELETE 113
+#define ID_EDIT 114
+#define ID_UNDO 115
+#define ID_REDO 116
+#define ID_SAVE 117
+#define ID_OPTIONS 118
+#define ID_NEW_RECT 119
+
+
+
+#define ID_PATH 117
+#define ID_ONPATH 118
+#define ID_JPG 119
+#define ID_MTF 120
+#define ID_LIST_FILES 121
+#define ID_AUTO_SAVE 122
+#define ID_TABLE_PLANE 101

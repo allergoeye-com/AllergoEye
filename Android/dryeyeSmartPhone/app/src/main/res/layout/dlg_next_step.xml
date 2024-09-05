@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+
+    <lib.common.layout.LinearLayoutShadow
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:shadow_color="#FFFFFFFF"
+
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_marginLeft="5dp"
+            android:id="@+id/idText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|center_vertical"
+            android:layout_marginTop="@dimen/generic_cell_padding"
+            android:layout_marginBottom="@dimen/generic_padding"
+            android:ellipsize="middle"
+            android:gravity="left|center_vertical"
+
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+    </lib.common.layout.LinearLayoutShadow>
+
+    <lib.common.CListBox
+        android:layout_marginLeft="5dp"
+        android:id="@+id/idList"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+</LinearLayout>

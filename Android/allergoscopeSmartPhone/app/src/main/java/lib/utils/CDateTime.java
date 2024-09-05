@@ -6,6 +6,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 /**
@@ -112,6 +113,10 @@ public class CDateTime {
             }
         }
         return null;
+    }
+    Date GetDate()
+    {
+        return new Date(wYear, wMonth, wDay, wHour, wMinute, wSecond);
     }
     //----------------------------------------------------
     //

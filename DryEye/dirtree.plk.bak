@@ -1,0 +1,1579 @@
+class NodeXml {
+    name;
+    data;
+    child;
+    fClosed;
+    parent;
+};
+global extLevel = << << >>, <<".ini">>, <<".jpg",".nam", ".res", ".dst", ".ctr", ".bin">> >>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new NodeXml::NodeXml(any, any) = <|
+param _parent, n;
+	.fClosed = FALSE;
+    .parent = _parent;
+    .name = n;
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new NodeXml::GetChild(refer object BaseString) = <|
+param nm;
+    if (.child != EMPTY)
+    {
+        for (new i = 0, l = .child->Len(); i < l; ++i)
+        {
+        	new c = @.child[i];
+        	if (c.name == nm)
+                return &c;
+        }
+    }
+    return EMPTY;
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new NodeXml::Get(refer object BaseString) = <|
+param path;
+    new node = @self;
+   	path->TrimTrail();
+	new v = path->Tokenize("/");
+	for (new i = 0, l = v->Len(); i < l; ++i)
+    {
+        
+        node = node->GetChild(v[i]);
+        if (node == EMPTY)
+            return EMPTY;
+    }
+    return node;
+|>;
+
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new NodeXml::FindFolder(refer object BaseString) = <|
+param nm;
+
+    if (.child != EMPTY)
+    {
+        for (new i = 0, l = .child->Len(); i < l; ++i)
+        {
+        	new c = @.child[i];
+        	if (c.name == nm)
+                return c;
+            else
+            {
+                new d = c->FindFolder(nm);
+                if (d != EMPTY)
+                    return d;
+            }
+        }
+    }
+    return EMPTY;
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+class ParsXml {
+
+        root;
+        last;
+};
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new ParsXml::ParsXml(void) = <|
+        .root = instance NodeXml(EMPTY, EMPTY);
+        .last = &.root;
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new ParsXml::ParsXml(refer object BaseString) = <|
+param xml;
+	.root = instance NodeXml(EMPTY, EMPTY);
+	.last = &.root;
+
+	new tmp;
+	tmp = xml;
+	new i = tmp->Find("<file-area>");
+	if (i == -1) return;
+	new orig = "<file-area>";
+	
+	new first = FALSE;
+	new last = FALSE;
+	new token;
+	new ctl;
+	new control = << '<', '>' >>;
+	new I = i;
+	while(TRUE)
+	{
+		while (tmp->Len() > I && tmp->GetByte(I) != 0) 
+		{
+			
+			for (ctl = 0; ctl < control->Len() && control[ctl] != tmp->GetByte(I); ++ctl);
+			if (ctl >= control->Len()) 
+				break;
+			if (tmp->GetByte(I) == '<')
+					first = TRUE;
+				
+				if (tmp->GetByte(I) == '>')
+					last = TRUE;
+			++I;
+		}
+		token = I;
+		for (;tmp->Len() > I &&  tmp->GetByte(I) != 0; ++I) 
+		{
+
+			for (ctl = 0; ctl < control->Len() && control[ctl] != tmp->GetByte(I); ++ctl);
+			if (ctl < control->Len()) 
+			{
+				if (tmp->GetByte(I) == '<')
+					first = TRUE;
+				
+				if (tmp->GetByte(I) == '>')
+					last = TRUE;
+				tmp->PutByte(I, 0);
+				++I;									
+				break;
+			}
+		}
+		if (token == I)
+			break;
+		if (first && last)
+		{
+			if (tmp->GetByte(token) == '/')
+			{
+				if (!self->CloseNode(tmp->Mid(token + 1, I - token - 2)))
+				{
+					trace "!!!!!!!! parser ERROR", CR;
+					break;
+				}
+			}
+			else
+				self->CreateNode(tmp->Mid(token, I - token - 1));
+			first = FALSE;
+			last = FALSE;
+		}
+		else
+			self->AddData(tmp->Mid(token, I - token - 1));
+			
+		
+	}
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new ParsXml::Get(refer object BaseString) = <|
+param path;
+	new n = .root->Get(path);
+	return n != EMPTY ? n.data : EMPTY;
+|>;
+
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new ParsXml::CreateNode(refer object BaseString) = <|
+param name;
+
+//trace "create(" , name, ")", CR; 
+	if (.last.child == EMPTY)
+		.last.child = <<>>;
+	new node = instance NodeXml(.last, name);
+	new i = .last.child->Len();
+	.last.child @= node;
+	node = @.last.child[i];
+	.last = &node;
+	
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new ParsXml::AddData(refer object BaseString) = <|
+param data;
+	.last.data = data;
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+new ParsXml::CloseNode(refer object BaseString) = <|
+param name;
+
+//trace "close(" , name, ")", CR; 
+
+	if (name == .last.name)
+	{
+	new n = .last.parent;
+	.last = n;
+
+		return TRUE;
+	}
+		return FALSE;
+	
+|>;
+//------------------------------------------------------
+//
+//------------------------------------------------------
+class FileNode {
+        name;
+        parent;
+        isSelect; // from xml
+        roi;
+        names;
+        result;
+        res_distr;
+};
+new FileNode::Ptr(void) = <| return &self; |>;
+
+//-----------------------------------
+//
+//-----------------------------------
+new FileNode::FileNode(any, refer object NodeXml) = <|
+param parent, file;
+	.result = "";
+	.roi = <<>>;
+	.res_distr = << >>;
+	.names = << >>;
+	.isSelect = <<>>;
+	.parent = parent;
+	new n = file->Get("name");
+	.name = n == EMPTY ? EMPTY : n.data;
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::FileNode(any, any) = <|
+param parent, name;
+	self->Init(parent, name);
+|>;
+
+
+//=============================================
+//
+//=============================================
+new FileNode::FileNode(void) = <|
+	.result = "";
+	.name = EMPTY;
+	.parent = EMPTY;
+	.roi = <<>>;
+	.res_distr = << >>;
+	.names = << >>;
+	.isSelect = <<>>;
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::Init(any, any) = <|
+param parent, name;
+	.result = "";
+	.parent = parent;
+	.name = name;
+	.roi = <<>>;
+	.res_distr = << >>;
+	.names = << >>;
+	.isSelect = <<>>;
+|>;
+
+//=============================================
+//
+//=============================================
+new FileNode::Reset(void) = <|
+	.result = "";
+	.parent = EMPTY;
+	.name = EMPTY;
+	.roi = <<>>;
+	.res_distr = << >>;
+	.names = << >>;
+	.isSelect = <<>>;
+|>;
+
+
+//=============================================
+//
+//=============================================
+ new FileNode::IsDir(void) = <|
+  	return typeof(self) == "DirNode";
+|>;
+//=============================================
+//
+//=============================================
+ new FileNode::IsModefied(void) = <|
+  	for (new i = 0; i < .roi->Len(); ++i)
+  		.roi[i]->Edit(FALSE);
+  	for (i = 0; i < .roi->Len(); ++i)
+  		if (.roi[i].fModefied)
+  			return TRUE;
+  	
+  	return FALSE;
+|>;
+//=============================================
+//
+//=============================================
+ new FileNode::ClearModefied(void) = <|
+  	for (new i = 0; i < .roi->Len(); ++i)
+  		.roi[i].fModefied = FALSE;
+|>;
+
+//=============================================
+//
+//=============================================
+new FileNode::GetPath(refer object BaseString) = <|
+param s;
+     if (.parent != EMPTY)
+     	return .parent->GetPath(.name @ "/" @ s);
+     else
+     	return instance WString("/") @ s;
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::GetWinPath(refer object BaseString) = <|
+param s;
+     return .parent != EMPTY ? .parent->GetWinPath(.name @ "\\" @ s) : s;
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::GetPointersPath(refer object Vector) = <|
+param s;
+     if (.name != EMPTY && .parent != EMPTY)
+     {
+	     s @= &self;
+     	.parent->GetPointersPath(s);
+     }
+|>;
+//=============================================
+//
+//=============================================
+ new FileNode::GetPath(void) = <|
+      return .parent != EMPTY && .name != EMPTY ? .parent->GetPath(.name) : instance WString("/");
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::privateCheckSelect(int) = <|
+param n;
+	if (.isSelect != EMPTY && n >= .isSelect->Len())
+	{
+		.isSelect->SetLen(n + 1);
+		for (new j = 0; j < n + 1; ++j)
+			if (.isSelect[j] == EMPTY)
+				.isSelect[j] = 0;
+	}
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new FileNode::Select(int, boolean) = <|
+param n, b;
+	if (.isSelect != EMPTY)
+	{
+		self->privateCheckSelect(n);
+		if (.isSelect[n] < 0) .isSelect[n] = 0;
+		if (b)
+		{
+			if (.isSelect[n]  == 0)
+				++.isSelect[n];
+			else
+				return;
+		}
+		else
+		if (.isSelect[n] > 0)
+			--.isSelect[n];
+		if (.parent != EMPTY)
+			.parent->Select2(n, b);
+	}
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new FileNode::Select2(int, boolean) = <|
+param n, b;
+	if (.isSelect != EMPTY)
+	{
+		self->privateCheckSelect(n);
+		if (.isSelect[n] < 0) .isSelect[n] = 0;
+		if (b)
+			++.isSelect[n];
+		else
+		if (.isSelect[n] > 0)
+			--.isSelect[n];
+		if (.parent != EMPTY)
+			.parent->Select2(n, b);
+	}
+|>;
+
+//-----------------------------------
+//
+//-----------------------------------
+new FileNode::IsSelected(int) = <|
+param n;
+	self->privateCheckSelect(n);
+	return .isSelect[n] > 0;
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new FileNode::GetSelected(int) = <|
+param n;
+	self->privateCheckSelect(n);
+	return .isSelect[n];
+	
+|>;
+
+//-----------------------------------
+//
+//-----------------------------------
+new FileNode::IsSelected(void) = <|
+	new n = .isSelect->Len();
+	for (new j = 0; j < n; ++j)
+	if (.isSelect[j] > 0)
+		return TRUE;
+	return FALSE;
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::ClearSelect(int) = <|
+param n;
+	self->privateCheckSelect(n);
+	.isSelect[n] = 0;
+|>;
+
+//=============================================
+//
+//=============================================
+ new FileNode::GetWinPath(void) = <|
+      return .parent != EMPTY && .name != EMPTY ? .parent->GetWinPath(.name) : "";
+|>;
+//=============================================
+//
+//=============================================
+ new FileNode::Level(int) = <|
+ param l;
+	l += .parent != EMPTY ? 1 : 0;
+    if (.parent != EMPTY)
+    	return .parent->Level(l);
+    return l;
+|>;
+//=============================================
+//
+//=============================================
+ new FileNode::Level(void) = <|
+
+ new l = 0;
+    if (.parent != EMPTY)
+    	return .parent->Level(l);
+    return l;
+|>;
+//=============================================
+//
+//=============================================
+new FileNode::GetRoot(void) = <|
+
+
+	if (.parent != EMPTY && .parent.name != EMPTY)
+		return  .parent->GetRoot();
+	return &self;
+|>;
+
+
+//=============================================
+//
+//=============================================
+class DirNode : FileNode {
+  childs;
+ };
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::DirNode(void) = <|
+  .childs = <<>>;
+
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::IsSelected(refer object BaseString, int) = <|
+param name, n;
+
+	self->privateCheckSelect(n);
+	if (.names != EMPTY)
+	{
+	
+		return .names->Find(name, 0,
+		{|param key, elem; return elem[0]->Find(key) != -1; |}
+		) >= 0;
+			
+	}
+	return .isSelect[n] > 0;
+|>;
+
+
+
+
+//=============================================
+//
+//=============================================
+new DirNode::ClearSelect(int) = <|
+param n;
+	self->privateCheckSelect(n);
+	.isSelect[n] = 0;
+|>;
+
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::AddDir(refer object Vector, int) = <|
+param st, i;
+	new s = st[i];
+	new dir;
+	new node = self->GetChild(s);
+	if (node == EMPTY || !node->IsDir())
+	{
+		.childs @= instance DirNode(&self, st[i]);
+		dir = .childs[.childs->Len() - 1]->Ptr();
+	}
+	else
+		dir = node;
+	if (st->Len() > i + 1)
+		dir = dir->AddDir(st, ++i);
+	return dir;
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::Remove(refer object Vector, int) = <|
+param st, i;
+	new dir;
+	new J = .childs->Find(st[i], 0, <| param key, elem; return elem.name == key; |>);
+	if (st->Len() == i + 1)
+	{
+		if (J == -1) return FALSE;
+		.childs->Remove(J);
+		return FALSE;	
+	}
+	new node = J == -1 ? EMPTY : .childs[i]->Ptr();
+	if (node == EMPTY)
+		return FALSE;
+	if (node->IsDir())
+		return node->Remove(st, ++i);
+		
+	return FALSE;
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::Remove(refer object BaseString) = <|
+param s;
+	new st = s->Tokenize("\\/");
+	return self->Remove(st, 0);
+|>;	
+
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::AddFile(refer object Vector) = <|
+param st;
+	new sfile = st[st->Len() - 1];
+	st->SetLen(st->Len() - 1);
+	new dir = self->AddDir(st, 0);
+	new file;
+	if (dir != EMPTY)
+	{
+		if ((file = dir->GetChild(sfile)) == EMPTY)
+		{
+			dir.childs @= instance FileNode(dir, sfile);
+			file = dir.childs[dir.childs->Len() - 1]->Ptr();
+		}
+	}
+	return file;
+|>;	
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::AddFile(refer object BaseString) = <|
+param s;
+	new st = s->Tokenize("\\/");
+	return self->AddFile(st);
+|>;	
+
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::AddDir(refer object BaseString) = <|
+param s;
+	new st = s->Tokenize("\\/");
+	return self->AddDir(st, 0);
+|>;	
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::GetChild(refer object BaseString) = <|
+param name;
+	new i = .childs->Find(name, 0, <| param key, elem; return elem.name == key; |>);
+	if (i > -1)
+		return .childs[i]->Ptr();
+	return EMPTY;
+|>;
+	
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::DirNode(any, refer object NodeXml) = <|
+param _parent, folder;
+     self->FileNode(_parent, folder);
+     new i,l;
+    .childs = <<>>;
+		
+     new files = folder->Get("folders");
+     if (files != EMPTY && files.child != EMPTY)
+     {
+      for (i = 0, l = files.child->Len(); i < l; ++i)
+		{
+			new file = @files.child[i];
+			if (file.name == "folder")
+			   .childs @= instance DirNode(&self, file);
+		}
+	}
+	files = folder->Get("files");
+     if (files != EMPTY && files.child != EMPTY)
+     {
+        for (i = 0, l = files.child->Len(); i < l; ++i)
+        {
+             
+         	new file = @files.child[i];
+            if (file.name == "file")
+                 .childs @= instance FileNode(&self, file);
+         }
+     }
+  
+|>;
+
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::DirNode(int, any, refer object DirNode) = <|
+param n, _parent, folder;
+    self->FileNode(_parent, folder.name);
+	.childs = <<>>;
+	self->privateCheckSelect(n);
+    for (new i = 0, l = folder.childs->Len(); i < l; ++i)
+    {
+		new child = @folder.childs[i];
+        if (child->IsSelected(n) && child->IsDir())
+         	.childs @= instance DirNode(n, &self, child);
+        
+    }
+  
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::DirNode(pointer object DirNode, refer object BaseString) = <|
+param _parent, folder;
+    self->FileNode(_parent, folder);
+	.childs = <<>>;
+|>;
+
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::DirNode(int, refer object BaseString, any, refer object DirNode) = <|
+param n, mask, _parent, folder;
+    self->FileNode(_parent, folder.name);
+	.childs = <<>>;
+	self->privateCheckSelect(n);
+    for (new i = 0, l = folder.childs->Len(); i < l; ++i)
+    {
+		new child = @folder.childs[i];
+       	if (child->IsDir())
+        	.childs @= instance DirNode(n, mask, &self, child);
+        else
+        	if (child.name->Right(4) == mask)
+			.childs @= instance FileNode(_parent, child.name);
+	        	
+        
+    }
+  
+|>;
+//-----------------------------------
+//
+//-----------------------------------
+new DirNode::DirNode(any, refer object BaseString) = <|
+param _parent, folder;
+    self->FileNode(_parent, folder);
+	.childs = <<>>;
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::DirNode(any, any, refer object BaseString, refer object Vector, boolean) = <|
+param _parent, name, path, mask , fDir;
+	self->DirNode(_parent, name, path, mask , fDir, TRUE);
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::DirNode(any, any, refer object BaseString, refer object Vector, boolean, boolean) = <|
+param _parent, name, path, mask , fDir, fSubDir;
+	self->FileNode(_parent, name);
+
+	.childs = <<>>;
+	onerror {
+		return; 
+	};
+	new dir = instance DirW(path);
+	dir->Read();
+	new childs = <<>>;
+	new j, i, l, lj = mask->Len();
+	if (!fDir)
+	{
+		for (i = 0, l = dir->GetNumbFiles(); i < l; ++i)
+		{
+			for (j = 0 ; j < lj; ++j)
+				if (dir.Files[i][0]->Right(4) == mask[j])
+					break;
+			if (lj == 0 || j < lj)
+				childs @= instance FileNode(&self, dir.Files[i][0]);
+		}
+	}
+	
+	if (dir.SubDirs != EMPTY && fSubDir && (childs->Len() == 0 || lj == 0))
+	for (i = 0, l = dir->GetNumbSubDir(); i < l; ++i)
+	{
+//		if (dir.SubDirs[i][0]->Find("Sun") != -1)
+//			stop;
+		if (dir.SubDirs[i][0] == ".\\" || dir.SubDirs[i][0] == "..\\" || dir.SubDirs[i][0]->Find(":") != -1)
+			continue;
+		new j = dir.SubDirs[i][0]->Len();
+		.childs @= instance DirNode(&self, dir.SubDirs[i][0]->Mid(0, j - 1), path @ dir.SubDirs[i][0], mask, fDir);
+	}
+	if (!fDir)
+	{
+		if (childs->Len() > 0)
+			.childs @= childs; 
+	}
+	
+|>;
+
+
+//=============================================
+//
+//=============================================
+new DirNode::ReloadDir(refer object BaseString, refer object Vector, boolean) = <|
+param path, mask , fDir;
+	new ph = path @ self->GetWinPath();
+    new dir = instance DirW(ph);
+	if (ph->Right(1) != "\\")
+		ph @= "\\";
+    new flg = FALSE;
+
+    dir->Read();
+    new j, i, l, lj = mask->Len();
+    if (dir.SubDirs != EMPTY)
+    for (i = 0, l = dir->GetNumbSubDir(); i < l; ++i)
+    {
+    	if (dir.SubDirs[i][0] == ".\\" || dir.SubDirs[i][0] == "..\\" || dir.SubDirs[i][0]->Find(":") != -1) continue;
+           new j = dir.SubDirs[i][0]->Len();
+           if (.childs->Find(dir.SubDirs[i][0]->Mid(0, j - 1), 0, <| param key, elem; return elem.name == key; |>) == -1)
+           {
+	            .childs @= instance DirNode(&self, dir.SubDirs[i][0]->Mid(0, j - 1), ph @ dir.SubDirs[i][0], mask, fDir);
+	            flg = TRUE;
+	       }
+    }
+    for (i = 0, l = .childs->Len(); i < l; ++i)
+    	if (.childs[i]->IsDir())
+    	{
+    		onerror {
+    		.childs->Remove(i);
+    		l = .childs->Len();
+    		--i;
+    		continue;
+    		
+    		};
+    		if (.childs[i]->ReloadDir(path, mask , fDir))
+               flg = TRUE;
+        }
+	 		
+    if (!fDir)
+    	if (dir.Files != EMPTY)
+        for (i = 0, l = dir->GetNumbFiles(); i < l; ++i)
+        {
+           for (j = 0 ; j < lj; ++j)
+           if (dir.Files[i][0]->Right(4) == mask[j])
+           	break;
+           	if (lj == 0 || j < lj)
+           if (.childs->Find(dir.Files[i][0], 0, <| param key, elem; return elem.name == key; |>) == -1)
+           {
+           		new l = .childs->Len();
+           		.childs @= instance FileNode(&self, dir.Files[i][0]);
+           		flg = TRUE;
+           		
+           	}
+        }
+    for (i = 0; i < .childs->Len(); ++i)
+    {
+           if ((dir.SubDirs == EMPTY || dir.SubDirs->Find(.childs[i].name, 0, <| param key, elem; return  elem[0]->Len() > 1 && key == elem[0]->Mid(0, elem[0]->Len() - 1); |>) == -1) &&
+	           (dir.Files == EMPTY || dir.Files->Find(.childs[i].name, 0, <| param key, elem; return elem[0]->Len() > 1 && key == elem[0]; |>) == -1))
+           {
+	            .childs->Remove(i);
+          		flg = TRUE;
+          		--i;
+           		
+           	}
+     }
+    return flg;
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::CopyTo(refer object DirNode) = <|
+param dir;
+	onerror {
+		return; 
+	};
+	
+	dir.childs = instance Vector(.childs->Len());
+	
+    for (new i = 0, l = .childs->Len(); i < l; ++i)
+    {
+    	dir.childs[i] = .childs[i]->IsDir() ? instance DirNode(&dir, .childs[i].name) : instance FileNode(&dir, .childs[i].name);
+    	if (.childs[i]->IsDir())
+			.childs[i]->CopyTo(dir.childs[i]);
+	}
+
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::GetListPaths(refer object Vector) = <|
+param ret;
+if (.name != EMPTY &&  .childs->Len() == 0)
+ret @= self->GetPath();
+new ret1 = <<>>; 
+for (new i = 0, l = .childs->Len(); i < l; ++i)
+{
+
+if (.childs[i]->IsDir())
+	.childs[i]->GetListPaths(ret);
+
+else
+ret @= .childs[i]->GetPath();
+}
+
+
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::GetListSelectedPaths(int, refer object Vector) = <|
+param N, ret;
+	
+	new I = 0;
+	for (new i = 0, l = .childs->Len(); i < l; ++i)
+    	{
+
+		if (.childs[i]->IsSelected(N))
+		{
+			++I;
+		    	if (.childs[i]->IsDir())
+		    	{
+		    		.childs[i]->GetListSelectedPaths(N, ret);
+			}
+			else
+				ret @= .childs[i]->GetPath();
+		}
+	}
+	if (.name != EMPTY &&  I == 0)
+		ret @= self->GetPath();
+	
+	
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::And(refer object DirNode, refer object DirNode) = <|
+param dir, res;
+    new j, i, l;
+    for (i = 0, l = dir.childs->Len(); i < l; ++i)
+    {
+		if ((j = .childs->Find(dir.childs[i].name, 0, <| param key, elem; return elem.name == key; |>)) != -1)
+		{
+			new ll = res.childs->Len();
+			if (dir.childs[i]->IsDir())
+			{
+				new child = @dir.childs[i];
+				res.childs @= instance DirNode(&res, dir.childs[i].name);
+				.childs[j]->And(dir.childs[i], res.childs[ll]);
+			}
+			else
+				res.childs @= instance FileNode(&res, dir.childs[i].name);
+		}
+    }
+|>;
+
+
+//=============================================
+//
+//=============================================
+new DirNode::&(refer object DirNode) = <|
+param dir;
+	new no = instance DirNode();
+	no.name = .name; 
+	self->And(dir, no);
+	return no;
+		
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::&=(refer object DirNode) = <|
+param dir;
+    new j, i, l;
+    for (i = 0, l = .childs->Len(); i < l; ++i)
+    {
+   
+          if ((j = dir.childs->Find(.childs[i].name, 0, <| param key, elem; return elem.name == key; |>)) != -1)
+          {
+			if (.childs[i]->IsDir())
+				.childs[i]->And(dir.childs[j], .childs[i]);
+			
+       }
+       else
+       {
+	       	.childs->Remove(i);
+	       	--i;
+	       	l = .childs->Len();
+       	}
+    }
+	return @self;
+		
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::-=(refer object DirNode) = <|
+param dir;
+    new j, i, l;
+    if (dir.childs->Len() == 0)
+    {
+    	return  FALSE;
+    }
+    for (i = 0; i < dir.childs->Len(); ++i)
+    {
+    
+		if ((j = .childs->Find(dir.childs[i].name, 0, <| param key, elem; return elem != EMPTY && elem.name == key; |>)) != -1)
+		{
+			if (.childs[j]->IsDir())
+			{
+				.childs[j] -= dir.childs[i];
+				if (.childs[j].childs->Len() == 0)
+					.childs->Remove(j);
+			}
+			else
+				.childs->Remove(j);
+       }
+    }
+ 	return @self;
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::-=(refer object BaseString) = <|
+param dir;
+    new j;
+    if (.childs->Len() == 0)
+    {
+    	return  FALSE;
+    }
+    
+	if ((j = .childs->Find(dir, 0, <| param key, elem; return elem.name == key; |>)) != -1)
+	{
+		.childs->Remove(j);
+    
+    }
+ 	return @self;
+
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::-(refer object DirNode) = <|
+param dir;
+	new no = instance DirNode();
+	no.name = .name; 
+	self->CopyTo(no);
+	no -= dir;
+ 	return no;
+|>;
+/*
+щрн ме дндекюмн
+//=============================================
+//
+//=============================================
+new DirNode::|(refer object DirNode) = <|
+param dir;
+	new no = instance DirNode();
+	no.name = .name; 
+	self->CopyTo(no);
+	no |= dir;
+ 	return no;
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::|=(refer object DirNode) = <|
+param dir;
+    new j, i, l;
+    for (i = 0; i < dir.childs->Len(); ++i)
+    {
+		new f = dir.childs[j]->IsDir();
+		if ((j = .childs->Find(dir.childs[i].name, 0, <| param key, elem; return elem.name == key; |>)) == -1)
+		{
+			if (f)
+			{
+				j = .childs->Len();
+				.childs @= instance DirNode(&self, dir.childs[i].name); 
+			}
+			else
+				.childs @= instance FileNode(&self, dir.childs[i].name); 
+		}
+		if (f)
+			.childs[j]->OR(dir.childs[i], .childs[j]);
+    }
+ 	return self;
+|>;
+*/
+//=============================================
+//
+//=============================================
+new DirNode::Reset(void) = <|
+	self->FileNode::Reset();
+	.childs = <<>>;
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::GetGetListLast(refer object Vector) = <|
+param dir;
+
+	new N = 0;
+	for (new i = 0, l = .childs->Len(); i < l; ++i)
+	{
+		if (.childs[i]->IsDir())
+		{
+			++N;
+			.childs[i]->GetGetListLast(dir);
+			
+		}
+	}
+	if (N == 0)
+		dir @= &self;
+
+|>;
+
+//=============================================
+//
+//=============================================
+new DirNode::SelectDir(int, pointer object DirNode, boolean) = <|
+param Index, dir, clr;
+	new v = <<>>;
+	dir->GetDirList(v);
+	new j;
+	new N = 0;
+	for (new i = 0, l = v->Len(); i < l; ++i)
+	{
+		if ((j = .childs->Find(v[i].name, 0, <| param key, elem; return key == elem.name; |> )) != -1)
+		{
+			if (.childs[j]->IsDir())
+				N += .childs[j]->SelectDir(Index, v[i], clr);
+			if (.childs[j]->IsSelected(Index) != clr)
+			{
+				.childs[j]->Select(Index, clr);
+				++N;
+			}
+		}
+	}
+	return N;
+
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::get(int) = <|
+param i;
+	return .childs != EMPTY && .childs->Len() > i ? .childs[i]->Ptr() : EMPTY;
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::NumDir(void) = <|
+	
+	new i = 0, l = .childs->Len();
+	new k = 0;
+    for (; i < l; ++i)
+            if (.childs[i] != EMPTY && .childs[i]->IsDir())
+                 ++k;
+    return k;
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::GetFile(refer object BaseString) = <|
+param str;
+	if (.childs == EMPTY) return EMPTY;
+	new i = 0, l = .childs->Len();
+    for (; i < l; ++i)
+         if (!.childs[i]->IsDir() && .childs[i].name == str)
+              return .childs[i]->Ptr(); 
+    return EMPTY;
+|>;
+//=============================================
+//
+//=============================================
+new DirNode::Get(refer object BaseString) = <|
+param str;
+
+	new n =  str->Find("/", 0 );
+	if (n == 0)
+	{
+		str = str->Mid(1, str->Len() - 1);
+		n =  str->Find("/", 0 );
+	}
+	if (.name == str) return &self;
+	new s;
+	new i = 0, l = .childs->Len();
+	
+	if (.name == EMPTY ||  n > -1)
+	{
+		
+		s = n > -1 ? str->Left(n) : str;
+			
+		if (.name == EMPTY || s == .name)
+		{
+			if (.name == EMPTY)
+				s = str;
+			else				
+				s = str->Mid(n + 1, str->Len() - n - 1);
+			new fIsDir =  s->Find("/", 0 ) != -1;
+		    for (; i < l; ++i)
+		    {
+			 if (fIsDir)
+			 {
+			         if (.childs[i]->IsDir())
+			         {
+			              new g = .childs[i]->Get(s);
+			              if (g != EMPTY)
+			              	return g;
+			         }
+			    }
+			    else
+			    if (.childs[i].name == s)
+			    {
+			    	return .childs[i]->Ptr();
+			    	
+			    }
+			     
+			    
+		     }
+		 }
+	}
+	else
+	if (n == -1)
+	{
+		    for (; i < l; ++i)
+		    {
+			    if (.childs[i].name == str)
+			    {
+			    	return .childs[i]->Ptr();
+			    	
+			    }
+		     }
+		 
+	}
+    return EMPTY;
+|>;
+
+//=============================================
+//
+//=============================================
+ new DirNode::FindFolder(refer object BaseString) = <|
+ param name;
+	if (.childs == EMPTY) return EMPTY;
+	new i = .childs->Find(name, 0, <| param key, elem; return key == elem.name; |> );
+	if (i != -1)
+	{
+		new child = .childs[i]->Ptr();
+        if (child->IsDir())
+       		return child;
+	}	
+    return EMPTY;
+|>;
+//=============================================
+//
+//=============================================
+ new DirNode::ReloadFolder(refer object BaseString, refer object BaseString) = <|
+ param Dir, name;
+	if (.childs == EMPTY) return EMPTY;
+	new i = .childs->Find(name, 0, <| param key, elem; return key == elem.name; |> );
+	new child;
+	if (i != -1)
+	{
+		child = .childs[i]->Ptr();
+        if (child->IsDir())
+        {
+         	child->ReloadDir(Dir, <<>>, FALSE);
+
+        }
+	}	
+    else
+    {
+    		new dir = self->AddDir(instance WString("/") @ name);
+			dir->ReloadDir(Dir, <<>>, FALSE);
+			child = dir->Ptr();
+	}
+	return child;
+
+|>;
+
+//=============================================
+//
+//=============================================
+ new DirNode::GetFileList(refer object Vector, boolean, refer object Vector) = <|
+ param mask, fAll, res;
+	if (.childs == EMPTY) return EMPTY;
+
+	new j, lj = mask->Len();
+    for (new i = 0, l = .childs->Len(); i < l; ++i)
+    {
+		new child = .childs[i]->Ptr();
+        if (!child->IsDir())
+        {
+          
+            if (lj > 0)
+            {
+	            for (j = 0 ; j < lj; ++j)
+					if (child.name->Right(4) == mask[j])
+					{
+						res @= child;
+						break;
+					}
+            }
+            else
+              	res @= child;
+        }
+        else
+        if (fAll)
+        {
+        	child->GetFileList(mask, fAll, res);
+        }
+    }
+|>;
+
+//=============================================
+//
+//=============================================
+ new DirNode::GetDirList(refer object Vector) = <|
+ param res;
+	if (.childs == EMPTY) return EMPTY;
+
+    for (new i = 0, l = .childs->Len(); i < l; ++i)
+    {
+		new child = .childs[i]->Ptr();
+        if (child->IsDir())
+            res @= child;
+    }
+   res->QSort({|param key, elem; return key.name  <> elem.name;|});
+	
+|>;
+//=============================================
+//
+//=============================================
+ new DirNode::GetDirSelected(int, refer object Vector) = <|
+ param n, res;
+	if (.childs == EMPTY) return EMPTY;
+
+   	 for (new i = 0, l = .childs->Len(); i < l; ++i)
+  	{
+		
+		new child = .childs[i]->Ptr();
+	        if (child->IsSelected(n) && child->IsDir())
+	            res @= child;
+    }
+|>;
+
+//=============================================
+//
+//=============================================
+ new DirNode::GetDirSelectedFroLevel(int, int, refer object Vector) = <|
+ param n, level, res;
+	if (.childs == EMPTY) return EMPTY;
+
+    for (new i = 0, l = .childs->Len(); i < l; ++i)
+  	{
+		
+		new child = .childs[i]->Ptr();
+		if (child->IsDir())
+		{
+			new child_level = child->GetSelected(n);
+			if (child_level == level)
+        		res @= child;
+			else
+			if (level > child_level)
+				self->GetDirSelectedFroLevel(n, level, res);
+        }
+    }
+|>;
+
+
+//=============================================
+//
+//=============================================
+ new DirNode::GetFileList(refer object Vector) = <|
+ param mask;
+	return self->GetFileList(mask, FALSE);
+    
+  
+|>;
+//=============================================
+//
+//=============================================
+ new DirNode::GetFileList(refer object Vector, boolean) = <|
+ param mask, fAll;
+	new res = <<>>;
+  	self->GetFileList(mask, fAll, res);
+  	 res->QSort({|param key, elem; return key.name  <> elem.name;|});
+    return res;
+ |>;
+//=============================================
+//
+//=============================================
+new DirNode::MakeXml(refer object Vector) = <|
+ param mask;
+	if (.childs == EMPTY) return "";
+    new str = "";
+    new fStart = TRUE;
+    new i = 0, l = .childs->Len();
+   	new j, lj = mask->Len();
+
+    for (; i < l; ++i)
+    {
+		new node = @.childs[i];
+        new fIsDir = node->IsDir();
+        if (fIsDir)
+        {
+            if (fStart)
+            {
+                fStart = FALSE;
+                str @= "<folders>";
+            }
+            str @= "<folder>";
+            str @= "<name>" @ node.name @ "</name>";
+            str @= node->MakeXml(mask);
+            str @= "</folder>";
+        }
+        else
+			break;
+
+     }
+	 if (!fStart)
+		 str @= "</folders>";
+	 fStart = TRUE;
+    for (; i < l; ++i)
+    {
+		new node = @.childs[i];
+    
+        if (lj > 0)
+        {
+             for (j = 0 ; j < lj; ++j)
+				if (node.name->Right(4) == mask[j])
+					break;
+			if (j == lj) continue;
+        }
+   
+        if (fStart)
+        {
+            fStart = FALSE;
+            str @= "<files>";
+        }
+        str @= "<file>";
+        str @= "<name>" @ node.name @ "</name>";
+        str @= "</file>";
+    }
+	if (!fStart)
+        str @= "</files>";
+    return str;
+|>;
+//=============================================
+//
+//=============================================
+class TreeDir {
+	root;
+};
+//=============================================
+//
+//=============================================
+new TreeDir::TreeDir(void) = <|
+	.root = instance DirNode();
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::TreeDir(refer object BaseString, boolean) = <|
+param path, fDir;
+    .root = instance DirNode(EMPTY, EMPTY, path, <<>>,fDir);
+|>;
+//=============================================
+//
+//=============================================
+new TreeDir::TreeDir(refer object BaseString) = <|
+param path;
+    .root = instance  DirNode(EMPTY, EMPTY, path, <<>>, FALSE);
+|>;
+    
+//=============================================
+//
+//=============================================
+new TreeDir::TreeDir(refer object BaseString, refer object Vector) = <|
+param path, mask;
+    .root = instance DirNode(EMPTY, EMPTY, path, mask, FALSE);
+|>;
+//--------------------------------------------------------------------------------
+//
+//--------------------------------------------------------------------------------
+new TreeDir::TreeDir(refer object ParsXml) = <| 
+param data;
+     new node = data.root->FindFolder("file-area");
+     if (node != EMPTY)
+         .root = instance DirNode(EMPTY, node);
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::AddDir(refer object BaseString) = <|
+param s;
+	return .root->AddDir(s);
+|>;
+//=============================================
+//
+//=============================================
+new TreeDir::Remove(refer object BaseString) = <|
+param s;
+	return .root->Remove(s);
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::AddFile(refer object BaseString) = <|
+param s;
+	return .root->AddFile(s);
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::get(int) = <|
+param i;
+    return .root->get(i);
+|>;
+//=============================================
+//
+//=============================================
+new TreeDir::Get(refer object BaseString) = <|
+param i;
+    return .root->Get(i);
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::NumDir(void) = <|
+    return .root->NumDir();
+|>;
+//=============================================
+//
+//=============================================
+new TreeDir::CopySelectedDir(int, refer object TreeDir) = <|
+param n, tree;
+
+	.root = instance DirNode(n, EMPTY, tree.root);
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::Root(void) = <| 
+	return @.root; 
+|>;
+//=============================================
+//
+//=============================================
+new TreeDir::MakeXml(refer object Vector) = <|
+ param mask;
+    new s = "<file-area>";
+
+    s @= .root->MakeXml(mask);
+    s @= "</file-area>";
+    return s;
+|>;
+//=============================================
+//
+//=============================================
+new TreeDir::MakeXmlFromPoints(refer object Vector) = <|
+ param childs;
+    new str = "<file-area>";
+    new i = 0, l = childs->Len();
+	for (i = l - 1; i > 0; --i)
+    {
+    	str @= "<folders>";
+
+		new node = @childs[i];
+        str @= "<folder>";
+        str @= "<name>" @ node.name @ "</name>";
+   
+     }
+     str @= "<files>";
+     str @= "<file>";
+     str @= "<name>" @ childs[0].name @ "</name>";
+     str @= "</file>";
+     str @= "</files>";
+       for (i = l - 1; i > 0; --i)
+       {
+        str @= "</folder>";
+    	str @= "</folders>";
+    	}
+
+	 str @= "</folders>";
+    str @= "</file-area>";
+    return str;
+|>;
+
+//=============================================
+//
+//=============================================
+new TreeDir::GetImageList(refer object Vector) = <|
+ param childs;
+    new File = AllergoEyeIni->ReadStr("DIR", "DATA");
+    if (File->GetLastByte() != FD)
+    	File @= SFD;
+    new i = 0, l = childs->Len();
+	for (i = l - 1; i > 0; --i)
+	{
+		File @= childs[i].name;
+    	if (File->GetLastByte() != FD)
+    		File @= SFD;
+    }
+	File @= childs[i].name;
+    return << File >>;
+|>;

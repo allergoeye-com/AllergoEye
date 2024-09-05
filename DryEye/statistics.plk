@@ -1,0 +1,134 @@
+//=================================================
+//
+//=================================================
+new SelectDlg::GetStatistics(object BaseString) = <|
+param Allergen;
+	new Curves = << >>;
+	for (new p = 0; p < .AllRecord->Len(); ++p)
+	{
+		for (new t = 0; t < .AllRecord[p][0].Therapy->Len(); ++t)
+		{ 
+			new b = @.AllRecord[p][0].Date;
+			if (.AllRecord[p][0].Therapy[t].Allergen->Find(Allergen) != -1)
+			{
+				new allergen = .AllRecord[p][0].Therapy[t].Allergen;
+				new StartDate = instance Date(.AllRecord[p][0].Therapy[t].StartDate);
+				new X = << >>;
+				new Y = << >>;
+				new C = << >>;
+				for (new i = 0;  i < b->Len(); ++i)
+				{
+					if (b[i].Allergen == allergen)
+					{
+						new Date = instance Date(b[i].Date);
+						new day = Max(0.0, Date - StartDate) / 30;
+						X ,= int(day / 3.0 + 0.5) * 3.0;
+						Y ,= b[i]->GetOpSynScore();
+						C ,= 1;
+					}
+				}
+				for (new k = X->Len() - 1; k >=0; --k)
+				{
+					if (k > 0 && X[k] == X[k - 1])
+					{
+						Y[k - 1] = (Y[k - 1] * C[k - 1] + Y[k] * C[k]) / (C[k - 1] + C[k]);
+						C[k - 1] += C[k];
+						C->Remove(k);
+						X->Remove(k);
+						Y->Remove(k);
+					}
+				}
+				if (X->Len() > 1)
+				{
+					Curves ,= instance Curve(X, Y, Printf("ID = %s, Allergen = %s, CAP = %v", .AllRecord[p][0].PatientIDStr, allergen, .AllRecord[p][0].CAP));
+				}
+			}
+		}
+	}
+	return Curves;
+|>;
+//===========================================================
+//
+//===========================================================
+new SelectDlg::GetStatistics(object String) = <|
+param Med;
+	new Curves = << >>;
+	for (new p = 0; p < .AllRecord->Len(); ++p)
+	{
+		for (new t = 0; t < .AllRecord[p][0].Therapy->Len(); ++t)
+		{
+			if (.AllRecord[p][0].Therapy[t].Medication != Med)
+				continue;
+			new b = @.AllRecord[p][0].Date;
+			new StartDate = instance Date(.AllRecord[p][0].Therapy[t].StartDate);
+			new allergen = .AllRecord[p][0].Therapy[t].Allergen;
+			new X = << >>;
+			new Y = << >>;
+			new C = << >>;
+			for (new i = 0;  i < b->Len(); ++i)
+			{
+				if (b[i].Allergen != allergen)
+					continue;
+				new Date = instance Date(b[i].Date);
+				new day = Max(0.0, Date - StartDate) / 30;
+				X ,= int(day / 3.0 + 0.5) * 3.0;
+/*
+				for (new j = 0; j < b[i].Tests->Len(); ++j)
+				{
+					b[i].Tests[j]->CalculateScore();
+					b[i].Tests[j]->Save();
+				}
+*/
+//				Y ,= b[i]->GetOpSynScore();
+				Y ,= b[i]->GetAEScore();
+//				Y ,= b[i]->GetOpScore();
+//				Y ,= b[i]->GetSSScore();
+				C ,= 1;
+			}
+			for (new k = X->Len() - 1; k >=0; --k)
+			{
+				if (k > 0 && X[k] == X[k - 1])
+				{
+					Y[k - 1] = (Y[k - 1] * C[k - 1] + Y[k] * C[k]) / (C[k - 1] + C[k]);
+					C[k - 1] += C[k];
+					C->Remove(k);
+					X->Remove(k);
+					Y->Remove(k);
+				}
+			}
+			if (X->Len() > 1)
+			{
+				Curves ,= instance Curve(X, Y, Printf("ID = %s, CAP = %v, %s", .AllRecord[p][0].PatientIDStr, .AllRecord[p][0].CAP, allergen));
+			}
+		}
+	}
+	return Curves;
+|>;
+/*
+//global Curves = main.SelectDlg->GetStatistics("mite");
+
+global Curves = main.SelectDlg->GetStatistics("TA");
+trace "0, 3, 6, 9, 12", CR;
+new t =  << 0, 3, 6, 9, 12 >>;
+for (new i = 0; i < Curves->Len(); ++i)
+{
+//	trace i + 1, " ", Curves[i], CR;
+	for (new j = 0; j < t->Len(); ++j)
+	{
+		new ind = Curves[i].X->Find(t[j]);
+		if (ind == 0)
+			trace Curves[i].Y[ind];
+		else
+		if (ind > 0)
+			trace ", ", Curves[i].Y[ind];
+		else
+			trace ", ";
+	}
+	trace CR;
+}
+for (new i = 0; i < Curves->Len(); ++i)
+	trace i + 1, ", ", Curves[i].Comment, CR;	
+
+*/
+
+

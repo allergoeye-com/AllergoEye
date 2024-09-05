@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/transparent"
+    android:orientation="vertical"
+    android:textAlignment="viewStart">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:text="@string/select_lang"
+            android:textAlignment="viewStart"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="@dimen/sew_options_margin"
+            android:textColor="@color/theme_dlg_text_color" />
+
+        <RadioGroup
+            android:id="@+id/idLangGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/idEn"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="@string/str_en"
+                    android:textColor="@color/theme_dlg_text_color" />
+
+                <RadioButton
+                    android:id="@+id/idDe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="@string/str_de"
+                    android:textColor="@color/theme_dlg_text_color" />
+                <RadioButton
+                    android:id="@+id/idFr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="@string/str_fr"
+                    android:textColor="@color/theme_dlg_text_color" />
+                <RadioButton
+                    android:id="@+id/idEs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="@string/str_es"
+                    android:textColor="@color/theme_dlg_text_color" />
+                <RadioButton
+                    android:id="@+id/idPol"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="@string/str_pl"
+                    android:textColor="@color/theme_dlg_text_color" />
+        </RadioGroup>
+
+</LinearLayout>

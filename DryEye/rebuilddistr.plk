@@ -1,0 +1,75 @@
+//=========================================================
+//
+//=========================================================
+new SelectDlg::onResponce(refer ...) = <|
+	if (.IndexBuild != EMPTY)
+	{
+		new Dir = AllergoEyeIni->ReadStr("DIR", "DATA");
+		if (Dir->GetLastByte() != FD)
+			Dir @= SFD;
+		new list = .ListSubRecord->GetListRecords();
+		if (.IndexBuild > -1)
+		{
+			new dir = Dir @ list[.IndexBuild]->GetWinPath();
+	
+			new v = <<>>;
+			new names = <<>>;
+			new distr = << >>;
+			list[.IndexBuild].result = main->LoadROI(JustDirName(dir) @ JustName(dir), v, names, distr);
+			list[.IndexBuild].res_distr <- distr;
+			if (v->Len() > 0)
+			{
+				list[.IndexBuild].roi <- v;
+				list[.IndexBuild].names <- names;
+			}
+	
+			.ListSubRecord->OnUpdate();
+
+			new Pict = Odml2Exec("select p from DBPicture as p where p.Path like ?", <<"%" @ list[.IndexBuild].name>>);
+			if (Pict->Len() > 0)
+			{
+				onerror {
+					goto cont;
+				}
+				new root = AllergoEyeIni->ReadStr("DIR", "DATA");
+				new Name = JustName(Pict[0].Path);
+				new dirName = root @ JustDirName(Pict[0].Path);
+				new f1 = instance File(dirName @ Name @ ".res");
+				Pict[0]->ReadScore(f1);
+				f1 = instance File(dirName @ Name @ ".dst");
+				Pict[0]->ReadDistr(f1);
+				Pict[0]->Save();
+				new Test = Odml2Exec("select p from DBTest as p where p.Pictures[i].oID = ?", <<Pict[0].oID>>);
+				Test[0]->CalculateScore();
+				Test[0]->Save();
+			}
+cont :
+			onerror {
+				.waitCursor	= EMPTY;
+				rollback;
+			}
+		}
+		main.netDir->SetProxy(EMPTY);
+		for (new i = .IndexBuild + 1; i < list->Len(); ++i)
+		{
+			.IndexBuild = i;
+			trace .IndexBuild, CR;
+			self->OnBuild(list[i]);
+		}
+		new ph = AllergoEyeIni->ReadStr("DIR", "DATA");
+		.AllRecord[.IndexAll][.OBJ]->ReloadDir(ph,  <<>>, FALSE);
+		main.netDir.dbdir->ReloadPatient(.AllRecord[.IndexAll][.OBJ]);
+		main.netDir->SetProxy(&self);
+
+		.IndexBuild = EMPTY;
+		.View = EMPTY;	
+		self->EnableItem(ID_BUILD, FALSE);
+		self->EnableSync(TRUE);
+		self->EnableItem(ID_REPORT, TRUE);
+	 	self->EnableItem(ID_EXCEL, TRUE);
+	
+		self->EnableItem(BTN_EDIT, TRUE);
+	}
+	.waitCursor	= EMPTY;
+
+|>;

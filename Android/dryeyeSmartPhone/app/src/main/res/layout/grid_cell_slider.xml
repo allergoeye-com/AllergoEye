@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lib.common.ImageSlider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <lib.common.CListBox
+        android:id="@+id/idListView"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:tabTextColor="@color/theme_dlg_text_color"
+        android:layout_weight="0.3" />
+
+
+    <lib.common.layout.LinearLayoutBorder
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.7"
+        android:orientation="vertical">
+
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <LinearLayout
+
+                android:id="@+id/viewBmp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_centerHorizontal="true"
+                android:orientation="vertical">
+
+                <androidx.viewpager.widget.ViewPager
+                    android:id="@+id/idViewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </LinearLayout>
+
+            <lib.common.button.CMenuButton
+                android:id="@+id/idPrev"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="12dp"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:visibility="visible"
+                app:color_up="#FFE0E0E0"
+                app:srcCompat="@drawable/previous" />
+
+            <lib.common.button.CMenuButton
+                android:id="@+id/idNext"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:visibility="visible"
+                app:color_up="#A0E0E0E0"
+                app:srcCompat="@drawable/next" />
+
+        </RelativeLayout>
+    </lib.common.layout.LinearLayoutBorder>
+</lib.common.ImageSlider>

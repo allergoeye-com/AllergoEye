@@ -1,0 +1,93 @@
+class DlgNewTest2 : ModalForm , FormTriggers {
+	newtest;
+	DilitionList;
+	IndexAlerg;
+	
+	IndexSideControl;
+	IndexTimeControl;
+	SideStartTest;
+	SideControl;
+	SideTest;
+	IsStartTest;
+	TestControl;
+
+};
+
+//=========================================================
+//
+//=========================================================
+new DlgNewTest2::DlgNewTest2(refer object GWnd ) = <|
+param parent;
+		self->ModalForm( "DLG_NEW_TEST2", parent );
+|>;
+
+//=========================================================
+//
+//=========================================================
+new DlgNewTest2::Setup( void ) =
+<|
+	self->ModalForm::Setup();
+	self->Bind(self);
+	new ls = GetDilitionList();
+	.IsStartTest = TRUE;
+	.TestControl = ls[1];
+
+	new side = GetSideList();
+	.SideStartTest = side[0];
+	.SideControl = instance Vector(2);
+	for (new i = 0; i < 2; ++i)
+	{
+		.SideControl[i] = side[i + 1]; 
+	}
+	.IndexAlerg = AllergoEyeIni->ReadInt("TEST", "1", 0);
+	.IndexSideControl = 0; 
+	.IndexTimeControl = AllergoEyeIni->ReadInt("TEST", "4", 0);
+	self->UpdateForm();
+|>;
+new DlgNewTest2::OnControlSide(refer ...) = <|
+	self->UpdateForm();
+
+|>;
+
+//=========================================================
+//
+//=========================================================
+new DlgNewTest2::OnOk(refer ...) = <|
+
+	self->UpdateForm();
+
+	new combo = instance GComboBox(ID_TEST_ALERGEN, self);
+	new test = GetAllergenEng(combo->GetText());
+	combo = instance GComboBox(ID_SIDE_CONTROL, self);
+	new side_control = GetSideEng(combo->GetText());
+	combo = instance GComboBox(ID_TIME, self);
+	new time_control = GetIncubationEng(combo->GetText());
+	.newtest = <<>>;
+	new lsDil = GetDilitionList();
+	if (.IsStartTest)
+	{
+		new newtest = test;
+		new b = GetDilitionEng(lsDil[0]);
+		b->ReplaceAll(":", "-");
+		newtest @= "_" @ b;
+		newtest @= "_" @ GetSideEng(.SideStartTest);
+		newtest @= "_" @ "00min";
+		.newtest ,= newtest ;  
+	}
+	if (TRUE)
+	{
+		new newtest = test;
+		new b = GetDilitionEng(lsDil[1]);
+		b->ReplaceAll(":", "-");
+		newtest @= "_" @ b;
+		newtest @= "_" @ side_control;
+		newtest @= "_" @ time_control;
+		.newtest ,= newtest ;  
+	}
+	
+	AllergoEyeIni->WriteInt("TEST", "1", .IndexAlerg);
+	AllergoEyeIni->WriteInt("TEST", "2", .IndexSideControl);
+	AllergoEyeIni->WriteInt("TEST", "4", .IndexTimeControl);
+	self->ModalForm::Close(IDOK);
+	
+|>;

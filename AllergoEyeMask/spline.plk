@@ -1,0 +1,156 @@
+class FromRoiView {
+global :
+	ShowLabel;
+	ShowMarkPoints;
+};
+FromRoiView::ShowLabel = FALSE;
+FromRoiView::ShowMarkPoints = FALSE;
+
+FromRoiView::ShowLabel = FALSE;
+FromRoiView::ShowMarkPoints = FALSE;
+
+/****************************************************************
+CSpline
+****************************************************************/
+class CSpline {
+	CornerPoints;
+	pointMove;
+	ptCorner;
+	iCorner;
+	curve;
+	vMoved;
+
+};
+
+//---------------------------------------
+//
+//---------------------------------------
+new CSpline::CSpline(refer object Vector) = <| 
+param points;
+	.curve = instance BetaCurve(points);
+	.CornerPoints = points;
+	.vMoved = <<>>;
+|>;
+
+//---------------------------------------
+//
+//---------------------------------------
+new CSpline::Enter(void) = {|
+|};
+
+//---------------------------------------
+//
+//---------------------------------------
+new CSpline::OnDraw(refer object MDC, refer object Transform2D, int, int) = <| 
+param mdc, trans, W, H;
+	if (.CornerPoints == EMPTY)
+		return;
+	new i, l, pt;
+	mdc->SetFgColor(CLR_LIGHTRED);
+	mdc->SetBrush(CLR_LIGHTRED, BG_SOLID);
+	pt = .CornerPoints;
+	l = .CornerPoints->Len();
+	
+	trans->Lp2Dp(pt, pt);
+	new curve = instance BetaContour(pt);
+	new pt1 = curve->GetContour();
+	mdc->PolyLine(pt1);		
+
+	
+	for (i = 0, l = pt->Len(); i < l; ++i)
+		mdc->Bar(pt[i].x - 4, pt[i].y - 4, pt[i].x + 3, pt[i].y + 3);
+
+|>;
+
+//---------------------------------------
+//
+//---------------------------------------
+new CSpline::OnLButtonDown(int, int, refer object Transform2D, int, int) = {|
+param x, y, trans, W, H;
+	.iCorner = EMPTY;
+	.ptCorner = EMPTY;
+	.vMoved = <<>>;
+	.pointMove = instance POINT(x, y);
+	new i, l = .CornerPoints->Len(), pt = .CornerPoints;
+	trans->Lp2Dp(pt, pt);
+	new cur, d, dist = 100.0;
+	for (i = 0; i < l; ++i)
+	{
+		if ((d = ((pt[i].x - x)**2 + (pt[i].y - y)**2)) < dist)
+		{
+			dist = d;
+			cur = i;
+		}
+	}
+		if (cur != EMPTY)
+		{
+	
+			.iCorner = cur;
+
+			.vMoved = <<.CornerPoints[.iCorner], .CornerPoints[.iCorner], .iCorner>>;
+			.ptCorner = pt[cur];
+			return TRUE;
+		}
+		
+	
+	.pointMove = EMPTY;
+	
+	return FALSE;
+|};
+//---------------------------------------
+//
+//---------------------------------------
+new CSpline::OnLButtonUp(int, int, refer object Transform2D, int, int) = <|
+param x, y, trans, W, H;
+onerror {
+.pointMove = EMPTY;
+}
+	if (.pointMove != EMPTY && .iCorner != EMPTY)
+	{
+	new lpt = instance POINT(x, y);
+		.pointMove = lpt;
+		trans->Dp2Lp(.pointMove, lpt);
+		//lpt.y = int(H - lpt.y);
+		if (.vMoved[0] != .vMoved[1] && lpt.y >= 0 && lpt.y < H && lpt.x >= 0 && lpt.x < W) 
+		{
+			.CornerPoints[.iCorner] = lpt;
+			.vMoved[1] = .CornerPoints[.iCorner];
+
+//			.curve = instance BetaContour(.CornerPoints);
+			.curve->SetControl(.iCorner, lpt);
+
+			
+		}		
+	
+	}
+	.pointMove = EMPTY;
+	.iCorner = EMPTY;
+	
+
+|>;
+
+
+//---------------------------------------
+//
+//---------------------------------------
+new CSpline::OnMouseMove(int, int, refer object Transform2D, int, int) = <|
+param x, y, trans, W, H;
+	if (.vMoved->Len() > 0 && .pointMove != EMPTY && .iCorner != EMPTY && (Abs(.pointMove.x - x) > 1 || Abs(.pointMove.y - y) > 1))
+	{
+		new lpt = instance POINT(x, y);
+		.pointMove = lpt;
+		trans->Dp2Lp(.pointMove, lpt);
+		//lpt.y = int(H - lpt.y);
+		
+		if (lpt.y >= 0 && lpt.y < H && lpt.x >= 0 && lpt.x < W) 
+		{
+			.CornerPoints[.iCorner] = lpt;
+			.vMoved[1] = .CornerPoints[.iCorner];
+			//.curve = instance BetaContour(.CornerPoints);
+			.curve->SetControl(.iCorner, lpt);
+			
+		}		
+	}
+	
+|>;
+

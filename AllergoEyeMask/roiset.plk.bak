@@ -1,0 +1,531 @@
+
+class ROISet {
+    Points; // The collection of points in the ROISet
+    BS; // The BetaContour object used for generating control points
+    View; // A flag indicating whether the ROISet is visible or not
+    Selected; // A flag indicating whether the ROISet is selected or not
+    fModefied; // A flag indicating whether the ROISet has been modified or not
+    spline; // The CSpline object used for generating the spline curve
+    pointMove; // The point to be moved during insertion
+    iCorner; // The index of the corner point to be deleted or moved
+    tmp; // Temporary storage for the points before editing
+};
+//=============================================
+// Default constructor for ROISet
+//=============================================
+new ROISet::ROISet(void) = <|
+	.Points = <<>>; // Initialize the Points collection as empty
+	.View = TRUE; // Set the View flag to true
+	.Selected = FALSE; // Set the Selected flag to false
+	.fModefied = FALSE; // Set the fModefied flag to false
+|>;
+//=============================================
+// Constructor for ROISet with initial points
+//=============================================
+new ROISet::ROISet(refer object Vector) = <|
+param p; // The initial points for the ROISet
+	.View = TRUE; // Set the View flag to true
+	.Selected = FALSE; // Set the Selected flag to false
+	.fModefied = TRUE; // Set the fModefied flag to true
+	.Points = p; // Set the Points collection to the initial points
+|> ;
+
+//=============================================
+// Convert the ROISet points to a Bezier curve
+//=============================================
+new ROISet::ToBezier(void) = <|
+    .tmp = .Points; // Store the current points in the tmp variable
+
+	if (.Points->Len() < 60) // Check if the number of points is less than 60
+	    return; // If so, return without converting to Bezier
+	
+	self->ToBezier(15); // Call the ToBezier method with a default value of 15
+|> ;
+
+//=============================================
+// Convert the ROISet points to a Bezier curve with a given number of segments
+//=============================================
+new ROISet::ToBezier(int) = <|
+    param N; // The number of segments for the Bezier curve
+
+	new n = .Points->Len() / N; // Calculate the number of points per segment
+	
+	new pt = <<>>; // Create an empty collection for the new points
+	new ap = instance AproxLine(); // Create an instance of the AproxLine class
+	ap->Exec(.Points, pt, int(.Points->Len() / n)); // Generate the approximate line segments
+	.Points < -pt; // Update the Points collection with the new points
+|> ;
+
+//=============================================
+// Get the control points for the ROISet
+//=============================================
+new ROISet::GetControlPoints(refer object Vector) = <|
+param p; // The input points for generating control points
+	.BS = instance BetaContour(p); // Create an instance of the BetaContour class with the input points
+	if (p->Len() > 20) // Check if the number of input points is greater than 20
+	{
+	    .BS->GetContour(); // Generate the contour points
+	    .BS->RebuildEx(Max(.BS.Contour->Len() / 30, 20)); // Rebuild the contour with a minimum length of 20
+	}
+	.Points = .BS->GetControlPoints(); // Get the control points from the BetaContour object
+	.Points->SetLen(.Points->Len() - 1); // Remove the last point from the control points
+|> ;
+
+//=============================================
+// Edit the ROISet
+//=============================================
+new ROISet::Edit(boolean) = <|
+    param f; // The flag indicating whether to edit or not
+	self->Edit(f, self); // Call the Edit method with the flag and a reference to the current object
+|> ;
+
+//=============================================
+// Edit the ROISet with a given flag and reference object
+//=============================================
+new ROISet::Edit(boolean, refer any) = <|
+    param f, ref; // The flag indicating whether to edit or not, and the reference object
+	if (!f) // Check if the flag is false
+	{
+	    if (.spline != EMPTY) // Check if the spline object is not empty
+	    {
+	        new c = instance GWaitCursor(); // Create an instance of the GWaitCursor class 
+	
+	        if (.Points != .spline.CornerPoints) // Check if the Points collection is different from the spline's CornerPoints
+	        {
+	            .fModefied = TRUE; // Set the fModefied flag to true
+	            .Points = .spline.CornerPoints; // Update the Points collection with the spline's CornerPoints
+	        }
+	        else
+	            .Points = .tmp;	// Restore the original points from the tmp variable
+	        if (.fModefied) // Check if the fModefied flag is true
+	            if (ref != EMPTY) // Check if the reference object is not empty
+	                ref->OnModefied(); // Call the OnModefied method of the reference object
+	
+	        .spline = EMPTY; // Set the spline object to empty
+	        c = EMPTY; // Clear the GWaitCursor instance
+	    }
+	}
+	else
+	if (.spline == EMPTY) // Check if the spline object is empty
+	{
+	    .tmp = .Points; // Store the current points in the tmp variable
+	
+	    new c = instance GWaitCursor(); // Create an instance of the GWaitCursor class
+	    if (!.fModefied) // Check if the fModefied flag is false
+	        self->GetControlPoints(.Points); // Generate the control points
+	    .spline = instance CSpline(.Points); // Create an instance of the CSpline class with the control points
+	    c = EMPTY; // Clear the GWaitCursor instance
+	}
+|> ;
+
+//=============================================
+// Check if the ROISet is being edited
+//=============================================
+new ROISet::IsEdit(void) = <|
+	return.spline != EMPTY; // Return true if the spline object is not empty, indicating that the ROISet is being edited
+|> ;
+
+//=============================================
+// Draw the ROISet on the given MDC with the given transformation and parent object
+//=============================================
+new ROISet::OnDraw(refer object MDC, refer object Transform2D, refer any) = <|
+    param mdc, trans, Parent;
+	
+	
+	mdc->SetFgColor(CLR_YELLOW); // Set the foreground color to yellow
+	if (.spline != EMPTY) // Check if the spline object is not empty
+	{
+	    .spline->OnDraw(mdc, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight()); // Call the OnDraw method of the spline object
+	    return; // Return after drawing the spline
+	}
+	if (!.View) return; // Check if the View flag is false, indicating that the ROISet should not be drawn
+	if (.Points->Len() == 0) // Check if the number of points is zero
+	return; // If so, return without drawing anything
+	mdc->SetFgColor(.Selected ? CLR_LIGHTRED : CLR_YELLOW); // Set the foreground color based on the Selected flag
+	new pt1 = .Points; // Create a new collection for the transformed points
+	
+	
+	trans->Lp2DpPOINT(pt1, pt1); // Transform the points from logical coordinates to device coordinates
+	if (.fModefied && pt1->Len() > 2) // Check if the fModefied flag is true and the number of transformed points is greater than 2
+	{
+	    new curve = instance BetaCurve(pt1); // Create an instance of the BetaCurve class with the transformed points
+	    pt1 = curve->GetContour(); // Get the contour points from the BetaCurve object
+	    pt1 @= pt1[0]; // Append the first point to the end of the collection to close the contour
+	}
+	mdc->PolyLine(pt1); // Draw a polyline using the transformed points
+|> ;
+
+//=============================================
+// Handle the left mouse button down event on the ROISet
+//=============================================
+new ROISet::OnLButtonDown(int, int, refer object Transform2D, refer any) = <|
+    param x, y, trans, Parent;
+	if (.spline != EMPTY) // Check if the spline object is not empty
+	{
+	    .spline->OnLButtonDown(x, y, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight()); // Call the OnLButtonDown method of the spline object
+	    return; // Return after handling the event
+	}
+|> ;
+
+//=============================================
+// Delete the selected corner point in the ROISet
+//=============================================
+new ROISet::Delete(void) = <|
+	if (.spline == EMPTY) return; // Check if the spline object is empty, indicating that there is no corner point to delete
+	new result = << .spline.CornerPoints[.iCorner], .iCorner >> ; // Create a collection with the deleted corner point and its index
+	.spline.CornerPoints->Remove(.iCorner); // Remove the corner point from the spline's CornerPoints collection
+	.fModefied = TRUE; // Set the fModefied flag to true
+	.spline.curve = instance BetaCurve(.spline.CornerPoints); // Update the spline curve with the new CornerPoints collection
+	return result; // Return the result collection
+|> ;
+
+//=============================================
+// Delete the corner point at the given index in the ROISet
+//=============================================
+new ROISet::Delete(int) = <|
+    param iCorner; // The index of the corner point to delete
+
+	if (.spline == EMPTY) return; // Check if the spline object is empty, indicating that there is no corner point to delete
+	.spline.CornerPoints->Remove(iCorner); // Remove the corner point at the given index from the spline's CornerPoints collection
+	.fModefied = TRUE; // Set the fModefied flag to true
+	.spline.curve = instance BetaCurve(.spline.CornerPoints); // Update the spline curve with the new CornerPoints collection
+
+|> ;
+
+//=============================================
+// Move the corner point at the given index in the ROISet to the given position
+//=============================================
+new ROISet::Move(int, refer object POINT) = <|
+    param iCorner, lpt; // The index of the corner point to move, and the new position
+
+	if (.spline == EMPTY) return; // Check if the spline object is empty, indicating that there is no corner point to move
+	.spline.CornerPoints[iCorner] = lpt; // Update the corner point at the given index with the new position
+	.spline.curve = instance BetaCurve(.spline.CornerPoints); // Update the spline curve with the new CornerPoints collection
+	.fModefied = TRUE; // Set the fModefied flag to true
+|> ;
+
+//=============================================
+// Insert a new corner point after the selected corner point in the ROISet
+//=============================================
+new ROISet::Insert(void) = <|
+    if (.spline == EMPTY || .iCorner == EMPTY) return; // Check if the spline object is empty or the selected corner point index is empty
+    new result = << .pointMove, .iCorner + 1 >> ; // Create a collection with the new corner point and its index
+	.spline.CornerPoints->Insert(.pointMove, .iCorner + 1); // Insert the new corner point after the selected corner point in the spline's CornerPoints collection
+	.fModefied = TRUE; // Set the fModefied flag to true
+	.spline.curve = instance BetaCurve(.spline.CornerPoints); // Update the spline curve with the new CornerPoints collection
+	return result; // Return the result collection
+|> ;
+
+//=============================================
+// Insert a new corner point at the given index in the ROISet
+//=============================================
+new ROISet::Insert(refer object POINT, int) = <|
+    param pointMove, iCorner; // The new corner point and its index
+	if (.spline == EMPTY || .iCorner == EMPTY) return; // Check if the spline object is empty or the given corner point index is empty
+	.spline.CornerPoints->Insert(pointMove, iCorner); // Insert the new corner point at the given index in the spline's CornerPoints collection
+	.fModefied = TRUE; // Set the fModefied flag to true
+	.spline.curve = instance BetaCurve(.spline.CornerPoints); // Update the spline curve with the new CornerPoints collection
+|>;
+
+
+//=============================================
+// OnSelectCorner function
+// This function is called when a corner point is selected.
+// It takes the x and y coordinates of the selected point and the GWnd object as parameters.
+// It checks if the spline object is empty and returns if it is.
+// It initializes the pointMove and iCorner variables to empty values.
+// It converts the corner points from logical coordinates to device coordinates.
+// It calculates the distance between the selected point and each corner point.
+// It finds the closest corner point and sets the iCorner variable to its index.
+// It returns true if a corner point is found, otherwise false.
+//=============================================
+new ROISet::OnSelectCorner(int, int, refer object GWnd) = <|
+    param x, y, Parent;
+    if (.spline == EMPTY) return;
+    .pointMove = EMPTY;
+    .iCorner = EMPTY;
+
+    if (.Points->Len() > 0)
+    {
+        new pt = .spline.CornerPoints;
+        Parent.trans->Lp2Dp(pt, pt);
+        new cur, d, dist = 100.0;
+        for (new i = 0, len = pt->Len(); i < len; ++i)
+        {
+
+            if ((d = ((pt[i].x - x) **2 + (pt[i].y - y) **2)) < dist)
+            {
+                dist = d;
+                cur = i;
+            }
+        }
+        if (cur != EMPTY)
+        {
+            .iCorner = cur;
+            return TRUE;
+        }
+    }
+    return FALSE;
+|> ;
+
+//=============================================
+// OnSelectCurve function
+// This function is called when a curve is selected.
+// It takes the x and y coordinates of the selected point and the GWnd object as parameters.
+// It initializes the pointMove and iCorner variables to empty values.
+// It converts the corner points from logical coordinates to device coordinates.
+// It creates a BetaContour object using the corner points and generates a spline curve.
+// It gets the contour points of the spline curve.
+// It calculates the distance between the selected point and each contour point.
+// It finds the closest point on the curve and sets the pointMove variable to its coordinates.
+// It checks if a pointMove is found and calculates the perpendicular distance between the curve and the pointMove.
+// It converts the pointMove coordinates from device coordinates to logical coordinates.
+// It sets the iCorner variable to the index of the closest corner point.
+// It returns true if a pointMove and iCorner are found, otherwise false.
+//=============================================
+new ROISet::OnSelectCurve(int, int, refer object GWnd) = <|
+    param x, y, Parent;
+    new lpt = instance POINT(x, y);
+    .pointMove = EMPTY;
+    .iCorner = EMPTY;
+
+    new pt1 = .spline.CornerPoints;
+
+    Parent.trans->Lp2Dp(pt1, pt1);
+    new curve = instance BetaContour(pt1);
+    curve->MakeSplineFromControl(pt1);
+    new pt = curve->GetContour();
+
+    new K, k = 0;
+    new dist = 100.0;
+    new cur;
+    new res = pt1[0];
+    new p = pt1[0];
+    for (new i = 0, l = pt->Len() - 1; i < l; ++i)
+    {
+        new d, p = self->Distance(pt[i], pt[i + 1], lpt);
+        if ((d = (p.x **2 + p.y **2)) < dist)
+        {
+            dist = d;
+            .pointMove = instance POINT(lpt.x + p.x, lpt.y + p.y);
+        }
+    }
+    if (.pointMove != EMPTY)
+    {
+        dist = 1000.0;
+
+        for (new i = 0, len = pt1->Len() - 1; i < len; ++i)
+        {
+
+            new d = self->PerpDistance(pt1[i], pt1[i + 1], .pointMove);
+            if (d != EMPTY && Abs(d) < dist)
+            {
+                dist = Abs(d);
+                cur = i;
+            }
+        }
+        if (cur != EMPTY)
+        {
+            Parent.trans->Dp2Lp(.pointMove, .pointMove);
+            .iCorner = cur;
+            return TRUE;
+        }
+
+    }
+    return FALSE;
+
+|> ;
+
+//=============================================
+// PerpDistance function (overloaded)
+// This function calculates the perpendicular distance between two points and a given point.
+// It takes the origin, destination, point, and result objects as parameters.
+// It calculates the normal vector of the line segment between the origin and destination points.
+// It calculates the distance between the origin and destination points.
+// It checks if the distance is greater than a threshold value.
+// It calculates the perpendicular distance between the line segment and the given point.
+// It checks if the perpendicular distance is within a threshold value.
+// It calculates the coordinates of the point on the line segment that is closest to the given point.
+// It checks if the point lies within the line segment.
+// It calculates the dot product of the point and the normal vector plus the distance.
+// It returns the dot product if the point lies within the line segment, otherwise returns 0.
+//=============================================
+new ROISet::PerpDistance(refer object POINT, refer object POINT, object POINT, refer object POINT) = <|
+    param org, dest, pt, res;
+    new n = instance POINT(float(org.y - dest.y), float(dest.x - org.x));
+    new dist = float(org.x * dest.y) - float(dest.x * org.y);
+    new d = n->Module();
+    if (d > 1.0e-6)
+    {
+        dist /= d;
+        n /= d;
+
+        d = -dist - (pt * n);
+
+        res = pt + (n * d);
+        return pt.x * n.x + pt.y * n.y + dist;
+    }
+    res = org;
+    return 0.0;
+|> ;
+
+//=============================================
+// PerpDistance function (overloaded)
+// This function calculates the perpendicular distance between two points and a given point.
+// It takes the origin, destination, and point objects as parameters.
+// It calculates the normal vector of the line segment between the origin and destination points.
+// It calculates the distance between the origin and destination points.
+// It checks if the distance is greater than a threshold value.
+// It calculates the perpendicular distance between the line segment and the given point.
+// It checks if the perpendicular distance is within a threshold value.
+// It calculates the coordinates of the point on the line segment that is closest to the given point.
+// It checks if the point lies within the line segment.
+// It calculates the dot product of the point and the normal vector plus the distance.
+// It returns the dot product if the point lies within the line segment, otherwise returns 0.
+//=============================================
+new ROISet::PerpDistance(refer object POINT, refer object POINT, refer object POINT) = <|
+    param org, dest, pt;
+    new n = instance POINT(float(org.y - dest.y), float(dest.x - org.x));
+    new dist = float(org.x * dest.y) - float(dest.x * org.y);
+    new d = n->Module();
+    if (d > 1.0e-6)
+    {
+        dist /= d;
+        n /= d;
+        d = -dist - (pt * n);
+        new v = pt + (n * d);
+        new a = dest - org;
+        new b = v - org;
+
+        if (a.x * b.x < -1.0e-3 || b.y * a.y < -1.0e-3)
+            return EMPTY;
+        new sa = a.x * a.x + a.y * a.y;
+        new sb = b.x * b.x + b.y * b.y;
+        if (Abs(sa - sb) < 1.0e-3 || sa > sb)
+            return pt.x * n.x + pt.y * n.y + dist;
+        return EMPTY;
+    }
+
+    return 0.0;
+|> ;
+
+//=============================================
+// Distance function
+// This function calculates the distance between a line segment and a given point.
+// It takes the origin, destination, and point objects as parameters.
+// It calculates the difference in x and y coordinates between the destination and origin points.
+// It checks if the difference in x and y coordinates is within a threshold value.
+// It calculates the difference in x and y coordinates between the given point and the origin point.
+// It checks if the difference in x and y coordinates is within a threshold value.
+// It calculates the cosine of the angle between the given point and the line segment.
+// It calculates the difference in x and y coordinates between the given point and the line segment.
+// It calculates the dot product of the difference vector and the line segment vector.
+// It calculates the x and y coordinates of the point on the line segment that is closest to the given point.
+// It calculates the difference in x and y coordinates between the x and y coordinates of the closest point and the origin point.
+// It checks if the dot product of the difference vector and the line segment vector is negative.
+// It calculates the difference in x and y coordinates between the x and y coordinates of the closest point and the destination point.
+// It checks if the negative difference in x and y coordinates between the x and y coordinates of the closest point and the line segment vector is negative.
+// It calculates the difference in x and y coordinates between the x and y coordinates of the closest point and the destination point.
+// It checks if the difference in x and y coordinates between the x and y coordinates of the closest point and the line segment vector is negative.
+// It calculates the difference in x and y coordinates between the x and y coordinates of the closest point and the destination point.
+// It calculates the dot product of the difference vector and the line segment vector.
+// It returns the dot product as a new POINT object.
+//=============================================
+new ROISet::Distance(refer object POINT, refer object POINT, object POINT) = <|
+    param org, dest, pt;
+    new dx_l = dest.x - org.x;
+    new dy_l = dest.y - org.y;
+    new _PRECISION_ = 1.0e-6;
+    new dx, dy;
+    if (Abs(dx_l) < _PRECISION_ && Abs(dy_l) < _PRECISION_)
+    {
+        dx = pt.x - org.x;
+        dy = pt.y - org.y;
+    }
+    else
+    {
+        new dx_t = pt.x - org.x;
+        new dy_t = pt.y - org.y;
+        if (Abs(dx_t) < _PRECISION_ && Abs(dy_t) < _PRECISION_)
+        {
+            dx = 0.0;
+            dy = 0.0;
+        }
+        else
+        {
+            new cosa = (dx_t * dx_l + dy_t * dy_l) / (dx_l * dx_l + dy_l * dy_l);
+            dx = -dx_t + dx_l * cosa;
+            dy = -dy_t + dy_l * cosa;
+        }
+    }
+    new x_x = pt.x + dx;
+    new y_x = pt.y + dy;
+    new dx_x = x_x - org.x;
+    new dy_x = y_x - org.y;
+    if (dx_x * dx_l + dy_x * dy_l < -_PRECISION_)
+    {
+        dx = org.x - pt.x;
+        dy = org.y - pt.y;
+    }
+    else
+    {
+        dx_x = x_x - dest.x;
+        dy_x = y_x - dest.y;
+        if (-dx_x * dx_l - dy_x * dy_l < -_PRECISION_)
+        {
+            dx = dest.x - pt.x;
+            dy = dest.y - pt.y;
+        }
+    }
+    return instance POINT(dy, dy);
+|> ;
+
+//=============================================
+// OnLButtonUp function
+// This function is called when the left mouse button is released.
+// It takes the x and y coordinates of the mouse cursor, the Transform2D object, and the Parent object as parameters.
+// It initializes the result variable.
+// It checks if the spline object is not empty.
+// It calls the OnLButtonUp function of the spline object.
+// It checks if the fModefied flag is false and the spline object has moved points.
+// It sets the fModefied flag to true if the first two moved points are not equal.
+// It sets the result variable to the moved points.
+// It clears the moved points of the spline object.
+// It returns the result variable.
+//=============================================
+new ROISet::OnLButtonUp(int, int, refer object Transform2D, refer any) = <|
+    param x, y, trans, Parent;
+    new result;
+    if (.spline != EMPTY)
+    {
+        .spline->OnLButtonUp(x, y, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight());
+        if (!.fModefied && .spline.vMoved->Len() > 0)
+            .fModefied = .spline.vMoved[0] != .spline.vMoved[1];
+        if (.spline.vMoved->Len() > 0 && .spline.vMoved[0] != .spline.vMoved[1])
+            result = .spline.vMoved;
+        .spline.vMoved = <<>>;
+
+    }
+    return result;
+
+
+|> ;
+
+//=============================================
+// OnMouseMove function
+// This function is called when the mouse cursor is moved.
+// It takes the x and y coordinates of the mouse cursor, the Transform2D object, and the Parent object as parameters.
+// It checks if the spline object is not empty.
+// It calls the OnMouseMove function of the spline object.
+//=============================================
+new ROISet::OnMouseMove(int, int, refer object Transform2D, refer any) = <|
+    param x, y, trans, Parent;
+    if (.spline != EMPTY)
+    {
+        .spline->OnMouseMove(x, y, trans, Parent.Bmp->GetWidth(), Parent.Bmp->GetHeight());
+        return;
+    }
+
+|> ;
+
+
